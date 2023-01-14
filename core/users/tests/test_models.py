@@ -2,6 +2,8 @@ from django.test import TestCase
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 
+from uuid import uuid4
+
 from core.users.models import User, UserPersonalProfile
 
 
@@ -32,6 +34,13 @@ class TestUser(TestCase):
         User.objects.bulk_create(users)
         
         return super().setUpTestData()
+
+    def test_pk(self):
+        self.assertEqual(type(self.userone.id), type(uuid4()))
+        user_id_str = str(self.userone.id)
+        uuid4_str = str(uuid4())
+        self.assertEqual(len(user_id_str), len(uuid4_str))
+        self.assertEqual(len(user_id_str.split('-')), len(uuid4_str.split('-')))
 
     def test_username(self):
         self.assertEqual(self.userone.username, 'testuserone')
