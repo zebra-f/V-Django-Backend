@@ -11,18 +11,18 @@ class TestUser(TestCase):
 
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.userone = User.objects.create_user(
+        cls.testuserone = User.objects.create_user(
             'testuserone@email.com',
             'testuserone',
             '6A37xvby&1!L'
             )
-        UserPersonalProfile(user=cls.userone).save()
-        cls.usertwo = User.objects.create_user(
+        UserPersonalProfile(user=cls.testuserone).save()
+        cls.testusertwo = User.objects.create_user(
             'testusertwo@email.com',
             'testusertwo',
             '6A37xvby&1!L'
         )
-        UserPersonalProfile(user=cls.usertwo).save()
+        UserPersonalProfile(user=cls.testusertwo).save()
         
         cls.user_numbers = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight']
         users = []
@@ -36,15 +36,15 @@ class TestUser(TestCase):
         return super().setUpTestData()
 
     def test_pk(self):
-        self.assertEqual(type(self.userone.id), type(uuid4()))
-        user_id_str = str(self.userone.id)
+        self.assertEqual(type(self.testuserone.id), type(uuid4()))
+        user_id_str = str(self.testuserone.id)
         uuid4_str = str(uuid4())
         self.assertEqual(len(user_id_str), len(uuid4_str))
         self.assertEqual(len(user_id_str.split('-')), len(uuid4_str.split('-')))
 
     def test_username(self):
-        self.assertEqual(self.userone.username, 'testuserone')
-        self.assertEqual(self.usertwo.username, 'testusertwo')
+        self.assertEqual(self.testuserone.username, 'testuserone')
+        self.assertEqual(self.testusertwo.username, 'testusertwo')
 
     def test_ordering(self):
         '''ordering = ['-created_at']'''
@@ -61,13 +61,13 @@ class TestUser(TestCase):
             self.assertEqual(user.is_active, False)
 
     def test_password(self):
-        self.assertNotEqual(self.userone.password, make_password('6A37xvby&1!L'))
-        self.assertNotEqual(self.usertwo.password, make_password('6A37xvby&1!L'))
-        self.assertNotEqual(self.userone.password, self.usertwo.password)
-        self.assertEqual(check_password('6A37xvby&1!L', self.userone.password), True)
-        self.assertEqual(check_password('6A37xvby&1!L', self.usertwo.password), True)
-        self.assertEqual(check_password('5A37xvby&1!L', self.userone.password), False)
-        self.assertEqual(check_password('7A37xvby&1!L', self.usertwo.password), False)
+        self.assertNotEqual(self.testuserone.password, make_password('6A37xvby&1!L'))
+        self.assertNotEqual(self.testusertwo.password, make_password('6A37xvby&1!L'))
+        self.assertNotEqual(self.testuserone.password, self.testusertwo.password)
+        self.assertEqual(check_password('6A37xvby&1!L', self.testuserone.password), True)
+        self.assertEqual(check_password('6A37xvby&1!L', self.testusertwo.password), True)
+        self.assertEqual(check_password('5A37xvby&1!L', self.testuserone.password), False)
+        self.assertEqual(check_password('7A37xvby&1!L', self.testusertwo.password), False)
 
     def test_queryset(self):
         self.assertEqual(User.objects.count(), 8)
@@ -81,7 +81,7 @@ class TestUser(TestCase):
             self.assertEqual(user.is_staff, False)
     
     def test_retation(self):
-        self.assertEqual(self.userone.user_personal_profile.first_name, None)
-        self.assertEqual(self.userone.email, self.userone.user_personal_profile.user.email)
-        self.assertEqual(self.usertwo.user_personal_profile.first_name, None)
-        self.assertEqual(self.usertwo.email, self.usertwo.user_personal_profile.user.email)
+        self.assertEqual(self.testuserone.user_personal_profile.first_name, None)
+        self.assertEqual(self.testuserone.email, self.testuserone.user_personal_profile.user.email)
+        self.assertEqual(self.testusertwo.user_personal_profile.first_name, None)
+        self.assertEqual(self.testusertwo.email, self.testusertwo.user_personal_profile.user.email)
