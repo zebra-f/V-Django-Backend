@@ -21,10 +21,10 @@ class UserViewSet(viewsets.ModelViewSet):
         'retrieve', 
         'destroy', 
         'deactivate', 
+        'partial_update',
         ]
     forbidden_object_level_actions = [
-        'update', 
-        'partial_update', 
+        'update',
     ]
 
     def get_permissions(self):

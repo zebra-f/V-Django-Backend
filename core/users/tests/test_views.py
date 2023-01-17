@@ -157,3 +157,94 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data.get('username', 'no username'), 'testuserone')
         self.assertEqual(response.data.get('email', 'no email'), 'testuserone@email.com')
+
+        # testusertwo makes the request on behalf of testuserone
+        token_pair = self.obtain_token_pair(self.testusertwo)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token_pair['access'])
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
+
+
+    def test_user_update(self):
+        """
+        PUT method
+        """
+        url = reverse('user-detail', kwargs={"pk": str(self.testuserone.id)})
+        response = self.client.put(url, format='json')
+        self.assertEqual(response.data['detail'], 'Authentication credentials were not provided.')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        token_pair = self.obtain_token_pair(self.testuserone)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token_pair['access'])
+        response = self.client.put(url, format='json')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
+    
+    def test_user_partial_update(self):
+        """
+        PATCH method
+        """
+        url = reverse('user-detail', kwargs={"pk": str(self.testuserone.id)})
+        response = self.client.patch(url, format='json')
+        self.assertEqual(response.data['detail'], 'Authentication credentials were not provided.')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        # testusertwo makes the request on behalf of testuserone
+        token_pair = self.obtain_token_pair(self.testusertwo)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token_pair['access'])
+        data = {
+            "username": "testuserone",
+            "email": "testuserone@email.com",
+            "password": "8B33xvby&1!R"
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
+
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.random_access_token)
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.data.get('detail', 'no detail'), 'Given token not valid for any token type')
+        
+        token_pair = self.obtain_token_pair(self.testuserone)
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + token_pair['access'])
+        data = {
+            "username": "testuseroneupdated",
+            "email": "testuseroneupdated@email.com",
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, 200)
+        # email address and username can't be changed
+        self.assertEqual(response.data['username'], 'testuserone')
+        self.assertEqual(response.data['email'], 'testuserone@email.com')
+
+        data = {
+            "password": "password"
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['password'][0], 'This password is too common.')
+
+        data = {
+            "password": "passwor"
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['password'][0], 'This password is too short. It must contain at least 8 characters.')
+
+        data = {
+            "password": "testuserone"
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['password'][0], 'The password is too similar to the username.')
+
+        data = {
+            "password": "8B33xvby&1!R"
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data.get('password', 'no password'), 'no password')
+        testuserone_updated = User.objects.get(email="testuserone@email.com")
+        self.assertNotEqual(self.testuserone.password, testuserone_updated.password)
