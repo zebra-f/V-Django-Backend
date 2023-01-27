@@ -12,6 +12,7 @@ from django.shortcuts import get_object_or_404
 from core.users.models import User, UserPersonalProfile
 from core.users.utils.emails import ActivationEmailMessage, PasswordResetEmailMessage
 from .utils.tokens import activate_user_token_generator, custom_password_reset_token_generator
+from .tasks import email_message_task
 
 
 class PasswordValidatorMixin:
@@ -25,22 +26,15 @@ class PasswordValidatorMixin:
 
 
 class EmailMessageMixin:
-    def email_token(self, instance, token_generator, EmailMessage):
+    def email_token(self, instance, token_generator, email_class_name: str):
         encoded_pk = urlsafe_base64_encode(force_bytes(instance.pk))
         token = token_generator.make_token(instance)
-        email_message = EmailMessage(
+        email_message_task.delay(
             encoded_pk=encoded_pk, 
-            token=token, 
-            to=[instance.email]
+            token=token,  
+            to=[instance.email],
+            email_class_name=email_class_name
             )
-        try:
-            email_message.send(fail_silently=False)
-        except smtplib.SMTPException: 
-            exc = APIException()
-            exc.status_code = 503
-            exc.default_detail = 'Service temporarily unavailable, try again later.'
-            exc.default_code = 'service_unavailable'
-            raise exc 
 
 
 class UserSerializer(serializers.ModelSerializer, PasswordValidatorMixin, EmailMessageMixin):
@@ -60,7 +54,7 @@ class UserSerializer(serializers.ModelSerializer, PasswordValidatorMixin, EmailM
         password = self.custom_validate_password(instance, validated_data)
         instance.set_password(password)
 
-        self.email_token(instance, activate_user_token_generator, ActivationEmailMessage)
+        self.email_token(instance, activate_user_token_generator, 'activation_email_message')
 
         instance.save()
         user_personal_profile = UserPersonalProfile(
@@ -93,7 +87,7 @@ class UserPasswordResetSerializer(serializers.Serializer, PasswordValidatorMixin
         return user
 
     def send_reset_password_email(self, instance):
-        self.email_token(instance, custom_password_reset_token_generator, PasswordResetEmailMessage)
+        self.email_token(instance, custom_password_reset_token_generator, 'password_reset_email_message')
 
     def update(self, instance, validated_data):
         if not validated_data.get('password'):
