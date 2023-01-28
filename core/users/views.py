@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from .serializers import UserSerializer, UserPasswordResetSerializer
 from .models import User
 from .permissions import UserIsAuthorized, ForbiddenAction
-from .utils.tokens import activate_user_token_generator, custom_password_reset_token_generator
+from .utils.tokens import ActivateUserTokenGenerator, CustomPasswordResetTokenGenerator
 
 
 class UserViewSet(viewsets.ModelViewSet):  
@@ -58,7 +58,8 @@ class UserViewSet(viewsets.ModelViewSet):
     # [reminder] change method to POST
     @action(methods=['get'], detail=False)
     def token_activate_user(self, request):
-        user = self.check_token_get_user(request, activate_user_token_generator)
+        token_generator = ActivateUserTokenGenerator()
+        user = self.check_token_get_user(request, token_generator)
         if user:
             user.is_active = True
             user.save()
@@ -84,7 +85,8 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
         # user submits a new password with the provided token
         if request.method == 'PATCH':
-            user = self.check_token_get_user(request, custom_password_reset_token_generator)
+            token_genrator = CustomPasswordResetTokenGenerator()
+            user = self.check_token_get_user(request, token_genrator)
             if user:
                 serializer = self.get_serializer(user, data=request.data)
                 serializer.is_valid(raise_exception=True)
