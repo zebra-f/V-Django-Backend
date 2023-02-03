@@ -34,6 +34,7 @@ class EmailMessageMixin:
                 to=[instance.email],
                 email_class_name=email_class_name
                 )
+        # Exception: <class 'kombu.exceptions.OperationalError'>
         except Exception:
             raise ServiceUnavailable()
 

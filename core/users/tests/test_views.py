@@ -1,6 +1,13 @@
+import re
+from urllib.parse import urlparse
+from unittest.mock import patch
+
+from django.core import mail
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APITestCase, override_settings
+from kombu.exceptions import OperationalError
+
 from core.users.models import User, UserPersonalProfile
 
 
@@ -13,7 +20,7 @@ class UserTests(APITestCase):
                     'jk3LWY0ZGYtNDFlYi05ZDc3LTBkZjFmZTBkMThhYSJ9'\
                         '.9Cyc5YFc-bs_lSprlJsLWsNY8h1THIDuVlO0lt'\
                             'skgm0'
-
+    
     def obtain_token_pair(self, user):
         login_url = reverse('login')
         data = {
@@ -22,6 +29,7 @@ class UserTests(APITestCase):
         }
         response = self.client.post(login_url, data, format='json')
         return response.data
+
 
     @classmethod
     def setUpTestData(cls) -> None:
@@ -67,6 +75,7 @@ class UserTests(APITestCase):
         self.assertEqual(response.data['count'], 10)
         self.assertEqual(len(response.data['results']), 10)
     
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_create_user(self):
         """
         Ensure we can create a new User.
@@ -82,6 +91,7 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(User.objects.count(), 11)
         self.assertEqual(User.objects.get(email='testusereleven@email.com').username, 'testusereleven')
+        self.assertEqual(User.objects.get(email='testusereleven@email.com').is_active, False)
 
         data = {
             'username': 'testusertwelve',
@@ -92,8 +102,22 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(User.objects.count(), 12)
         self.assertEqual(User.objects.get(email='testusertwelve@email.com').username, 'testusertwelve')
+        self.assertEqual(User.objects.get(email='testusertwelve@email.com').is_active, False)
 
-        # testuserthirteen won't be created
+        self.assertEqual(len(mail.outbox), 2)
+
+        # User shouldn't be created.
+
+        with patch('core.users.tasks.email_message_task.delay') as mocked_email_message_task_delay:
+            mocked_email_message_task_delay.side_effect = OperationalError
+            data = {
+                'username': 'testuserthirteen',
+                'email': 'testuserthirteen@email.com',
+                'password': '6A37xvby&1!L'
+                }
+            response = self.client.post(url, data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
+            self.assertEqual(response.data['detail'], 'Service temporarily unavailable, try again later.')
 
         data = {
             'username': 'testuserthirteen',
@@ -139,6 +163,42 @@ class UserTests(APITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['username'][0], 'Ensure this field has no more than 32 characters.')
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_token_activate_user(self):
+        url = reverse('user-list')
+        data = {
+            'username': 'testusereleven',
+            'email': 'testusereleven@email.com',
+            'password': '6A37xvby&1!L'
+            }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(User.objects.count(), 11)
+        self.assertEqual(User.objects.get(email='testusereleven@email.com').username, 'testusereleven')
+        
+        self.assertEqual(User.objects.get(email='testusereleven@email.com').is_active, False)
+
+        url = reverse('user-token-activate-user')
+        body = mail.outbox[0].body
+        links = re.findall(r'(https?://\S+)', body)
+        activation_link_url = None
+        for link in links:
+            parsed_url = urlparse(link)
+            if parsed_url.path == url:
+                activation_link_url = link
+                break
+        
+        if activation_link_url:
+            response = self.client.get(activation_link_url, format='json')
+            self.assertEqual(response.status_code, 200)
+            # it's not possible to use this link twice
+            response = self.client.get(activation_link_url, format='json')
+            self.assertEqual(response.status_code, 400)
+        else:
+            raise Exception
+
+        self.assertEqual(User.objects.get(email='testusereleven@email.com').is_active, True)
 
     def test_user_detail(self):
         url = reverse('user-detail', kwargs={"pk": str(self.testuserone.id)})
