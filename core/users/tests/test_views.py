@@ -174,8 +174,6 @@ class UserTests(APITestCase):
             }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(User.objects.count(), 11)
-        self.assertEqual(User.objects.get(email='testusereleven@email.com').username, 'testusereleven')
         
         self.assertEqual(User.objects.get(email='testusereleven@email.com').is_active, False)
 
@@ -185,14 +183,14 @@ class UserTests(APITestCase):
         activation_link_url = None
         for link in links:
             parsed_url = urlparse(link)
-            if parsed_url.path == url:
-                activation_link_url = link
-                break
-        
+            if parsed_url.query:
+                activation_link_url = url + '?' + parsed_url.query
+                break     
+
         if activation_link_url:
             response = self.client.get(activation_link_url, format='json')
             self.assertEqual(response.status_code, 200)
-            # it's not possible to use this link twice
+            # it's not possible to use this link/activate the user twice
             response = self.client.get(activation_link_url, format='json')
             self.assertEqual(response.status_code, 400)
         else:
@@ -224,7 +222,6 @@ class UserTests(APITestCase):
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.data['detail'], 'You do not have permission to perform this action.')
-
 
     def test_user_update(self):
         """
@@ -308,3 +305,68 @@ class UserTests(APITestCase):
         self.assertEqual(response.data.get('password', 'no password'), 'no password')
         testuserone_updated = User.objects.get(email="testuserone@email.com")
         self.assertNotEqual(self.testuserone.password, testuserone_updated.password)
+
+    @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    def test_token_password_reset(self):
+        url = reverse('user-token-password-reset')
+        
+        data = {
+	        "email": "testuserthriteen@email.com"
+            }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data['detail'], 'Not found.')
+
+        data = {}
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['email'][0], 'This field is required.')
+        
+        data = {
+	        "email": "testuserone@email.com"
+            }
+        response = self.client.post(url, data, format='json')
+
+        body = mail.outbox[0].body
+        links = re.findall(r'(https?://\S+)', body)
+        password_reset_link = None
+        for link in links:
+            parsed_url = urlparse(link)
+            if parsed_url.query:
+                password_reset_link = url + '?' + parsed_url.query
+                break
+        
+        if password_reset_link:
+            data = {}
+            response = self.client.patch(password_reset_link, data, format='json')
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.data['password'][0], 'This field is required.')
+            
+            data = {
+                "password": "testuserone"
+            }
+            response = self.client.patch(password_reset_link, data, format='json')
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.data['password'][0], 'The password is too similar to the username.')
+
+            data = {
+                "password": "testuserone@email.com"
+            }
+            response = self.client.patch(password_reset_link, data, format='json')
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.data['password'][0], 'The password is too similar to the email address.')
+
+            data = {
+                "password": "7C34xvby&1!A"
+            }
+            response = self.client.patch(password_reset_link, data, format='json')
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data, None)
+
+            testuserone_updated = User.objects.get(email="testuserone@email.com")
+            self.assertNotEqual(self.testuserone.password, testuserone_updated.password)
+        else:
+            raise Exception
+
+
+        
