@@ -164,6 +164,34 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['username'][0], 'Ensure this field has no more than 32 characters.')
 
+        data = {
+            'username': 'testuserthirteen',
+            'email': 'testuserthirteen@email.com',
+            'password': 'testuserthirteen'
+            }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['password'][0], 'The password is too similar to the username.')
+
+        data = {
+            'username': 'testuserthirteen',
+            'email': 'testuserthirteen@email.com',
+            "password": "password"
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['password'][0], 'This password is too common.')
+
+        data = {
+            'username': 'testuserthirteen',
+            'email': 'testuserthirteen@email.com',
+            "password": "passwor"
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['password'][0], 'This password is too short. It must contain at least 8 characters.')
+
+
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_token_activate_user(self):
         url = reverse('user-list')
@@ -194,7 +222,7 @@ class UserTests(APITestCase):
             response = self.client.get(activation_link_url, format='json')
             self.assertEqual(response.status_code, 400)
         else:
-            raise Exception
+            raise TypeError("Link doesn't exist")
 
         self.assertEqual(User.objects.get(email='testusereleven@email.com').is_active, True)
 
@@ -362,11 +390,40 @@ class UserTests(APITestCase):
             response = self.client.patch(password_reset_link, data, format='json')
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.data, None)
+            
+            # password reset link can be used only once
+            data = {
+                "password": "7C34xvby&1!A"
+            }
+            response = self.client.patch(password_reset_link, data, format='json')
+            self.assertEqual(response.status_code, 400)
 
-            testuserone_updated = User.objects.get(email="testuserone@email.com")
+            testuserone_updated = User.objects.get(email='testuserone@email.com')
             self.assertNotEqual(self.testuserone.password, testuserone_updated.password)
+
+            # let's try to log in with the old and new password
+            login_url = reverse('login')
+            data = {
+                'email': 'testuserone@email.com',
+                'password': self.users_passwords['testuserone']
+            }
+            response = self.client.post(login_url, data, format='json')
+            self.assertEqual(response.status_code, 401)
+            self.assertEqual(response.data['detail'], 'No active account found with the given credentials')
+            
+            login_url = reverse('login')
+            data = {
+                'email': 'testuserone@email.com',
+                'password': "7C34xvby&1!A"
+            }
+            response = self.client.post(login_url, data, format='json')
+            self.assertEqual(response.status_code, 200)
+            self.assertIn('refresh', response.data)
+            self.assertIn('access', response.data)
+
         else:
-            raise Exception
+            raise TypeError("Link doesn't exist")
+
 
 
         
