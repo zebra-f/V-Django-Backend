@@ -1,4 +1,5 @@
 import re
+import datetime
 from urllib.parse import urlparse
 from unittest.mock import patch
 
@@ -7,6 +8,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase, override_settings
 from kombu.exceptions import OperationalError
+from django.conf import settings
 
 from core.users.models import User, UserPersonalProfile
 
@@ -216,6 +218,12 @@ class UserTests(APITestCase):
                 break     
 
         if activation_link_url:
+            # let's make sure that the token won't work after the timeout
+            with patch('core.users.utils.tokens.ActivateUserTokenGenerator._now') as mocked__now:
+                mocked__now.return_value = datetime.datetime.now() + datetime.timedelta(0, settings.PASSWORD_RESET_TIMEOUT+60)
+                response = self.client.get(activation_link_url, format='json')
+                self.assertEqual(response.status_code, 400)
+            
             response = self.client.get(activation_link_url, format='json')
             self.assertEqual(response.status_code, 200)
             # it's not possible to use this link/activate the user twice
@@ -384,6 +392,12 @@ class UserTests(APITestCase):
             self.assertEqual(response.status_code, 400)
             self.assertEqual(response.data['password'][0], 'The password is too similar to the email address.')
 
+            # let's make sure that the token won't work after the timeout
+            with patch('core.users.utils.tokens.CustomPasswordResetTokenGenerator._now') as mocked__now:
+                mocked__now.return_value = datetime.datetime.now() + datetime.timedelta(0, settings.PASSWORD_RESET_TIMEOUT+60)
+                response = self.client.patch(password_reset_link, data, format='json')
+                self.assertEqual(response.status_code, 400)
+            
             data = {
                 "password": "7C34xvby&1!A"
             }
