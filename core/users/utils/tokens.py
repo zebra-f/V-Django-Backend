@@ -11,7 +11,3 @@ class ActivateUserTokenGenerator(PasswordResetTokenGenerator):
 
 class CustomPasswordResetTokenGenerator(PasswordResetTokenGenerator):
     pass
-
-
-activate_user_token_generator = ActivateUserTokenGenerator()
-custom_password_reset_token_generator = CustomPasswordResetTokenGenerator()
