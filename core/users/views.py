@@ -20,7 +20,7 @@ class UserViewSet(viewsets.ModelViewSet):
     object_level_actions = [
         'retrieve', 
         'destroy', 
-        'deactivate', 
+        'deactivate_user', 
         'partial_update',
         ]
     forbidden_object_level_actions = [
