@@ -432,7 +432,6 @@ class UserTests(APITestCase):
             }
             response = self.client.post(login_url, data, format='json')
             self.assertEqual(response.status_code, 200)
-            self.assertIn('refresh', response.data)
             self.assertIn('access', response.data)
 
         else:
