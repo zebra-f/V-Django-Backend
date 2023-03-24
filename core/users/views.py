@@ -93,7 +93,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post', 'patch'], detail=False)
     def token_password_reset(self, request):
-        # user requests a password reset
+        # user requests a password reset providing an email address
         if request.method == 'POST':
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -103,8 +103,8 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
         # user submits a new password with the provided token
         if request.method == 'PATCH':
-            token_genrator = CustomPasswordResetTokenGenerator()
-            user = self.check_token_get_user(request, token_genrator)
+            token_generator = CustomPasswordResetTokenGenerator()
+            user = self.check_token_get_user(request, token_generator)
             if user:
                 serializer = self.get_serializer(user, data=request.data)
                 serializer.is_valid(raise_exception=True)
