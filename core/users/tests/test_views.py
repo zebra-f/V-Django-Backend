@@ -195,7 +195,7 @@ class UserTests(APITestCase):
 
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
-    def test_token_activate_user(self):
+    def test_token_activate_user_verify_email(self):
         url = reverse('user-list')
         data = {
             'username': 'testusereleven',
@@ -206,33 +206,35 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         
         self.assertEqual(User.objects.get(email='testusereleven@email.com').is_active, False)
+        self.assertEqual(User.objects.get(email='testusereleven@email.com').email_verified, False)
 
-        url = reverse('user-token-activate-user')
+        url = reverse('user-token-verify-email-activate-user')
         body = mail.outbox[0].body
         links = re.findall(r'(https?://\S+)', body)
-        activation_link_url = None
+        activation_verification_link = None
         for link in links:
             parsed_url = urlparse(link)
             if parsed_url.query:
-                activation_link_url = url + '?' + parsed_url.query
+                activation_verification_link = url + '?' + parsed_url.query
                 break     
 
-        if activation_link_url:
+        if activation_verification_link:
             # let's make sure that the token won't work after the timeout
-            with patch('core.users.utils.tokens.ActivateUserTokenGenerator._now') as mocked__now:
+            with patch('core.users.utils.tokens.ActivateUserVerifyEmailTokenGenerator._now') as mocked__now:
                 mocked__now.return_value = datetime.datetime.now() + datetime.timedelta(0, settings.PASSWORD_RESET_TIMEOUT+60)
-                response = self.client.get(activation_link_url, format='json')
+                response = self.client.get(activation_verification_link, format='json')
                 self.assertEqual(response.status_code, 400)
             
-            response = self.client.get(activation_link_url, format='json')
+            response = self.client.get(activation_verification_link, format='json')
             self.assertEqual(response.status_code, 200)
             # it's not possible to use this link/activate the user twice
-            response = self.client.get(activation_link_url, format='json')
+            response = self.client.get(activation_verification_link, format='json')
             self.assertEqual(response.status_code, 400)
         else:
             raise TypeError("Link doesn't exist")
 
         self.assertEqual(User.objects.get(email='testusereleven@email.com').is_active, True)
+        self.assertEqual(User.objects.get(email='testusereleven@email.com').email_verified, True)
 
     def test_user_detail(self):
         url = reverse('user-detail', kwargs={"pk": str(self.testuserone.id)})

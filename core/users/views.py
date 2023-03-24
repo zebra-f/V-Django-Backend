@@ -10,7 +10,11 @@ from django.shortcuts import get_object_or_404
 from .serializers import UserSerializer, UserPasswordResetSerializer
 from .models import User
 from .permissions import UserIsAuthorized, ForbiddenAction
-from .utils.tokens import ActivateUserTokenGenerator, CustomPasswordResetTokenGenerator
+from .utils.tokens import (
+    ActivateUserVerifyEmailTokenGenerator,
+    ActivateUserTokenGenerator,
+    CustomPasswordResetTokenGenerator
+)
 
 
 class UserViewSet(viewsets.ModelViewSet):  
@@ -18,17 +22,18 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
     object_level_actions = [
-        'retrieve', 
-        'destroy', 
-        'deactivate_user', 
+        'retrieve',
+        'destroy',
+        'deactivate_user',
         'partial_update',
         ]
     forbidden_object_level_actions = [
         'update',
+        'token_activate_user',
     ]
 
     def get_permissions(self):
-        if self.action in ('list', 'create', 'token_activate_user', 'token_password_reset', 'test'):
+        if self.action in ('list', 'create', 'token_password_reset', 'token_verify_email_activate_user', 'test',):
             self.permission_classes = [AllowAny]
         if self.action in self.object_level_actions:
             self.permission_classes = [UserIsAuthorized]
@@ -57,7 +62,20 @@ class UserViewSet(viewsets.ModelViewSet):
     
     # [reminder] change method to POST
     @action(methods=['get'], detail=False)
+    def token_verify_email_activate_user(self, request):
+        token_generator = ActivateUserVerifyEmailTokenGenerator()
+        user = self.check_token_get_user(request, token_generator)
+        if user:
+            user.is_active = True
+            user.email_verified = True
+            user.save()
+            return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    
+    # [reminder] change method to POST
+    @action(methods=['get'], detail=False)
     def token_activate_user(self, request):
+        ''' NOT IN USE '''
         token_generator = ActivateUserTokenGenerator()
         user = self.check_token_get_user(request, token_generator)
         if user:

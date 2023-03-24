@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import get_object_or_404
 
 from core.users.models import User, UserPersonalProfile
-from .utils.tokens import CustomPasswordResetTokenGenerator, ActivateUserTokenGenerator
+from .utils.tokens import CustomPasswordResetTokenGenerator, ActivateUserVerifyEmailTokenGenerator
 from .tasks import email_message_task
 from .exceptions import ServiceUnavailable
 
@@ -56,8 +56,8 @@ class UserSerializer(serializers.ModelSerializer, PasswordValidatorMixin, EmailM
         password = self.custom_validate_password(instance, validated_data)
         instance.set_password(password)
 
-        token_generator = ActivateUserTokenGenerator()
-        self.email_token(instance, token_generator, 'activation_email_message')
+        token_generator = ActivateUserVerifyEmailTokenGenerator()
+        self.email_token(instance, token_generator, 'ActivateVerifiyUserEmailMessage')
 
         instance.save()
         user_personal_profile = UserPersonalProfile(
@@ -91,7 +91,7 @@ class UserPasswordResetSerializer(serializers.Serializer, PasswordValidatorMixin
 
     def send_reset_password_email(self, instance):
         token_generator = CustomPasswordResetTokenGenerator()
-        self.email_token(instance, token_generator, 'password_reset_email_message')
+        self.email_token(instance, token_generator, 'PasswordResetEmailMessage')
 
     def update(self, instance, validated_data):
         if not validated_data.get('password'):

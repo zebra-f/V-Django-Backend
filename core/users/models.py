@@ -65,6 +65,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     id = models.UUIDField(primary_key=True, default=uuid4)
     email = models.EmailField(_('email address'), max_length=255, unique=True)
+
+    email_verified = models.BooleanField(default=False)
     
     username = models.CharField(_('username'), max_length=32, unique=True)
 
@@ -75,6 +77,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
+
 
     objects = UserManager()
 
