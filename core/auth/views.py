@@ -4,12 +4,13 @@ from rest_framework.permissions import IsAuthenticated
 from django.utils import timezone
 from django.conf import settings
 
-from .serializers import CustomTokenRefreshSerializer, LogoutSerializer
+from .serializers import CustomTokenRefreshSerializer, LogoutSerializer, CustomTokenObtainPairSerializer
 
 from ..users.models import User
 
 
-class LoginView(TokenObtainPairView): 
+class LoginView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
     
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
