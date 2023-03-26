@@ -7,48 +7,50 @@ from rest_framework_simplejwt.serializers import (TokenRefreshSerializer,
                                                   TokenObtainPairSerializer
                                                   )                   
 from rest_framework_simplejwt.exceptions import InvalidToken
-from .authentication import AuthenticationRules
+# from .authentication import AuthenticationRules
 
 
-class CustomTokenObtainSerializer(TokenObtainSerializer):
+# class CustomTokenObtainSerializer(TokenObtainSerializer):
     
-    def validate(self, attrs):
-        authenticate_kwargs = {
-            self.username_field: attrs[self.username_field],
-            "password": attrs["password"],
-        }
-        try:
-            authenticate_kwargs["request"] = self.context["request"]
-        except KeyError:
-            pass
+#     def validate(self, attrs):
+#         authenticate_kwargs = {
+#             self.username_field: attrs[self.username_field],
+#             "password": attrs["password"],
+#         }
+#         try:
+#             authenticate_kwargs["request"] = self.context["request"]
+#         except KeyError:
+#             pass
         
-        # Returns `None` if a users doesn't exist or is not active.
-        self.user = authenticate(**authenticate_kwargs)
+#         # Returns `None` if a user doesn't exist or is not active.
+#         print({**authenticate_kwargs})
+#         self.user = authenticate(**authenticate_kwargs)
+#         print(self.user)
 
-        # custom rules
-        auth_rules = AuthenticationRules()
-        if not auth_rules.user_exists(self.user):
-            raise exceptions.AuthenticationFailed(
-                self.error_messages["no_active_account"],
-                "no_active_account",
-            )
-        if not auth_rules.email_verified(self.user):
-            raise exceptions.AuthenticationFailed(
-                "Email address not verified",
-                "email_not_verified",
-            )
-        # Should never reach this even if a user is not active.
-        if not auth_rules.is_active(self.user):
-            raise exceptions.AuthenticationFailed(
-                self.error_messages["no_active_account"],
-                "no_active_account",
-            )
+#         # custom rules
+#         auth_rules = AuthenticationRules()
+#         if not auth_rules.user_exists(self.user):
+#             raise exceptions.AuthenticationFailed(
+#                 self.error_messages["no_active_account"],
+#                 "no_active_account",
+#             )
+#         if not auth_rules.email_verified(self.user):
+#             raise exceptions.AuthenticationFailed(
+#                 "Email address not verified",
+#                 "email_not_verified",
+#             )
+#         # Should never reach this even if a user is not active.
+#         if not auth_rules.is_active(self.user):
+#             raise exceptions.AuthenticationFailed(
+#                 self.error_messages["no_active_account"],
+#                 "no_active_account",
+#             )
 
-        return {}
+#         return {}
     
 
-class CustomTokenObtainPairSerializer(TokenObtainPairSerializer, CustomTokenObtainSerializer):
-    pass
+# class CustomTokenObtainPairSerializer(TokenObtainPairSerializer, CustomTokenObtainSerializer):
+#     pass
 
 
 class CustomTokenRefreshSerializer(TokenRefreshSerializer):

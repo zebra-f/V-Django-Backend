@@ -45,6 +45,7 @@ class UserTests(APITestCase):
             '6A37xvby&1!L'
             )
         cls.testuserone.is_active = True
+        cls.testuserone.email_verified = True
         cls.testuserone.save()
         cls.users_passwords['testuserone'] = '6A37xvby&1!L'
         UserPersonalProfile(user=cls.testuserone).save()
@@ -54,6 +55,7 @@ class UserTests(APITestCase):
             '6A37xvby&1!L'
         )
         cls.testusertwo.is_active = True
+        cls.testusertwo.email_verified = True
         cls.testusertwo.save()
         cls.users_passwords['testusertwo'] = '6A37xvby&1!L'
         UserPersonalProfile(user=cls.testusertwo).save()
@@ -105,6 +107,7 @@ class UserTests(APITestCase):
         self.assertEqual(User.objects.count(), 12)
         self.assertEqual(User.objects.get(email='testusertwelve@email.com').username, 'testusertwelve')
         self.assertEqual(User.objects.get(email='testusertwelve@email.com').is_active, False)
+        self.assertEqual(User.objects.get(email='testusertwelve@email.com').email_verified, False)
 
         self.assertEqual(len(mail.outbox), 2)
 

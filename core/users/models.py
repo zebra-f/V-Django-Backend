@@ -54,6 +54,7 @@ class UserManager(BaseUserManager):
             **kwargs
         )
         user.is_admin = True
+        user.email_verified = True
         user.save(using=self._db)
         return user
 
