@@ -312,43 +312,50 @@ class UserTests(APITestCase):
             "email": "testuseroneupdated@email.com",
         }
         response = self.client.patch(url, data, format='json')
-        self.assertEqual(response.status_code, 200)
         # email address and username can't be changed
-        self.assertEqual(response.data['username'], 'testuserone')
-        self.assertEqual(response.data['email'], 'testuserone@email.com')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['password'][0], 'This field is required.')
+        self.assertEqual(response.data['new_password'][0], 'This field is required.')
 
         data = {
-            "password": "password"
+            "new_password": "password",
+            "password": self.users_passwords['testuserone']
         }
         response = self.client.patch(url, data, format='json')
+
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['password'][0], 'This password is too common.')
 
         data = {
-            "password": "passwor"
+            "new_password": "passwor",
+            "password": self.users_passwords['testuserone']
         }
         response = self.client.patch(url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['password'][0], 'This password is too short. It must contain at least 8 characters.')
 
         data = {
-            "password": "testuserone"
+            "new_password": "testuserone",
+            "password": self.users_passwords['testuserone']
         }
         response = self.client.patch(url, data, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['password'][0], 'The password is too similar to the username.')
 
         data = {
-            "password": "8B33xvby&1!R"
+            "new_password": "8B33xvby&1!R",
+            "password": self.users_passwords['testuserone']
         }
         response = self.client.patch(url, data, format='json')
         self.assertEqual(response.status_code, 200)
+
         self.assertEqual(response.data.get('password', 'no password'), 'no password')
         testuserone_updated = User.objects.get(email="testuserone@email.com")
         self.assertNotEqual(self.testuserone.password, testuserone_updated.password)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_token_password_reset(self):
+
         url = reverse('user-token-password-reset')
         
         data = {
@@ -376,20 +383,20 @@ class UserTests(APITestCase):
             if parsed_url.query:
                 password_reset_link = url + '?' + parsed_url.query
                 break
-        
+
         if password_reset_link:
             data = {}
             response = self.client.patch(password_reset_link, data, format='json')
             self.assertEqual(response.status_code, 400)
             self.assertEqual(response.data['password'][0], 'This field is required.')
-            
+
             data = {
                 "password": "testuserone"
             }
             response = self.client.patch(password_reset_link, data, format='json')
             self.assertEqual(response.status_code, 400)
             self.assertEqual(response.data['password'][0], 'The password is too similar to the username.')
-
+            
             data = {
                 "password": "testuserone@email.com"
             }
@@ -441,6 +448,7 @@ class UserTests(APITestCase):
 
         else:
             raise TypeError("Link doesn't exist")
+
 
 
 

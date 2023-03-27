@@ -14,8 +14,7 @@ from .exceptions import ServiceUnavailable
 
 
 class PasswordValidatorMixin:
-    def custom_validate_password(self, instance, validated_data):
-        password = validated_data['password']
+    def custom_validate_password(self, instance, password):
         try:
             validate_password(password, instance)
         except ValidationError as e:
@@ -40,10 +39,11 @@ class EmailMessageMixin:
 
 
 class UserSerializer(serializers.ModelSerializer, PasswordValidatorMixin, EmailMessageMixin):
+    new_password = serializers.CharField(required=False, max_length=128, write_only=True)
     
     class Meta:
         model = User
-        fields = ['id', 'email', 'username', 'password']
+        fields = ['id', 'email', 'username', 'password', 'new_password']
         read_only_fields = ['id']
         extra_kwargs = {
             'password': {'write_only': True}}
@@ -53,7 +53,7 @@ class UserSerializer(serializers.ModelSerializer, PasswordValidatorMixin, EmailM
             email=validated_data['email'],
             username=validated_data['username']
         )
-        password = self.custom_validate_password(instance, validated_data)
+        password = self.custom_validate_password(instance, validated_data['password'])
         instance.set_password(password)
 
         token_generator = ActivateUserVerifyEmailTokenGenerator()
@@ -68,14 +68,23 @@ class UserSerializer(serializers.ModelSerializer, PasswordValidatorMixin, EmailM
 
     def update(self, instance, validated_data):
         """
-        User can only update its password.
+        As of now a user can only update its password via PATCH method.
+        POST method disabled.
         """
-        # instance.email = validated_data.get('email', instance.email)
-        # instance.username = validated_data.get('username', instance.username)
-        if validated_data.get('password'):
-            password = self.custom_validate_password(instance, validated_data)
-            instance.set_password(password)
-        instance.save()
+        if validated_data.get('password') and validated_data.get('new_password'):
+            # checks if a current password is correct
+            if instance.check_password(validated_data.get('password')):
+                # validates and sets a new password
+                new_password = self.custom_validate_password(instance, validated_data['new_password'])
+                instance.set_password(new_password)
+                instance.save()
+            else:
+                raise DRFValidationError({'password': 'Wrong password'})
+        else:
+            raise DRFValidationError({
+                'password': ['This field is required.'],
+                'new_password': ['This field is required.']
+                })
         return instance
 
 
@@ -96,7 +105,7 @@ class UserPasswordResetSerializer(serializers.Serializer, PasswordValidatorMixin
     def update(self, instance, validated_data):
         if not validated_data.get('password'):
             raise DRFValidationError({'password': ['This field is required.']})
-        password = self.custom_validate_password(instance, validated_data)
+        password = self.custom_validate_password(instance, validated_data['password'])
         instance.set_password(password)
         instance.save()
         return instance
