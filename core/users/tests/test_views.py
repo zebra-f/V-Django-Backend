@@ -113,8 +113,8 @@ class UserTests(APITestCase):
 
         # User shouldn't be created.
 
-        with patch('core.users.tasks.email_message_task.delay') as mocked_email_message_task_delay:
-            mocked_email_message_task_delay.side_effect = OperationalError
+        with patch('core.users.tasks.send_activate_user_verify_email_token_task.delay') as mocked_send_activate_user_verify_email_token_task:
+            mocked_send_activate_user_verify_email_token_task.side_effect = OperationalError
             data = {
                 'username': 'testuserthirteen',
                 'email': 'testuserthirteen@email.com',

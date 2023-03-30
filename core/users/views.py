@@ -66,9 +66,7 @@ class UserViewSet(viewsets.ModelViewSet):
         token_generator = ActivateUserVerifyEmailTokenGenerator()
         user = self.check_token_get_user(request, token_generator)
         if user:
-            user.is_active = True
-            user.email_verified = True
-            user.save()
+            user.activate_verify_email()
             return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
     
@@ -79,16 +77,14 @@ class UserViewSet(viewsets.ModelViewSet):
         token_generator = ActivateUserTokenGenerator()
         user = self.check_token_get_user(request, token_generator)
         if user:
-            user.is_active = True
-            user.save()
+            user.activate()
             return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=['get'], detail=True)
     def deactivate_user(self, request, pk=None):
         user = self.get_object()
-        user.is_active = False
-        user.save()
+        user.deactivate()
         return Response(status=status.HTTP_200_OK)
 
     @action(methods=['post', 'patch'], detail=False)

@@ -3,11 +3,10 @@ from rest_framework.exceptions import ValidationError as DRFValidationError
 from django.shortcuts import get_object_or_404
 
 from core.users.models import User, UserPersonalProfile
-from .mixins import PasswordValidatorMixin
 from .services import Email
 
 
-class UserSerializer(serializers.ModelSerializer, PasswordValidatorMixin):
+class UserSerializer(serializers.ModelSerializer):
     new_password = serializers.CharField(required=False, max_length=128, write_only=True)
     
     class Meta:
@@ -45,7 +44,7 @@ class UserSerializer(serializers.ModelSerializer, PasswordValidatorMixin):
         return user
 
 
-class UserPasswordResetSerializer(serializers.Serializer, PasswordValidatorMixin):
+class UserPasswordResetSerializer(serializers.Serializer):
     password = serializers.CharField(required=False)
     email = serializers.EmailField(required=False)
             

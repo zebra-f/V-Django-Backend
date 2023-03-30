@@ -1,7 +1,7 @@
 from django.core.mail import EmailMessage
 
 
-class ActivateVerifiyUserEmailMessage(EmailMessage):
+class ActivateUserVerifiyEmailEmailMessage(EmailMessage):
     def __init__(self, *args, encoded_pk=None, token=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.encoded_pk = encoded_pk

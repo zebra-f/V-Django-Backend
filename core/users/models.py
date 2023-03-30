@@ -31,7 +31,7 @@ class UserManager(BaseUserManager, PasswordValidatorMixin):
             **kwargs
         )
         # user.is_active = True
-        password = self.custom_validate_password(user, password)
+        user.custom_validate_password(password)
         user.set_password(password)
 
         Email.send_activate_user_verify_email_token(user)
@@ -103,19 +103,32 @@ class User(AbstractBaseUser, PermissionsMixin, PasswordValidatorMixin):
         # All admins are staff
         return self.is_admin
     
-    def update_password(self, password, new_password):
+    def update_password(self, password, new_password) -> bool:
         # checks if a current password is correct
         if self.check_password(password):
             # validates and sets a new password
-            new_password = super().custom_validate_password(self, new_password)
+            self.custom_validate_password(new_password)
             self.set_password(new_password)
             self.save()
             return True
         return False
 
-    def token_update_password(self, password):
-        super().custom_validate_password(self, password)
-        self.set_password(password)
+    def token_update_password(self, new_password) -> None:
+        self.custom_validate_password(new_password)
+        self.set_password(new_password)
+        self.save()
+
+    def activate(self) -> None:
+        self.is_active = True
+        self.save()
+
+    def deactivate(self) -> None:
+        self.is_active = False
+        self.save()
+
+    def activate_verify_email(self) -> None:
+        self.is_active = True
+        self.email_verified = True
         self.save()
 
 

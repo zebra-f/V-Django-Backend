@@ -3,7 +3,9 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 
 from .exceptions import ServiceUnavailable
-from .tasks import email_message_task
+from .tasks import (send_activate_user_verify_email_token_task, 
+                    send_password_reset_token_task
+                    )
 
 
 class Email:
@@ -12,11 +14,10 @@ class Email:
         encoded_pk = urlsafe_base64_encode(force_bytes(instance.pk))
         token = ActivateUserVerifyEmailTokenGenerator().make_token(instance)
         try:
-            email_message_task.delay(
+            send_activate_user_verify_email_token_task.delay(
                 encoded_pk=encoded_pk, 
                 token=token,  
                 to=[instance.email],
-                email_class_name='ActivateVerifiyUserEmailMessage'
                 )
         # Exception: <class 'kombu.exceptions.OperationalError'>
         except Exception:
@@ -27,11 +28,10 @@ class Email:
         encoded_pk = urlsafe_base64_encode(force_bytes(instance.pk))
         token = CustomPasswordResetTokenGenerator().make_token(instance)
         try:
-            email_message_task.delay(
+            send_password_reset_token_task.delay(
                 encoded_pk=encoded_pk, 
                 token=token,  
                 to=[instance.email],
-                email_class_name='PasswordResetEmailMessage'
                 )
         # Exception: <class 'kombu.exceptions.OperationalError'>
         except Exception:
