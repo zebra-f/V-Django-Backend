@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAdminUser, AllowAny
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from django.shortcuts import get_object_or_404
-from .serializers import UserSerializer, UserPasswordResetSerializer
+from .serializers import UserSerializer, UserTokenPasswordResetSerializer
 from .models import User
 from .permissions import UserIsAuthorized, ForbiddenAction
 from .utils.tokens import (
@@ -43,7 +43,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_serializer(self, *args, **kwargs):
         if self.action == 'token_password_reset':
-            self.serializer_class = UserPasswordResetSerializer
+            self.serializer_class = UserTokenPasswordResetSerializer
         return super().get_serializer(*args, **kwargs)
 
     def check_token_get_user(self, request, token_generator):
@@ -93,8 +93,7 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            user = serializer.email_is_valid(serializer.data, self.get_queryset())
-            serializer.send_reset_password_email(user)
+            serializer.email_is_valid(serializer.data, self.get_queryset())
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
         # user submits a new password with the provided token

@@ -1,8 +1,8 @@
 from .utils.tokens import CustomPasswordResetTokenGenerator, ActivateUserVerifyEmailTokenGenerator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
+from kombu.exceptions import OperationalError
 
-from .exceptions import ServiceUnavailable
 from .tasks import (send_activate_user_verify_email_token_task, 
                     send_password_reset_token_task
                     )
@@ -19,9 +19,8 @@ class Email:
                 token=token,  
                 to=[instance.email],
                 )
-        # Exception: <class 'kombu.exceptions.OperationalError'>
-        except Exception:
-            raise ServiceUnavailable()
+        except:
+            raise OperationalError()
     
     @staticmethod
     def send_password_reset_token(instance):
@@ -33,6 +32,5 @@ class Email:
                 token=token,  
                 to=[instance.email],
                 )
-        # Exception: <class 'kombu.exceptions.OperationalError'>
-        except Exception:
-            raise ServiceUnavailable()
+        except:
+            raise OperationalError()

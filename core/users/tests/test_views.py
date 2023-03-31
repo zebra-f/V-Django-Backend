@@ -324,7 +324,7 @@ class UserTests(APITestCase):
         response = self.client.patch(url, data, format='json')
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data['password'][0], 'This password is too common.')
+        self.assertEqual(response.data['new_password'][0], 'This password is too common.')
 
         data = {
             "new_password": "passwor",
@@ -332,7 +332,7 @@ class UserTests(APITestCase):
         }
         response = self.client.patch(url, data, format='json')
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data['password'][0], 'This password is too short. It must contain at least 8 characters.')
+        self.assertEqual(response.data['new_password'][0], 'This password is too short. It must contain at least 8 characters.')
 
         data = {
             "new_password": "testuserone",
@@ -340,7 +340,7 @@ class UserTests(APITestCase):
         }
         response = self.client.patch(url, data, format='json')
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data['password'][0], 'The password is too similar to the username.')
+        self.assertEqual(response.data['new_password'][0], 'The password is too similar to the username.')
 
         data = {
             "new_password": "8B33xvby&1!R",
@@ -388,21 +388,21 @@ class UserTests(APITestCase):
             data = {}
             response = self.client.patch(password_reset_link, data, format='json')
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.data['password'][0], 'This field is required.')
+            self.assertEqual(response.data['new_password'][0], 'This field is required.')
 
             data = {
-                "password": "testuserone"
+                "new_password": "testuserone"
             }
             response = self.client.patch(password_reset_link, data, format='json')
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.data['password'][0], 'The password is too similar to the username.')
+            self.assertEqual(response.data['new_password'][0], 'The password is too similar to the username.')
             
             data = {
-                "password": "testuserone@email.com"
+                "new_password": "testuserone@email.com"
             }
             response = self.client.patch(password_reset_link, data, format='json')
             self.assertEqual(response.status_code, 400)
-            self.assertEqual(response.data['password'][0], 'The password is too similar to the email address.')
+            self.assertEqual(response.data['new_password'][0], 'The password is too similar to the email address.')
 
             # let's make sure that the token won't work after the timeout
             with patch('core.users.utils.tokens.CustomPasswordResetTokenGenerator._now') as mocked__now:
@@ -411,7 +411,7 @@ class UserTests(APITestCase):
                 self.assertEqual(response.status_code, 400)
             
             data = {
-                "password": "7C34xvby&1!A"
+                "new_password": "7C34xvby&1!A"
             }
             response = self.client.patch(password_reset_link, data, format='json')
             self.assertEqual(response.status_code, 200)
@@ -419,7 +419,7 @@ class UserTests(APITestCase):
             
             # password reset link can be used only once
             data = {
-                "password": "7C34xvby&1!A"
+                "new_password": "7C34xvby&1!A"
             }
             response = self.client.patch(password_reset_link, data, format='json')
             self.assertEqual(response.status_code, 400)

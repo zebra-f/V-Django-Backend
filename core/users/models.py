@@ -6,11 +6,8 @@ from django.conf import settings
 
 from uuid import uuid4
 
-from .mixins import PasswordValidatorMixin
-from .services import Email
 
-
-class UserManager(BaseUserManager, PasswordValidatorMixin):   
+class UserManager(BaseUserManager):   
     def create_user(self, email, username, password=None, **kwargs):
         """
         Creates and saves a User with the given email and password.
@@ -18,24 +15,18 @@ class UserManager(BaseUserManager, PasswordValidatorMixin):
         """
         if not email:
             raise ValueError('Users must have an email address')
-
         if not username:
             raise ValueError('Users must have an username')
-
         if not password:
             raise ValueError('Users must have a password')
-
+        
         user = self.model(
             email=self.normalize_email(email),
             username=username,
             **kwargs
-        )
+        ) 
         # user.is_active = True
-        user.custom_validate_password(password)
         user.set_password(password)
-
-        Email.send_activate_user_verify_email_token(user)
-
         user.save(using=self._db)
         return user
     
@@ -66,7 +57,7 @@ class UserManager(BaseUserManager, PasswordValidatorMixin):
         return user
 
 
-class User(AbstractBaseUser, PermissionsMixin, PasswordValidatorMixin):
+class User(AbstractBaseUser, PermissionsMixin):
     
     class Meta:
         ordering = ['-created_at']
@@ -103,18 +94,7 @@ class User(AbstractBaseUser, PermissionsMixin, PasswordValidatorMixin):
         # All admins are staff
         return self.is_admin
     
-    def update_password(self, password, new_password) -> bool:
-        # checks if a current password is correct
-        if self.check_password(password):
-            # validates and sets a new password
-            self.custom_validate_password(new_password)
-            self.set_password(new_password)
-            self.save()
-            return True
-        return False
-
-    def token_update_password(self, new_password) -> None:
-        self.custom_validate_password(new_password)
+    def update_password(self, new_password: str) -> None:
         self.set_password(new_password)
         self.save()
 
