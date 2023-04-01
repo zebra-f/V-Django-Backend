@@ -6,11 +6,12 @@ from kombu.exceptions import OperationalError
 from .tasks import (send_activate_user_verify_email_token_task, 
                     send_password_reset_token_task
                     )
+from .models import User
 
 
 class Email:
     @staticmethod
-    def send_activate_user_verify_email_token(instance):
+    def send_activate_user_verify_email_token(instance: User):
         encoded_pk = urlsafe_base64_encode(force_bytes(instance.pk))
         token = ActivateUserVerifyEmailTokenGenerator().make_token(instance)
         try:
@@ -23,7 +24,7 @@ class Email:
             raise OperationalError()
     
     @staticmethod
-    def send_password_reset_token(instance):
+    def send_password_reset_token(instance: User):
         encoded_pk = urlsafe_base64_encode(force_bytes(instance.pk))
         token = CustomPasswordResetTokenGenerator().make_token(instance)
         try:

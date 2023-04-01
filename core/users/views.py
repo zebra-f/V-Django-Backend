@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAdminUser, AllowAny
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from django.shortcuts import get_object_or_404
+
 from .serializers import UserSerializer, UserTokenPasswordResetSerializer
 from .models import User
 from .permissions import UserIsAuthorized, ForbiddenAction
@@ -15,6 +16,8 @@ from .utils.tokens import (
     ActivateUserTokenGenerator,
     CustomPasswordResetTokenGenerator
 )
+from .services import Email
+from .exceptions import ServiceUnavailable
 
 
 class UserViewSet(viewsets.ModelViewSet):  
@@ -93,26 +96,28 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            serializer.email_is_valid(serializer.data, self.get_queryset())
+            
+            user = get_object_or_404(self.get_queryset(), email=serializer.data['email'])
+            
+            try:
+                Email.send_password_reset_token(user)
+            # Exception: <class 'kombu.exceptions.OperationalError'>
+            except Exception:
+                raise ServiceUnavailable()
+
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+        
         # user submits a new password with the provided token
         if request.method == 'PATCH':
             token_generator = CustomPasswordResetTokenGenerator()
             user = self.check_token_get_user(request, token_generator)
             if user:
-                serializer = self.get_serializer(user, data=request.data)
+                serializer = self.get_serializer(user, data=request.data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
                 return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
-        
-    @action(methods=['get', 'post'], detail=False)
-    def test(self, request):
-        data = {
-            "test1": "test2"
-        }
-        return Response(status=status.HTTP_200_OK, data=data)
 
     # Admin views --- --- --- -->
     # Admin views --- --- --- -->
@@ -121,8 +126,18 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(methods=['get'], detail=True)
     def admin_activate_user(self, request, pk=None):
         user = self.get_object()
-        user.is_active = True
-        user.save()
+        user.activate()
         return Response(status=status.HTTP_200_OK)
+    
+    # To remove views --- --- --- -->
+    # To remove views --- --- --- -->
+    # To remove views --- --- --- -->
+
+    @action(methods=['get', 'post'], detail=False)
+    def test(self, request):
+        data = {
+            "test1": "test2"
+        }
+        return Response(status=status.HTTP_200_OK, data=data)
 
 
