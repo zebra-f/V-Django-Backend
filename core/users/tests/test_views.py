@@ -223,7 +223,7 @@ class UserTests(APITestCase):
 
         if activation_verification_link:
             # let's make sure that the token won't work after the timeout
-            with patch('core.users.utils.tokens.ActivateUserVerifyEmailTokenGenerator._now') as mocked__now:
+            with patch('core.users.emails.tokens.ActivateUserVerifyEmailTokenGenerator._now') as mocked__now:
                 mocked__now.return_value = datetime.datetime.now() + datetime.timedelta(0, settings.PASSWORD_RESET_TIMEOUT+60)
                 response = self.client.get(activation_verification_link, format='json')
                 self.assertEqual(response.status_code, 400)
@@ -405,7 +405,7 @@ class UserTests(APITestCase):
             self.assertEqual(response.data['new_password'][0], 'The password is too similar to the email address.')
 
             # let's make sure that the token won't work after the timeout
-            with patch('core.users.utils.tokens.CustomPasswordResetTokenGenerator._now') as mocked__now:
+            with patch('core.users.emails.tokens.CustomPasswordResetTokenGenerator._now') as mocked__now:
                 mocked__now.return_value = datetime.datetime.now() + datetime.timedelta(0, settings.PASSWORD_RESET_TIMEOUT+60)
                 response = self.client.patch(password_reset_link, data, format='json')
                 self.assertEqual(response.status_code, 400)

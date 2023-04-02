@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from .serializers import UserSerializer, UserTokenPasswordResetSerializer
 from .models import User
 from .permissions import UserIsAuthorized, ForbiddenAction
-from .utils.tokens import (
+from .emails.tokens import (
     ActivateUserVerifyEmailTokenGenerator,
     ActivateUserTokenGenerator,
     CustomPasswordResetTokenGenerator

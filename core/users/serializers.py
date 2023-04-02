@@ -1,13 +1,10 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
-from django.shortcuts import get_object_or_404
 
 from core.users.models import User, UserPersonalProfile
 from .services import Email
 from .validators import custom_validate_password
 from .exceptions import ServiceUnavailable
-
-from rest_framework.exceptions import ValidationError as DRFValidationError
 
 
 class UserSerializer(serializers.ModelSerializer):

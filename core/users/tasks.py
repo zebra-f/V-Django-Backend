@@ -1,7 +1,7 @@
 # Celery tasks
 from celery import shared_task
 
-from core.users.utils.emails import  (
+from core.users.emails.messages import  (
     ActivateUserVerifiyEmailEmailMessage,
     ActivateUserEmailMessage,
     PasswordResetEmailMessage,

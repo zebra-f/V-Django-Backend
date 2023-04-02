@@ -1,4 +1,4 @@
-from .utils.tokens import CustomPasswordResetTokenGenerator, ActivateUserVerifyEmailTokenGenerator
+from .emails.tokens import CustomPasswordResetTokenGenerator, ActivateUserVerifyEmailTokenGenerator
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from kombu.exceptions import OperationalError
