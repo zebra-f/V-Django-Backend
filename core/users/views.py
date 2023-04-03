@@ -8,7 +8,11 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from django.shortcuts import get_object_or_404
 
-from .serializers import UserSerializer, UserTokenPasswordResetSerializer
+from .serializers import (
+    UserSerializer, 
+    UserTokenPasswordResetSerializer, 
+    UserVerifyEmailActivateUserSerializer
+)
 from .models import User
 from .permissions import UserIsAuthorized, ForbiddenAction
 from .emails.tokens import (
@@ -47,9 +51,12 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_serializer(self, *args, **kwargs):
         if self.action == 'token_password_reset':
             self.serializer_class = UserTokenPasswordResetSerializer
+        if self.action == 'token_verify_email_activate_user':
+            self.serializer_class = UserVerifyEmailActivateUserSerializer
         return super().get_serializer(*args, **kwargs)
 
     def check_token_get_user(self, request, token_generator):
+        """ utility method """
         encoded_pk = request.query_params.get('id')
         token = request.query_params.get('token')
         if encoded_pk and token:
@@ -63,17 +70,31 @@ class UserViewSet(viewsets.ModelViewSet):
     # User views --- --- --- -->
     # User views --- --- --- -->
     
-    # [reminder] change method to POST
-    @action(methods=['get'], detail=False)
+    @action(methods=['get', 'post'], detail=False)
     def token_verify_email_activate_user(self, request):
-        token_generator = ActivateUserVerifyEmailTokenGenerator()
-        user = self.check_token_get_user(request, token_generator)
-        if user:
-            user.activate_verify_email()
-            return Response(status=status.HTTP_200_OK)
+        # a user requests a 'resend' of ActivateUserVerifiyEmailEmailMessage providing an email address
+        # if the user exists and its .email_verified field is set to False, email is sent 
+        if request.method == 'POST':
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            user = get_object_or_404(self.get_queryset(), email=serializer.data['email'])
+            if user.email_verified:
+                return Response(status=status.HTTP_409_CONFLICT)
+            
+            Email.send_activate_user_verify_email_token(user)
+            
+            headers = self.get_success_headers(serializer.data)
+            return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+        # a user opens a verification link from the received 'welcome' email 
+        else:
+            token_generator = ActivateUserVerifyEmailTokenGenerator()
+            user = self.check_token_get_user(request, token_generator)
+            if user:
+                user.activate_verify_email()
+                return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
-    
-    # [reminder] change method to POST
+
     @action(methods=['get'], detail=False)
     def token_activate_user(self, request):
         ''' NOT IN USE '''
@@ -92,7 +113,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(methods=['post', 'patch'], detail=False)
     def token_password_reset(self, request):
-        # user requests a password reset providing an email address
+        # a user requests a password reset providing an email address
         if request.method == 'POST':
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -108,7 +129,7 @@ class UserViewSet(viewsets.ModelViewSet):
             headers = self.get_success_headers(serializer.data)
             return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
         
-        # user submits a new password with the provided token
+        # a user submits a new password with the provided token
         if request.method == 'PATCH':
             token_generator = CustomPasswordResetTokenGenerator()
             user = self.check_token_get_user(request, token_generator)

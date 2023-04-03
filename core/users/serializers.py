@@ -74,3 +74,7 @@ class UserTokenPasswordResetSerializer(serializers.Serializer):
         new_password = custom_validate_password(new_password, user, 'new_password')
         user.update_password(new_password)
         return user
+
+
+class UserVerifyEmailActivateUserSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
