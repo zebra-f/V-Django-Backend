@@ -32,7 +32,6 @@ class UserTests(APITestCase):
         response = self.client.post(login_url, data, format='json')
         return response.data
 
-
     @classmethod
     def setUpTestData(cls) -> None:
         """
@@ -196,7 +195,6 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data['password'][0], 'This password is too short. It must contain at least 8 characters.')
 
-
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_token_activate_user_verify_email(self):
         # GET method
@@ -296,8 +294,6 @@ class UserTests(APITestCase):
             self.assertEqual(response.status_code, 200)
         else:
             raise TypeError("Link doesn't exist")
-
-
 
     def test_user_detail(self):
         url = reverse('user-detail', kwargs={"pk": str(self.testuserone.id)})
