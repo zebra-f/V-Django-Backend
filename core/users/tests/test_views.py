@@ -199,6 +199,7 @@ class UserTests(APITestCase):
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_token_activate_user_verify_email(self):
+        # GET method
         url = reverse('user-list')
         data = {
             'username': 'testusereleven',
@@ -238,6 +239,65 @@ class UserTests(APITestCase):
 
         self.assertEqual(User.objects.get(email='testusereleven@email.com').is_active, True)
         self.assertEqual(User.objects.get(email='testusereleven@email.com').email_verified, True)
+
+        # POST method
+        data = {
+            "username": "testuserone"
+            }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['email'][0], 'This field is required.')
+
+        data = {
+            "email": "testusertwnety@email.com"
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, 404)
+        
+        data = {
+            "email": "testuserone@email.com"
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, 409)
+        
+        url = reverse('user-list')
+        data = {
+            'username': 'testusertwelve',
+            'email': 'testusertwelve@email.com',
+            'password': '6A37xvby&1!L'
+            }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # resend
+        url = reverse('user-token-verify-email-activate-user')     
+        data = {
+            "email": "testusertwelve@email.com"
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, 200)
+        
+        self.assertEqual(len(mail.outbox), 5) # 2 new users + 3 resends
+        body = mail.outbox[-1].body 
+        links = re.findall(r'(https?://\S+)', body)
+        activation_verification_link = None
+        for link in links:
+            parsed_url = urlparse(link)
+            if parsed_url.query:
+                activation_verification_link = url + '?' + parsed_url.query
+                break     
+
+        if activation_verification_link:
+            response = self.client.get(activation_verification_link, format='json')
+            self.assertEqual(response.status_code, 200)
+        else:
+            raise TypeError("Link doesn't exist")
+
+
 
     def test_user_detail(self):
         url = reverse('user-detail', kwargs={"pk": str(self.testuserone.id)})
@@ -448,8 +508,3 @@ class UserTests(APITestCase):
 
         else:
             raise TypeError("Link doesn't exist")
-
-
-
-
-        

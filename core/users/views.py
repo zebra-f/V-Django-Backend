@@ -7,7 +7,8 @@ from rest_framework.permissions import IsAdminUser, AllowAny
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from django.shortcuts import get_object_or_404
-
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+ 
 from .serializers import (
     UserSerializer, 
     UserTokenPasswordResetSerializer, 
@@ -31,16 +32,21 @@ class UserViewSet(viewsets.ModelViewSet):
     object_level_actions = [
         'retrieve',
         'destroy',
-        'deactivate_user',
         'partial_update',
         ]
     forbidden_object_level_actions = [
+        'deactivate_user',
         'update',
         'token_activate_user',
     ]
 
     def get_permissions(self):
-        if self.action in ('list', 'create', 'token_password_reset', 'token_verify_email_activate_user', 'test',):
+        if self.action in (
+            'list', 'create', 
+            'token_password_reset', 
+            'token_verify_email_activate_user', 
+            'test',
+            ):
             self.permission_classes = [AllowAny]
         if self.action in self.object_level_actions:
             self.permission_classes = [UserIsAuthorized]
@@ -55,7 +61,7 @@ class UserViewSet(viewsets.ModelViewSet):
             self.serializer_class = UserVerifyEmailActivateUserSerializer
         return super().get_serializer(*args, **kwargs)
 
-    def check_token_get_user(self, request, token_generator):
+    def check_token_get_user(self, request, token_generator: PasswordResetTokenGenerator):
         """ utility method """
         encoded_pk = request.query_params.get('id')
         token = request.query_params.get('token')
@@ -107,6 +113,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(methods=['get'], detail=True)
     def deactivate_user(self, request, pk=None):
+        ''' NOT IN USE '''
         user = self.get_object()
         user.deactivate()
         return Response(status=status.HTTP_200_OK)
