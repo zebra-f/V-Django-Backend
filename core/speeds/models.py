@@ -20,15 +20,18 @@ class Speed(models.Model):
     description = models.CharField(_('description'), max_length=128, null=True, blank=True)
     tags = models.TextField(_('tags'), max_length=128)
     # kmph
-    speed = models.FloatField(_('speed'), validators=[
+    speed = models.PositiveIntegerField(_('speed'), validators=[
         MaxValueValidator(1_080_000_000),
-        CustomMinValueValidator(0)  # CustomMinValueValidator checks whether a value is greater than 0
+        # CustomMinValueValidator checks whether a value is greater than 0
+        CustomMinValueValidator(0)  
     ])
 
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     public = models.BooleanField(default=True)
 
-    feedback = models.ManyToManyField(settings.AUTH_USER_MODEL, through='SpeedFeedback')
+    # for author:
+    # >>> s1.feedback.add(user, through_defaults={"vote": 1})
+    feedback = models.ManyToManyField(settings.AUTH_USER_MODEL, through='SpeedFeedback', related_name='+')
 
     created_at = models.DateTimeField(_('created at'), default=timezone.now)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
@@ -53,6 +56,6 @@ class SpeedFeedback(models.Model):
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE)
 
     vote = models.IntegerField(_('vote'), choices=Vote.choices, default=Vote.DEFAULT_STATE)
-    report = models.TextField(_('report'), choices=Report.choces, null=True, blank=True)
+    report = models.TextField(_('report'), choices=Report.choices, null=True, blank=True)
 
     
