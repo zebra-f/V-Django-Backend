@@ -19,8 +19,7 @@ class Speed(models.Model):
     name = models.CharField(_('name'), max_length=128)
     description = models.CharField(_('description'), max_length=128, null=True, blank=True)
     tags = models.TextField(_('tags'), max_length=128)
-    # kmph
-    speed = models.PositiveIntegerField(_('speed'), validators=[
+    kmph = models.PositiveIntegerField(_('speed'), validators=[
         MaxValueValidator(1_080_000_000),
         # CustomMinValueValidator checks whether a value is greater than 0
         CustomMinValueValidator(0)  
@@ -41,7 +40,7 @@ class SpeedFeedback(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=('user', 'speed'), name="unique_user_speed")
+            models.UniqueConstraint(fields=('user', 'speed'), name="fb_unique_user_speed")
             ]
 
     class Vote(models.IntegerChoices):
@@ -49,13 +48,46 @@ class SpeedFeedback(models.Model):
         DEFAULT_STATE = 0, _('Default State')
         UPVOTE = 1, _('Upvote')
 
-    class Report(models.TextChoices):
-        pass
+    vote = models.IntegerField(_('vote'), choices=Vote.choices, default=Vote.DEFAULT_STATE)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE)
 
-    vote = models.IntegerField(_('vote'), choices=Vote.choices, default=Vote.DEFAULT_STATE)
+
+class SpeedReport(models.Model):
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=('user', 'speed'), name="rp_unique_user_speed")
+            ]
+    
+    class Report(models.TextChoices):
+        SPAM = "S"
+        INCORRECT_DATA = "I"
+        NON_ENGLISH = "NE"
+        INAPPROPRIATE_LANGUAGE = "IL"
+        OTHER = "O"
+
     report = models.TextField(_('report'), choices=Report.choices, null=True, blank=True)
+    other = models.TextField(_('other'), max_length=256, blank=True, null=True)
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    speed = models.ForeignKey(Speed, on_delete=models.CASCADE)
+
+
+class SpeedBookmark(models.Model):
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=('user', 'speed'), name="bm_unique_user_speed")
+            ]
+
+    category = models.CharField(_('category'), max_length=64, blank=True, null=True)
+    
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    speed = models.ForeignKey(Speed, on_delete=models.CASCADE)
+    
+
+    
 
     
