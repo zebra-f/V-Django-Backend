@@ -42,7 +42,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action in (
-            'list', 'create', 
+            'list', 
+            'create', 
             'token_password_reset', 
             'token_verify_email_activate_user', 
             'test',

@@ -93,7 +93,7 @@ class UserTests(APITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(User.objects.count(), 11)
-        self.assertEqual(User.objects.get(email='testusereleven@email.com').username, 'testusereleven')
+        self.assertEqual(User.objects.get(email='testusereleven@email.com').username, data['username'])
         self.assertEqual(User.objects.get(email='testusereleven@email.com').is_active, False)
 
         data = {
@@ -104,7 +104,7 @@ class UserTests(APITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(User.objects.count(), 12)
-        self.assertEqual(User.objects.get(email='testusertwelve@email.com').username, 'testusertwelve')
+        self.assertEqual(User.objects.get(email='testusertwelve@email.com').username, data['username'])
         self.assertEqual(User.objects.get(email='testusertwelve@email.com').is_active, False)
         self.assertEqual(User.objects.get(email='testusertwelve@email.com').email_verified, False)
 
