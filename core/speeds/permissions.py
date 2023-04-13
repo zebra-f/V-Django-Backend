@@ -7,11 +7,9 @@ class UserIsAuthorized(BasePermission):
         return super().has_permission(request, view)
 
     def has_object_permission(self, request, view, obj):
-        if request.method == 'OPTIONS':
-            return True
         if request.user.is_anonymous:
             return False
-        return obj.is_staff or request.user == obj
+        return request.user.is_staff or request.user == obj
 
 
 class ForbiddenAction(BasePermission):
@@ -26,7 +24,4 @@ class ForbiddenAction(BasePermission):
 class UserIsAuthor(BasePermission):
 
     def has_object_permission(self, request, view, obj):
-        if request.method == 'OPTIONS':
-            return True
-        
         return request.user == obj.author

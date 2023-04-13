@@ -4,11 +4,13 @@ from rest_framework.routers import DefaultRouter
 
 from .auth.views import CustomTokenRefreshView, LogoutView, LoginView
 from .users.urls import router as users_router
+from .speeds.urls import router as speeds_router
 
 
 # API Root
 router = DefaultRouter()
 router.registry.extend(users_router.registry)
+router.registry.extend(speeds_router.registry)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

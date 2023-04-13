@@ -19,14 +19,14 @@ class Speed(models.Model):
     name = models.CharField(_('name'), max_length=128)
     description = models.CharField(_('description'), max_length=128, null=True, blank=True)
     tags = models.TextField(_('tags'), max_length=128)
-    kmph = models.PositiveIntegerField(_('speed'), validators=[
+    kmph = models.PositiveIntegerField(_('kmph speed'), validators=[
         MaxValueValidator(1_080_000_000),
         # CustomMinValueValidator checks whether a value is greater than 0
         CustomMinValueValidator(0)  
     ])
 
     author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    public = models.BooleanField(default=True)
+    is_public = models.BooleanField(default=True)
 
     # for author:
     # >>> s1.feedback.add(user, through_defaults={"vote": 1})
@@ -34,6 +34,9 @@ class Speed(models.Model):
 
     created_at = models.DateTimeField(_('created at'), default=timezone.now)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+
+    def __repr__(self) -> str:
+        return self.name + ' ' + self.description
 
 
 class SpeedFeedback(models.Model):
