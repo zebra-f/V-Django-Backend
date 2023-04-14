@@ -14,18 +14,27 @@ class Speed(models.Model):
     class Meta:
         ordering = ['-created_at']
 
+    class SpeedType(models.TextChoices):
+        AVERAGE = 'average'
+        TOP = 'top'
+        CONSTANT = 'constant'
+        RELATIVE = 'relative'
+
     id = models.UUIDField(primary_key=True, default=uuid4)
     
     name = models.CharField(_('name'), max_length=128)
     description = models.CharField(_('description'), max_length=128, null=True, blank=True)
+    speed_type = models.TextField(_('speed type'), choices=SpeedType.choices)
     tags = models.TextField(_('tags'), max_length=128)
-    kmph = models.PositiveIntegerField(_('kmph speed'), validators=[
+    
+    kmph = models.PositiveIntegerField(_('speed in km/h'), validators=[
         MaxValueValidator(1_080_000_000),
         # CustomMinValueValidator checks whether a value is greater than 0
         CustomMinValueValidator(0)  
     ])
+    estimated = models.BooleanField(_('estimated'), default=False)
 
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE)
     is_public = models.BooleanField(default=True)
 
     # for author:
@@ -53,7 +62,7 @@ class SpeedFeedback(models.Model):
 
     vote = models.IntegerField(_('vote'), choices=Vote.choices, default=Vote.DEFAULT_STATE)
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE)
 
 
@@ -65,16 +74,16 @@ class SpeedReport(models.Model):
             ]
     
     class Report(models.TextChoices):
-        SPAM = "S"
-        INCORRECT_DATA = "I"
-        NON_ENGLISH = "NE"
-        INAPPROPRIATE_LANGUAGE = "IL"
-        OTHER = "O"
+        SPAM = "spam"
+        INCORRECT_DATA = "incorrcect data"
+        NON_ENGLISH = "non english"
+        INAPPROPRIATE_LANGUAGE = "inappropriate language"
+        OTHER = "other"
 
     report = models.TextField(_('report'), choices=Report.choices, null=True, blank=True)
     other = models.TextField(_('other'), max_length=256, blank=True, null=True)
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE)
 
 

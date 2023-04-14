@@ -1,0 +1,166 @@
+[
+  {
+    "model": "speeds.speed",
+    "pk": "d6d376b9-d4b5-4d81-9a52-42131dec225d",
+    "fields": {
+      "name": "Cheetah",
+      "description": "The fastest land animal",
+      "speed_type": "top",
+      "tags": "animal, wildlife",
+      "kmph": 112,
+      "estimated": true,
+      "author": null,
+      "is_public": true
+    }
+  },
+  {
+    "model": "speeds.speed",
+    "pk": 2,
+    "fields": {
+      "name": "F-22 Raptor",
+      "description": "A stealth tactical fighter aircraft",
+      "tags": "aircraft, military",
+      "kmph": 2410,
+      "estimated": false,
+      "author": null,
+      "is_public": false
+    }
+  },
+  {
+    "model": "speeds.speed",
+    "pk": 3,
+    "fields": {
+      "name": "Sailfish",
+      "description": "The fastest swimmer in the ocean",
+      "tags": "fish, marine",
+      "kmph": 110,
+      "estimated": false,
+      "author": null,
+      "is_public": true
+    }
+  },
+  {
+    "model": "speeds.speed",
+    "pk": 4,
+    "fields": {
+      "name": "Usain Bolt",
+      "description": "The fastest human being",
+      "tags": "athlete, track and field",
+      "kmph": 44.72,
+      "estimated": false,
+      "author": null,
+      "is_public": true
+    }
+  },
+  {
+    "model": "speeds.speed",
+    "pk": 5,
+    "fields": {
+      "name": "Earth",
+      "description": "The third planet from the Sun",
+      "tags": "planet, space",
+      "kmph": 107218,
+      "estimated": false,
+      "author": null,
+      "is_public": true
+    }
+  },
+  {
+    "model": "speeds.speed",
+    "pk": 6,
+    "fields": {
+      "name": "Solar System",
+      "description": "A system of planets, asteroids, and comets",
+      "tags": "astronomy, space",
+      "kmph": 792000,
+      "estimated": false,
+      "author": null,
+      "is_public": false
+    }
+  },
+  {
+    "model": "speeds.speed",
+    "pk": 7,
+    "fields": {
+      "name": "Soundwave",
+      "description": "A disturbance that travels through a medium of dry air at 20 degree Celsius",
+      "tags": "physics, sound",
+      "kmph": 1235,
+      "estimated": false,
+      "author": null,
+      "is_public": true
+    }
+  },
+  {
+    "model": "myapp.speed",
+    "pk": 2,
+    "fields": {
+      "name": "Peregrine Falcon",
+      "description": "The fastest bird in the world",
+      "tags": "bird, falcon, speed, hunter",
+      "kmph": 389,
+      "author": 2,
+      "is_public": true
+    }
+  },
+  {
+    "model": "myapp.speed",
+    "pk": 4,
+    "fields": {
+      "name": "Bullet train",
+      "description": "A high-speed train that operates in Japan",
+      "tags": "train, transportation, speed",
+      "kmph": 320,
+      "author": 3,
+      "is_public": true
+    }
+  },
+  {
+    "model": "myapp.speed",
+    "pk": 6,
+    "fields": {
+      "name": "Earth's rotation at the Equator",
+      "description": "The rotational speed of the Earth at the Equator",
+      "tags": "planet, rotation, speed",
+      "kmph": 1670,
+      "author": 5,
+      "is_public": true
+    }
+  },
+  {
+    "model": "myapp.speed",
+    "pk": 7,
+    "fields": {
+      "name": "Speed of sound in air",
+      "description": "The speed at which sound waves travel through air",
+      "tags": "sound, physics, speed",
+      "kmph": 1235,
+      "author": null,
+      "is_public": true
+    }
+  },
+  {
+    "model": "myapp.speed",
+    "pk": 8,
+    "fields": {
+      "name": "Solar System's orbital speed around the Milky Way",
+      "description": "The speed at which the Solar System travels around the Milky Way galaxy",
+      "tags": "astronomy, space, speed",
+      "kmph": 828000,
+      "author": 6,
+      "is_public": true
+    }
+  },
+  {
+    "model": "myapp.speed",
+    "pk": "f7d04515-9f5a-43b6-9625-6f5ec6b735c6",
+    "fields": {
+      "name": "Gazelle",
+      "description": "Fastest antelope",
+      "tags": "antelope, speed, wildlife",
+      "kmph": 80,
+      "author": null,
+      "is_public": true
+    }
+  }
+]

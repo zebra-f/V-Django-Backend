@@ -10,7 +10,7 @@ from django.db.models import Q
 from .models import Speed, SpeedBookmark, SpeedFeedback
 from .permissions import UserIsAuthorized, ForbiddenAction, UserIsAuthor
 from .serializers import SpeedSerializer
-
+ 
 
 class SpeedViewSet(viewsets.ModelViewSet):
     queryset = Speed.objects.all()
