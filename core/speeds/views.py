@@ -9,7 +9,7 @@ from django.db.models import Q
 
 from .models import Speed, SpeedBookmark, SpeedFeedback
 from .permissions import UserIsAuthorized, ForbiddenAction, UserIsAuthor
-from .serializers import SpeedSerializer
+from .serializers import SpeedSerializer, SpeedFeedbackSerializer
  
 
 class SpeedViewSet(viewsets.ModelViewSet):
@@ -57,6 +57,11 @@ class SpeedViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+
+class SpeedFeedbackViewSet(viewsets.ModelViewSet):
+    queryset = SpeedFeedback.objects.all()
+    serializer_class = SpeedFeedbackSerializer
 
 
 

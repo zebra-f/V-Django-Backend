@@ -96,8 +96,8 @@
     "pk": 2,
     "fields": {
       "name": "Peregrine Falcon",
-      "description": "The fastest bird in the world",
-      "tags": "bird, falcon, speed, hunter",
+      "description": "The fastest bird in the world diving speed",
+      "tags": "bird, falcon, hunter",
       "kmph": 389,
       "author": 2,
       "is_public": true
@@ -109,7 +109,7 @@
     "fields": {
       "name": "Bullet train",
       "description": "A high-speed train that operates in Japan",
-      "tags": "train, transportation, speed",
+      "tags": "train, transportation",
       "kmph": 320,
       "author": 3,
       "is_public": true
@@ -121,7 +121,7 @@
     "fields": {
       "name": "Earth's rotation at the Equator",
       "description": "The rotational speed of the Earth at the Equator",
-      "tags": "planet, rotation, speed",
+      "tags": "planet, rotation",
       "kmph": 1670,
       "author": 5,
       "is_public": true
@@ -133,7 +133,7 @@
     "fields": {
       "name": "Speed of sound in air",
       "description": "The speed at which sound waves travel through air",
-      "tags": "sound, physics, speed",
+      "tags": "sound, physics",
       "kmph": 1235,
       "author": null,
       "is_public": true
@@ -145,7 +145,7 @@
     "fields": {
       "name": "Solar System's orbital speed around the Milky Way",
       "description": "The speed at which the Solar System travels around the Milky Way galaxy",
-      "tags": "astronomy, space, speed",
+      "tags": "astronomy, space",
       "kmph": 828000,
       "author": 6,
       "is_public": true
@@ -157,7 +157,7 @@
     "fields": {
       "name": "Gazelle",
       "description": "Fastest antelope",
-      "tags": "antelope, speed, wildlife",
+      "tags": "antelope, wildlife",
       "kmph": 80,
       "author": null,
       "is_public": true
