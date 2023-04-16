@@ -7,9 +7,9 @@ from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticatedOrR
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 
-from .models import Speed, SpeedBookmark, SpeedFeedback
+from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedBookmark
 from .permissions import UserIsAuthorized, ForbiddenAction, UserIsAuthor
-from .serializers import SpeedSerializer, SpeedFeedbackSerializer
+from .serializers import SpeedSerializer, SpeedFeedbackSerializer, SpeedFeedbackCounterSerializer
  
 
 class SpeedViewSet(viewsets.ModelViewSet):
@@ -62,6 +62,20 @@ class SpeedViewSet(viewsets.ModelViewSet):
 class SpeedFeedbackViewSet(viewsets.ModelViewSet):
     queryset = SpeedFeedback.objects.all()
     serializer_class = SpeedFeedbackSerializer
+
+
+class SpeedFeedbackCounterViewSet(viewsets.ModelViewSet):
+    queryset = SpeedFeedbackCounter.objects.all()
+    serializer_class = SpeedFeedbackCounterSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.count_upvotes_downvotes()
+        print(instance.id)
+        serializer = self.get_serializer(instance)
+        data = {**serializer.data}
+        data.update({'score': instance.score})
+        return Response(data)
 
 
 

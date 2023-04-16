@@ -48,6 +48,12 @@ class Speed(models.Model):
         return self.name + ' ' + self.description
 
 
+class Vote(models.IntegerChoices):
+    DOWNVOTE = -1, _('Downvote')
+    DEFAULT_STATE = 0, _('Default State')
+    UPVOTE = 1, _('Upvote')
+
+
 class SpeedFeedback(models.Model):
 
     class Meta:
@@ -55,15 +61,34 @@ class SpeedFeedback(models.Model):
             models.UniqueConstraint(fields=('user', 'speed'), name="fb_unique_user_speed")
             ]
 
-    class Vote(models.IntegerChoices):
-        DOWNVOTE = -1, _('Downvote')
-        DEFAULT_STATE = 0, _('Default State')
-        UPVOTE = 1, _('Upvote')
-
     vote = models.IntegerField(_('vote'), choices=Vote.choices, default=Vote.DEFAULT_STATE)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE)
+
+
+class SpeedFeedbackCounter(models.Model):
+    speed = models.OneToOneField(Speed, on_delete=models.CASCADE, related_name='feedback_counter')
+    
+    downvotes = models.PositiveIntegerField(_('downvotes'), default=0)
+    upvotes = models.PositiveIntegerField(_('upvotes'), default=0)
+
+    @property
+    def score(self):
+        return self.upvotes - self.downvotes
+    
+    def count_upvotes_downvotes(self):
+        downvotes_counter = 0
+        upvotes_counter = 0
+        for feedback in SpeedFeedback.objects.filter(speed=self.speed):
+            print(feedback)
+            if feedback.vote == Vote.DOWNVOTE:
+                downvotes_counter += 1
+            if feedback.vote == Vote.UPVOTE:
+                upvotes_counter += 1
+        self.downvotes = downvotes_counter
+        self.upvotes = upvotes_counter
+        self.save()
 
 
 class SpeedReport(models.Model):
@@ -98,8 +123,3 @@ class SpeedBookmark(models.Model):
     
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE)
-    
-
-    
-
-    
