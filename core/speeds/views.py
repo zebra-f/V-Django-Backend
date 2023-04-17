@@ -9,11 +9,11 @@ from django.db.models import Q
 
 from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedBookmark
 from .permissions import UserIsAuthorized, ForbiddenAction, UserIsAuthor
-from .serializers import SpeedSerializer, SpeedFeedbackSerializer, SpeedFeedbackCounterSerializer
+from .serializers import SpeedSerializer, SpeedFeedbackSerializer
  
 
 class SpeedViewSet(viewsets.ModelViewSet):
-    queryset = Speed.objects.all()
+    queryset = Speed.objects.prefetch_related('feedback_counter')
     serializer_class = SpeedSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     object_level_actions = [
@@ -42,11 +42,11 @@ class SpeedViewSet(viewsets.ModelViewSet):
             'retrieve',
             ):
             if self.request.user.is_anonymous:
-                return Speed.objects.filter(is_public=True)
+                return Speed.objects.filter(is_public=True).prefetch_related('feedback_counter')
             elif not self.request.user.is_admin:
                 return Speed.objects.filter(
                      Q(is_public=True) | Q(author=self.request.user)
-                    )
+                    ).prefetch_related('feedback_counter')
             else:
                 return super().get_queryset()
         return super().get_queryset()
@@ -62,20 +62,6 @@ class SpeedViewSet(viewsets.ModelViewSet):
 class SpeedFeedbackViewSet(viewsets.ModelViewSet):
     queryset = SpeedFeedback.objects.all()
     serializer_class = SpeedFeedbackSerializer
-
-
-class SpeedFeedbackCounterViewSet(viewsets.ModelViewSet):
-    queryset = SpeedFeedbackCounter.objects.all()
-    serializer_class = SpeedFeedbackCounterSerializer
-
-    def retrieve(self, request, *args, **kwargs):
-        instance = self.get_object()
-        instance.count_upvotes_downvotes()
-        print(instance.id)
-        serializer = self.get_serializer(instance)
-        data = {**serializer.data}
-        data.update({'score': instance.score})
-        return Response(data)
 
 
 

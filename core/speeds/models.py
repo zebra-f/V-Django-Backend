@@ -81,7 +81,6 @@ class SpeedFeedbackCounter(models.Model):
         downvotes_counter = 0
         upvotes_counter = 0
         for feedback in SpeedFeedback.objects.filter(speed=self.speed):
-            print(feedback)
             if feedback.vote == Vote.DOWNVOTE:
                 downvotes_counter += 1
             if feedback.vote == Vote.UPVOTE:
@@ -89,6 +88,9 @@ class SpeedFeedbackCounter(models.Model):
         self.downvotes = downvotes_counter
         self.upvotes = upvotes_counter
         self.save()
+    
+    def __str__(self):
+        return f'{self.score}'
 
 
 class SpeedReport(models.Model):
@@ -109,7 +111,7 @@ class SpeedReport(models.Model):
     other = models.TextField(_('other'), max_length=256, blank=True, null=True)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
-    speed = models.ForeignKey(Speed, on_delete=models.CASCADE)
+    speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='report')
 
 
 class SpeedBookmark(models.Model):
@@ -122,4 +124,4 @@ class SpeedBookmark(models.Model):
     category = models.CharField(_('category'), max_length=64, blank=True, null=True)
     
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    speed = models.ForeignKey(Speed, on_delete=models.CASCADE)
+    speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='bookmark')
