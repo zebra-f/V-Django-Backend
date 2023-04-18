@@ -8,17 +8,30 @@ from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedReport, Spe
 
 
 class SpeedSerializer(serializers.HyperlinkedModelSerializer):
-    feedback = serializers.StringRelatedField(many=True, read_only=True)
+    author = serializers.StringRelatedField()
     feedback_counter = serializers.StringRelatedField()
+    user_speed_feedback = serializers.SerializerMethodField()
 
     class Meta:
         model = Speed
-        fields = ['url', 'id', 'name', 'description', 'speed_type', 'tags', 'kmph', 'estimated', 'author', 'is_public', 'feedback', 'feedback_counter']
-        read_only_fields = ['id', 'created_at', 'author', 'feedback', 'feedback_counter']
+        fields = [
+            'url', 
+            'id', 
+            'name', 
+            'description', 
+            'speed_type', 
+            'tags', 
+            'kmph', 
+            'estimated', 
+            'author', 
+            'is_public', 
+            'feedback_counter',
+            'user_speed_feedback'
+            ]
+        read_only_fields = ['id', 'created_at', 'author', 'feedback_counter']
 
-    def to_representation(self, instance):
-        data = super().to_representation(instance)
-        return data
+    def get_user_speed_feedback(self, obj):
+        return 0
     
     def get_url(self, obj):
         return reverse('myapp:my-model-detail', args=[obj.pk])
