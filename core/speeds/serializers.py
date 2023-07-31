@@ -28,10 +28,12 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
             'feedback_counter',
             'user_speed_feedback'
             ]
-        read_only_fields = ['id', 'created_at', 'author', 'feedback_counter']
+        read_only_fields = ['id', 'created_at', 'author', 'feedback_counter', 'user_speed_feedback']
 
     def get_user_speed_feedback(self, obj):
-        return 0
+        if obj.user_speed_feedback:
+            return obj.user_speed_feedback
+        return -2
     
     def get_url(self, obj):
         return reverse('myapp:my-model-detail', args=[obj.pk])

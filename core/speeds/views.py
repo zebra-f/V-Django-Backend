@@ -5,11 +5,13 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticatedOrReadOnly
 
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db.models import Q, Subquery, Case, FilteredRelation, Value, IntegerField, When, Exists, OuterRef
 
 from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedBookmark
 from .permissions import UserIsAuthorized, ForbiddenAction, UserIsAuthor
 from .serializers import SpeedSerializer, SpeedFeedbackSerializer
+
+from django.core.cache import cache
  
 
 class SpeedViewSet(viewsets.ModelViewSet):
@@ -45,8 +47,13 @@ class SpeedViewSet(viewsets.ModelViewSet):
                 return Speed.objects.filter(is_public=True).prefetch_related('feedback_counter')
             elif not self.request.user.is_admin:
                 return Speed.objects.filter(
-                     Q(is_public=True) | Q(author=self.request.user)
-                    ).prefetch_related('feedback_counter')
+                        Q(is_public=True) | Q(author=self.request.user)
+                    ).prefetch_related(
+                        'feedback_counter'
+                    ).annotate(
+                        user_speed_feedback=
+                            SpeedFeedback.objects.filter(speed=OuterRef('pk'), user=self.request.user).values('vote')
+                    )
             else:
                 return super().get_queryset()
         return super().get_queryset()
@@ -56,6 +63,7 @@ class SpeedViewSet(viewsets.ModelViewSet):
     # Speed views --- --- --- -->
 
     def list(self, request, *args, **kwargs):
+
         queryset = self.filter_queryset(self.get_queryset())
 
         serializer = None
@@ -66,19 +74,19 @@ class SpeedViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(queryset, many=True)
         
         serializer_data = serializer.data
-        if request.user:
-            # storing all of speed ids
-            id_vote_storage = {}
-            for ordered_dict in serializer.data:
-                id_vote_storage[ordered_dict['id']] = 0
+        # if request.user.is_authenticated:
+        #     # storing all of speed ids
+        #     id_vote_storage = {}
+        #     for ordered_dict in serializer.data:
+        #         id_vote_storage[ordered_dict['id']] = 0
             
-            # making a query that returns a user vote and assining it to the id in the storage
-            for speed_feedback in SpeedFeedback.objects.filter(speed__in=list(id_vote_storage.keys()), user=request.user):
-                id_vote_storage[str(speed_feedback.speed.id)] = speed_feedback.vote
+        #     # making a query that returns a user vote and assining it to the id in the storage
+        #     for speed_feedback in SpeedFeedback.objects.filter(speed__in=list(id_vote_storage.keys()), user=request.user):
+        #         id_vote_storage[str(speed_feedback.speed.id)] = speed_feedback.vote
         
-            # updating 'user_speed_feedback' field that's equal to = by default
-            for ordered_dict in serializer_data:
-                ordered_dict['user_speed_feedback'] = id_vote_storage[ordered_dict['id']]
+        #     # updating 'user_speed_feedback' field that's equal to = by default
+        #     for ordered_dict in serializer_data:
+        #         ordered_dict['user_speed_feedback'] = id_vote_storage[ordered_dict['id']]
         
         if page is not None:
             return self.get_paginated_response(serializer_data)

@@ -65,7 +65,7 @@ class SpeedFeedback(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE)
-
+    
 
 class SpeedFeedbackCounter(models.Model):
     speed = models.OneToOneField(Speed, on_delete=models.CASCADE, related_name='feedback_counter')
