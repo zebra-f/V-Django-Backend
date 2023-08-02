@@ -10,6 +10,12 @@ from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedReport, Spe
 class SpeedSerializer(serializers.HyperlinkedModelSerializer):
     author = serializers.StringRelatedField()
     feedback_counter = serializers.StringRelatedField()
+    # user_speed_feedback directions:
+    # 1 upvote 
+    # 0 default, 
+    # -1 downvote, 
+    # -2 no data for logged in user,
+    # -3 not logged in user
     user_speed_feedback = serializers.SerializerMethodField()
 
     class Meta:
@@ -31,6 +37,7 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
         read_only_fields = ['id', 'created_at', 'author', 'feedback_counter', 'user_speed_feedback']
 
     def get_user_speed_feedback(self, obj):
+        print(obj)
         if obj.user_speed_feedback:
             return obj.user_speed_feedback
         return -2

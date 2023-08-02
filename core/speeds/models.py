@@ -61,6 +61,7 @@ class SpeedFeedback(models.Model):
             models.UniqueConstraint(fields=('user', 'speed'), name="fb_unique_user_speed")
             ]
 
+    # aka direction
     vote = models.IntegerField(_('vote'), choices=Vote.choices, default=Vote.DEFAULT_STATE)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

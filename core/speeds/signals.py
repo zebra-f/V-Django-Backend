@@ -11,6 +11,7 @@ def speed_post_save_hander(sender, instance, created, **kwargs):
             speed=instance
             )
         speed_feedback.save()
+        
         speed_feedback_counter = SpeedFeedbackCounter(
             speed=instance, 
             upvotes=1
