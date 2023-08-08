@@ -11,7 +11,7 @@ class UserIsAuthorized(BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.user.is_anonymous:
             return False
-        return request.user.is_staff or request.user == obj.author
+        return request.user.is_staff or request.user == obj.user
 
 
 class ForbiddenAction(BasePermission):
@@ -21,9 +21,3 @@ class ForbiddenAction(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return False
-    
-
-class UserIsAuthor(BasePermission):
-
-    def has_object_permission(self, request, view, obj):
-        return request.user == obj.author

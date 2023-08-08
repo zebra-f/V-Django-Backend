@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q, Subquery, Case, FilteredRelation, Value, IntegerField, When, Exists, OuterRef
 
 from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedBookmark
-from .permissions import UserIsAuthorized, ForbiddenAction, UserIsAuthor
+from .permissions import UserIsAuthorized, ForbiddenAction
 from .serializers import SpeedSerializer, SpeedFeedbackSerializer
 
 from django.core.cache import cache
@@ -26,31 +26,23 @@ class SpeedViewSet(viewsets.ModelViewSet):
         ]
     
     def get_permissions(self):
-        if self.action in (
-            'list',
-            'retrieve',
-            ):
+        if self.action in ('list', 'retrieve'):
             self.permission_classes = [AllowAny]
-        if self.action in (
-            'create',
-            ):
+        if self.action in ('create'):
             self.permission_classes = [UserIsAuthorized]
         if self.action in self.object_level_actions:
-            self.permission_classes = [UserIsAuthorized, UserIsAuthor]
+            self.permission_classes = [UserIsAuthorized]
         return super().get_permissions()
 
     def get_queryset(self):
-        if self.action in (
-            'list',
-            'retrieve',
-            ):
+        if self.action in ('list', 'retrieve'):
             if self.request.user.is_anonymous:
                 return Speed.objects.filter(is_public=True).prefetch_related(
                     'feedback_counter'
                     ).annotate(user_speed_feedback=Value(-3))
             elif not self.request.user.is_admin:
                 return Speed.objects.filter(
-                        Q(is_public=True) | Q(author=self.request.user)
+                        Q(is_public=True) | Q(user=self.request.user)
                     ).prefetch_related(
                         'feedback_counter'
                     ).annotate(
@@ -59,11 +51,9 @@ class SpeedViewSet(viewsets.ModelViewSet):
                                 speed=OuterRef('pk'), user=self.request.user).values('vote')
                             )
                     )
-        if self.action in (
-            'list_personal'
-            ):
+        if self.action in ('list_personal'):
             return Speed.objects.filter(
-                    author=self.request.user
+                    user=self.request.user
                 ).prefetch_related(
                     'feedback_counter'
                 ).annotate(
@@ -75,10 +65,6 @@ class SpeedViewSet(viewsets.ModelViewSet):
 
         return super().get_queryset()
     
-    # Speed views --- --- --- -->
-    # Speed views --- --- --- -->
-    # Speed views --- --- --- -->
-
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         return response
@@ -88,12 +74,22 @@ class SpeedViewSet(viewsets.ModelViewSet):
         return self.list(request, *args, **kwargs)
     
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        serializer.save(user=self.request.user)
 
 
 class SpeedFeedbackViewSet(viewsets.ModelViewSet):
     queryset = SpeedFeedback.objects.all()
     serializer_class = SpeedFeedbackSerializer
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        if self.request.user.is_admin:
+            return super().get_queryset()
+        else:
+            return SpeedFeedback.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
 

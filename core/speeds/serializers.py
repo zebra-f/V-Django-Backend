@@ -8,7 +8,7 @@ from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedReport, Spe
 
 
 class SpeedSerializer(serializers.HyperlinkedModelSerializer):
-    author = serializers.StringRelatedField()
+    user = serializers.StringRelatedField()
     feedback_counter = serializers.StringRelatedField()
     # user_speed_feedback directions:
     # 1 upvote 
@@ -29,12 +29,12 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
             'tags', 
             'kmph', 
             'estimated', 
-            'author', 
+            'user', 
             'is_public', 
             'feedback_counter',
             'user_speed_feedback'
             ]
-        read_only_fields = ['id', 'created_at', 'author', 'feedback_counter', 'user_speed_feedback']
+        read_only_fields = ['id', 'created_at', 'user', 'feedback_counter', 'user_speed_feedback']
 
     def get_user_speed_feedback(self, obj):
         print(obj)
@@ -50,10 +50,7 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
 
     class Meta:
         model= SpeedFeedback
-        fields= ['id', 'vote', 'user', 'speed']
-        extra_kwargs = {
-            'user': {'write_only': True}
-            }
+        fields= ['id', 'vote', 'speed']
     
     def update(self, instance, validated_data):
         # vote field may be eqaul to 0
@@ -65,7 +62,7 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
                 if prev_vote == 1:
                     speed_feedback_counter.upvotes -= 1
                     if curr_vote == -1:
-                        speed_feedback_counter.downvotes -= 1
+                        speed_feedback_counter.downvotes += 1
                 if prev_vote == -1:
                     speed_feedback_counter.downvotes -= 1
                     if curr_vote == 1:

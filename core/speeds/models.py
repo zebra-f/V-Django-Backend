@@ -34,10 +34,10 @@ class Speed(models.Model):
     ])
     estimated = models.BooleanField(_('estimated'), default=False)
 
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE)
     is_public = models.BooleanField(default=True)
 
-    # for author:
+    # for user:
     # >>> s1.feedback.add(user, through_defaults={"vote": 1})
     feedback = models.ManyToManyField(settings.AUTH_USER_MODEL, through='SpeedFeedback', related_name='+')
 
