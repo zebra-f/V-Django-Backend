@@ -5,10 +5,20 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
 from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedReport, SpeedBookmark
+from core.users.models import User
+
+
+class UserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = [
+            'username'
+            ]
 
 
 class SpeedSerializer(serializers.HyperlinkedModelSerializer):
-    user = serializers.StringRelatedField()
+    user = UserSerializer()
     feedback_counter = serializers.StringRelatedField()
     # user_speed_feedback directions:
     # 1 upvote 

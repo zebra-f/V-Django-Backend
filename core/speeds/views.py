@@ -9,7 +9,7 @@ from django.db.models import Q, Subquery, Case, FilteredRelation, Value, Integer
 
 from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedBookmark
 from .permissions import UserIsAuthorized, ForbiddenAction
-from .serializers import SpeedSerializer, SpeedFeedbackSerializer
+from .serializers import SpeedSerializer, SpeedFeedbackSerializer, SpeedFeedbackFrontendSerializer
 
 from django.core.cache import cache
  
@@ -69,8 +69,9 @@ class SpeedViewSet(viewsets.ModelViewSet):
         response = super().list(request, *args, **kwargs)
         return response
     
-    @action(methods=['get'], detail=False)
+    @action(methods=['get'], detail=False, url_path='list-personal')
     def list_personal(self, request, *args, **kwargs):
+        ''' a queryset for this action is defined in the get_queryset() method '''
         return self.list(request, *args, **kwargs)
     
     def perform_create(self, serializer):
@@ -102,12 +103,18 @@ class SpeedFeedbackViewSet(viewsets.ModelViewSet):
             return super().get_queryset()
         else:
             return SpeedFeedback.objects.filter(user=self.request.user)
+        
+    def get_serializer(self, *args, **kwargs):
+        if self.action in ('create_or_partial_update',):
+            return SpeedFeedbackFrontendSerializer
+        return super().get_serializer(*args, **kwargs)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
     @action(methods=['get', 'post', 'patch'], detail=False, url_path='create-or-partial-update')
     def create_or_partial_update(self, request):
+        serializer = self.get_serializer()
         print('a')
         if request.method == 'POST':
             print('a')
