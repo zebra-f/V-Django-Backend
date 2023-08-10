@@ -43,7 +43,7 @@ class UserSerializer(serializers.ModelSerializer):
     def update(self, user, validated_data):
         """
         As of now a user can only update its password via PATCH method.
-        POST method disabled.
+        PUT method disabled.
         """
         password = validated_data.get('password', None)
         new_password = validated_data.get('new_password', None)

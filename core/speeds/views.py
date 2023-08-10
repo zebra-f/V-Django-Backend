@@ -26,16 +26,16 @@ class SpeedViewSet(viewsets.ModelViewSet):
         ]
     
     def get_permissions(self):
-        if self.action in ('list', 'retrieve'):
+        if self.action in ('list', 'retrieve',):
             self.permission_classes = [AllowAny]
-        if self.action in ('create'):
+        if self.action in ('create',):
             self.permission_classes = [UserIsAuthorized]
         if self.action in self.object_level_actions:
             self.permission_classes = [UserIsAuthorized]
         return super().get_permissions()
 
     def get_queryset(self):
-        if self.action in ('list', 'retrieve'):
+        if self.action in ('list', 'retrieve',):
             if self.request.user.is_anonymous:
                 return Speed.objects.filter(is_public=True).prefetch_related(
                     'feedback_counter'
@@ -51,7 +51,7 @@ class SpeedViewSet(viewsets.ModelViewSet):
                                 speed=OuterRef('pk'), user=self.request.user).values('vote')
                             )
                     )
-        if self.action in ('list_personal'):
+        if self.action in ('list_personal',):
             return Speed.objects.filter(
                     user=self.request.user
                 ).prefetch_related(
@@ -80,10 +80,25 @@ class SpeedViewSet(viewsets.ModelViewSet):
 class SpeedFeedbackViewSet(viewsets.ModelViewSet):
     queryset = SpeedFeedback.objects.all()
     serializer_class = SpeedFeedbackSerializer
-    permission_classes = [AllowAny]
+    # User should always be authorized for any action in this ViewSet
+    permission_classes = [UserIsAuthorized]
+    object_level_actions = [
+        'retrieve',
+        'partial_update',
+        ]
+    forbidden_object_level_actions = [
+        'update',
+        'destroy',
+    ]
 
+    def get_permissions(self):
+        if self.action in self.forbidden_object_level_actions:
+            self.permission_classes = [ForbiddenAction]
+        return super().get_permissions()
+    
     def get_queryset(self):
-        if self.request.user.is_admin:
+        # return super().get_queryset()
+        if self.request.user.is_admin or self.action in self.object_level_actions:
             return super().get_queryset()
         else:
             return SpeedFeedback.objects.filter(user=self.request.user)
@@ -91,6 +106,19 @@ class SpeedFeedbackViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
+    @action(methods=['get', 'post', 'patch'], detail=False, url_path='create-or-partial-update')
+    def create_or_partial_update(self, request):
+        print('a')
+        if request.method == 'POST':
+            print('a')
+            pass
+        elif request.method == 'PATCH':
+            print('b')
+            pass
+        
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    
 
+        
 
 

@@ -49,8 +49,9 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
 class SpeedFeedbackSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model= SpeedFeedback
-        fields= ['id', 'vote', 'speed']
+        model = SpeedFeedback
+        fields = ['id', 'vote', 'speed', 'user']
+        read_only_fields = ['id', 'speed']
     
     def update(self, instance, validated_data):
         # vote field may be eqaul to 0
@@ -71,6 +72,19 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
         
         return super().update(instance, validated_data)
 
+ 
+class SpeedFeedbackFrontendSerializer(serializers.ModelSerializer):
+    ''' Utilized by methods tailored for frontend requests, that not include a Vote pk '''
+
+    class Meta:
+        model = SpeedFeedback
+        fields = ['vote', 'speed', 'user']
+
+
+    def create(self, validated_data):
+
+        return super().create(validated_data)
+        
 
 class SpeedReportSerializer(serializers.ModelSerializer):
 
