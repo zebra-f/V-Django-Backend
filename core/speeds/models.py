@@ -86,9 +86,16 @@ class SpeedFeedbackCounter(models.Model):
                 downvotes_counter += 1
             if feedback.vote == Vote.UPVOTE:
                 upvotes_counter += 1
+        
         self.downvotes = downvotes_counter
         self.upvotes = upvotes_counter
         self.save()
+
+    @classmethod
+    def count_all_upvoted_downvotes(cls):
+        queryset = cls.objects.all()
+        for object in queryset:
+            object.count_upvotes_downvotes()
     
     def __str__(self):
         return f'{self.score}'
