@@ -1,5 +1,5 @@
 **Potentially essential:**  
-queryset that allows to retrieve every field in the SpeedFeedback model  
+queryset that allows to retrieve every field in the related SpeedFeedback model  
 
 ```
 qs = Speed.objects.filter(

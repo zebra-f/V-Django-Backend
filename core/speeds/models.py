@@ -75,10 +75,10 @@ class SpeedFeedbackCounter(models.Model):
     upvotes = models.PositiveIntegerField(_('upvotes'), default=0)
 
     @property
-    def score(self):
+    def score(self) -> int:
         return self.upvotes - self.downvotes
     
-    def count_upvotes_downvotes(self):
+    def recount_upvotes_downvotes(self):
         downvotes_counter = 0
         upvotes_counter = 0
         for feedback in SpeedFeedback.objects.filter(speed=self.speed):
@@ -89,10 +89,10 @@ class SpeedFeedbackCounter(models.Model):
         
         self.downvotes = downvotes_counter
         self.upvotes = upvotes_counter
-        self.save()
+        self.save(update_fields=['downvotes', 'upvotes'])
 
     @classmethod
-    def count_all_upvoted_downvotes(cls):
+    def recount_all_upvotes_downvotes(cls):
         queryset = cls.objects.all()
         for object in queryset:
             object.count_upvotes_downvotes()

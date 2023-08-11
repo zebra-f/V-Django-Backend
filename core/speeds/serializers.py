@@ -88,12 +88,7 @@ class SpeedFeedbackFrontendSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SpeedFeedback
-        fields = ['vote', 'speed', 'user']
-
-
-    def create(self, validated_data):
-
-        return super().create(validated_data)
+        fields = ['vote', 'speed']
         
 
 class SpeedReportSerializer(serializers.ModelSerializer):

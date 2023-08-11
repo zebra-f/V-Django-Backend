@@ -96,32 +96,34 @@ class SpeedFeedbackViewSet(viewsets.ModelViewSet):
         if self.action in self.forbidden_object_level_actions:
             self.permission_classes = [ForbiddenAction]
         return super().get_permissions()
-    
+
     def get_queryset(self):
         # return super().get_queryset()
         if self.request.user.is_admin or self.action in self.object_level_actions:
             return super().get_queryset()
         else:
             return SpeedFeedback.objects.filter(user=self.request.user)
-        
-    def get_serializer(self, *args, **kwargs):
-        if self.action in ('create_or_partial_update',):
+
+    def get_serializer_class(self):
+        if self.action in ('frontend_partial_update',):
             return SpeedFeedbackFrontendSerializer
-        return super().get_serializer(*args, **kwargs)
+        return super().get_serializer_class()
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-    @action(methods=['get', 'post', 'patch'], detail=False, url_path='create-or-partial-update')
-    def create_or_partial_update(self, request):
-        serializer = self.get_serializer()
-        print('a')
-        if request.method == 'POST':
-            print('a')
-            pass
-        elif request.method == 'PATCH':
-            print('b')
-            pass
+    @action(methods=['patch'], detail=False, url_path='frontend-partial-update')
+    def frontend_partial_update(self, request):
+        ''' used by the frontend client, with no access to the SpeedFeedback pk '''
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            speed_feedback = get_object_or_404(SpeedFeedback,
+                speed=serializer.data['speed'], 
+                user=self.request.user
+                )
+            speed_feedback.vote = serializer.data['vote']
+            speed_feedback.save(update_fields=['vote'])
+            return Response(status=status.HTTP_200_OK, data=serializer.data)
         
         return Response(status=status.HTTP_400_BAD_REQUEST)
     
