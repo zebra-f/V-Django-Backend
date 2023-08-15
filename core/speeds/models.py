@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.conf import settings
@@ -78,24 +78,25 @@ class SpeedFeedbackCounter(models.Model):
     def score(self) -> int:
         return self.upvotes - self.downvotes
     
-    def recount_upvotes_downvotes(self):
-        downvotes_counter = 0
-        upvotes_counter = 0
-        for feedback in SpeedFeedback.objects.filter(speed=self.speed):
-            if feedback.vote == Vote.DOWNVOTE:
-                downvotes_counter += 1
-            if feedback.vote == Vote.UPVOTE:
-                upvotes_counter += 1
+    def recount_votes(self):
+        with transaction.atomic():
+            downvotes_counter = 0
+            upvotes_counter = 0
+            for feedback in SpeedFeedback.objects.select_for_update().filter(speed=self.speed):
+                if feedback.vote == Vote.DOWNVOTE:
+                    downvotes_counter += 1
+                if feedback.vote == Vote.UPVOTE:
+                    upvotes_counter += 1
         
-        self.downvotes = downvotes_counter
-        self.upvotes = upvotes_counter
-        self.save(update_fields=['downvotes', 'upvotes'])
+            self.downvotes = downvotes_counter
+            self.upvotes = upvotes_counter
+            self.save(update_fields=['downvotes', 'upvotes'])
 
     @classmethod
-    def recount_all_upvotes_downvotes(cls):
+    def recount_all_votes(cls):
         queryset = cls.objects.all()
         for object in queryset:
-            object.count_upvotes_downvotes()
+            object.recount_votes()
     
     def __str__(self):
         return f'{self.score}'
