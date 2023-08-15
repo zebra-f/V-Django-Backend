@@ -212,7 +212,7 @@ SIMPLE_JWT = {
 CELERY_BROKER_URL = 'pyamqp://guest@localhost//'
 
 
-# Redis cache
+# Redis cache settings
 
 CACHES = {
     "default": {
@@ -220,3 +220,15 @@ CACHES = {
         "LOCATION": "redis://127.0.0.1:6379",
     }
 }
+
+
+# Meilisearch settings
+
+MEILISEARCH = {
+    'disabled': False,
+    'MASTER_KEY': None, 
+    'URL': 'http://127.0.0.1:7700'
+}
+
+if not MEILISEARCH['disabled']:
+    MEILISEARCH['MASTER_KEY'] = get_env_variable('MEILISEARCH_V_ONE_MASTER_KEY')
