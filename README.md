@@ -27,10 +27,10 @@ Run an instance of Meilisearch in Docker, or refer to the Meilisearch documentat
   
     $ sudo docker pull getmeili/meilisearch:v1.3
     $ # optionally, include `--rm`` flag
-    $ sudo docker run -it --name ms_v_one -d -p 7700:7700 -e MEILI_MASTER_KEY='$MEILISEARCH_V_ONE_MASTER_KEY' -v $(pwd)/meili_data:/meili_data getmeili/meilisearch:v1.3  
+    $ sudo docker run -it --name ms_v_one -d -p 7700:7700 -e MEILI_MASTER_KEY=$MEILISEARCH_V_ONE_MASTER_KEY -v $(pwd)/meili_data:/meili_data getmeili/meilisearch:v1.3  
      
-    # # script that creates search engine indexes
-    $ python3 core/meilisearch.py
+    # command that creates `speeds` index
+    $ python3 manage.py createspeedsindex
 
 
   
