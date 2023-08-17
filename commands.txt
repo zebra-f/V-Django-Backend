@@ -1,2 +1,4 @@
+# for reference only
+ 
 celery -A core worker --loglevel=INFO
 docker exec -it redis-stack redis-cli
