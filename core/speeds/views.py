@@ -98,7 +98,6 @@ class SpeedFeedbackViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_queryset(self):
-        # return super().get_queryset()
         if self.request.user.is_admin or self.action in self.object_level_actions:
             return super().get_queryset()
         else:
@@ -114,10 +113,11 @@ class SpeedFeedbackViewSet(viewsets.ModelViewSet):
 
     @action(methods=['patch'], detail=False, url_path='frontend-partial-update')
     def frontend_partial_update(self, request):
-        ''' used by the frontend client, with no access to the SpeedFeedback pk '''
+        ''' used by a frontend client, with no access to the SpeedFeedback pk '''
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
-            speed_feedback = get_object_or_404(SpeedFeedback,
+            speed_feedback = get_object_or_404(
+                SpeedFeedback,
                 speed=serializer.data['speed'], 
                 user=self.request.user
                 )

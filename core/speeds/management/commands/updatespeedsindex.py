@@ -6,7 +6,7 @@ from core.meilisearch import client
 
 
 class Command(BaseCommand):
-    help = "Creates speeds index for the Meilisearch search engine"
+    help = "Updates the 'speeds' index for the Meilisearch search engine if it already exists."
 
     def handle(self, *args, **options):
         if not client.is_disabled() and client.is_healthy():
