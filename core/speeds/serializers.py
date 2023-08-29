@@ -12,10 +12,16 @@ from core.users.models import User
 class TagsField(serializers.Field):
     initial = [""]
     default_error_messages = {
-        "incorrect_data_type": "incorrect data type",
-        "incorect_data_item_type": "incorect data item type",
-        "str_contains_comma": "A string object inside a list should not contain a comma (',')"
+        "incorrect_data_type": "incorrect data type.",
+        "incorect_data_item_type": "incorect data item type.",
+        "str_contains_invalid_symbol": "A string object in the list contains an invalid symbol.",
+        "str_contains_escape_sequnce": "A string object in the list contains an escape sequence.",
+        "input_too_long": "Excessive or elongated tags.",
     }
+    invalid_symbols = {
+        '*', '&', '$', '%', '#', '!', '?', ':', ';', '"', '[', ']', '{', '}', '(', ')', '/', '+', '=', '<', '>',
+        }
+    escape_sequences = ['\\', '\'', '\"', '\n', '\t', '\r', '\b', '\f', '\v', '\ooo', '\xhh']
     
     def to_representation(self, value: str) -> list:
         """ TODO: cahnge to split by a comma! """
@@ -24,11 +30,21 @@ class TagsField(serializers.Field):
     def to_internal_value(self, data: list[str]) -> str:
         if not isinstance(data, list):
             self.fail("incorrect_data_type", input_type=type(data).__name__)
+        
+        total_len = 0
         for item in data:
             if not isinstance(item, str):
                 self.fail("incorect_data_item_type", input_type=type(item).__name__)
-            if ',' in item:
-                self.fail("str_contains_comma", input_type=type(item).__name__)
+            has_invalid_symbol = any(symbol in item for symbol in self.invalid_symbols)
+            if has_invalid_symbol:
+                self.fail("str_contains_invalid_symbol")
+            has_escape_sequence = any(escape_sequence in item for escape_sequence in self.escape_sequences)
+            if has_escape_sequence:
+                self.fail("str_contains_escape_sequnce")
+            len_ += len(item)
+        if total_len + len(data) - 1 > 128:
+            self.fail("input_too_long")
+        
         return ','.join(data)
 
 
@@ -41,7 +57,7 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
     # -1 downvote, 
     # -2 no data for logged in user,
     # -3 not logged in user
-    # -4 something went wrong or updated default
+    # -4 update method default 
     user_speed_feedback = serializers.SerializerMethodField()
 
     class Meta:
