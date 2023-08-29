@@ -10,16 +10,25 @@ from core.users.models import User
 
 
 class TagsField(serializers.Field):
+    initial = [""]
+    default_error_messages = {
+        "incorrect_data_type": "incorrect data type",
+        "incorect_data_item_type": "incorect data item type",
+        "str_contains_comma": "A string object inside a list should not contain a comma (',')"
+    }
     
     def to_representation(self, value: str) -> list:
         """ TODO: cahnge to split by a comma! """
         return value.split(' ')
     
-    def to_internal_value(self, data: list) -> str:
+    def to_internal_value(self, data: list[str]) -> str:
         if not isinstance(data, list):
-            raise Exception('wrong format')
-        if not all(isinstance(item, str) for item in data):
-            raise Exception('wrong format')
+            self.fail("incorrect_data_type", input_type=type(data).__name__)
+        for item in data:
+            if not isinstance(item, str):
+                self.fail("incorect_data_item_type", input_type=type(item).__name__)
+            if ',' in item:
+                self.fail("str_contains_comma", input_type=type(item).__name__)
         return ','.join(data)
 
 
@@ -32,6 +41,7 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
     # -1 downvote, 
     # -2 no data for logged in user,
     # -3 not logged in user
+    # -4 something went wrong or updated default
     user_speed_feedback = serializers.SerializerMethodField()
 
     class Meta:
@@ -53,21 +63,31 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
         read_only_fields = ['id', 'created_at', 'user', 'feedback_counter', 'user_speed_feedback']
 
     def get_user_speed_feedback(self, obj):
-        if obj.user_speed_feedback:
-            return obj.user_speed_feedback
-        return -2
+        try:
+            if obj.user_speed_feedback:
+                return obj.user_speed_feedback
+            return -2
+        except:
+            # should never happen, workaround in `create` and `update` method
+            return -4
     
     def get_url(self, obj):
         return reverse('myapp:my-model-detail', args=[obj.pk])
-     
-    def create(self, validated_data):
-        print(validated_data)
-        return super().create(validated_data)
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
         representation['user'] = instance.user.username
         return representation
+    
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        instance.user_speed_feedback = 1
+        return instance
+    
+    def update(self, instance, validated_data):
+        instance = super().update(instance, validated_data)
+        instance.user_speed_feedback = -4
+        return instance
 
 
 class SpeedFeedbackSerializer(serializers.ModelSerializer):

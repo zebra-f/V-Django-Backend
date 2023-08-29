@@ -15,7 +15,7 @@ from django.core.cache import cache
  
 
 class SpeedViewSet(viewsets.ModelViewSet):
-    queryset = Speed.objects.prefetch_related('feedback_counter')
+    queryset = Speed.objects.prefetch_related('feedback_counter').annotate(user_speed_feedback=Value(-3))
     serializer_class = SpeedSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     object_level_actions = [
@@ -41,9 +41,20 @@ class SpeedViewSet(viewsets.ModelViewSet):
                     'feedback_counter'
                     ).annotate(user_speed_feedback=Value(-3))
             elif not self.request.user.is_admin:
+                # a user
                 return Speed.objects.filter(
                         Q(is_public=True) | Q(user=self.request.user)
                     ).prefetch_related(
+                        'feedback_counter'
+                    ).annotate(
+                        user_speed_feedback=Subquery(
+                            SpeedFeedback.objects.filter(
+                                speed=OuterRef('pk'), user=self.request.user).values('vote')
+                            )
+                    )
+            else:
+                # an admin
+                return Speed.objects.prefetch_related(
                         'feedback_counter'
                     ).annotate(
                         user_speed_feedback=Subquery(

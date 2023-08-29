@@ -27,7 +27,7 @@ class Speed(models.Model):
     speed_type = models.TextField(_('speed type'), choices=SpeedType.choices)
     tags = models.TextField(_('tags'), max_length=128)
     
-    kmph = models.PositiveIntegerField(_('speed in km/h'), validators=[
+    kmph = models.FloatField(_('speed in km/h'), validators=[
         MaxValueValidator(1_080_000_000),
         # CustomMinValueValidator checks whether a value is greater than 0
         CustomMinValueValidator(0)  
