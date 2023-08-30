@@ -15,7 +15,8 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'email', 'username', 'password', 'new_password']
         read_only_fields = ['id']
         extra_kwargs = {
-            'password': {'write_only': True}}
+            'password': {'write_only': True}
+            }
 
 
     def create(self, validated_data):
@@ -60,6 +61,12 @@ class UserSerializer(serializers.ModelSerializer):
                 'new_password': ['This field is required.']
                 })
         return user
+    
+    def get_fields(self):
+        fields = super().get_fields()
+        if self.context['request'].method in ['POST']:
+            del fields['new_password']
+        return fields
 
 
 class UserTokenPasswordResetSerializer(serializers.Serializer):

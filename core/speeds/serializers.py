@@ -21,7 +21,8 @@ class TagsField(serializers.Field):
     invalid_symbols = {
         '*', '&', '$', '%', '#', '!', '?', ':', ';', '"', '[', ']', '{', '}', '(', ')', '/', '+', '=', '<', '>',
         }
-    escape_sequences = ['\\', '\'', '\"', '\n', '\t', '\r', '\b', '\f', '\v', '\ooo', '\xhh']
+    escape_sequences = ['\\']
+    # escape_sequences = ['\\', '\'', '\"', '\n', '\t', '\r', '\b', '\f', '\v', '\ooo', '\xhh']
     
     def to_representation(self, value: str) -> list:
         """ TODO: cahnge to split by a comma! """
