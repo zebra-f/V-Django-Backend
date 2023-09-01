@@ -1,14 +1,22 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
+from rest_framework.validators import UniqueValidator
 
 from core.users.models import User, UserPersonalProfile
 from .services import Email
-from .validators import custom_validate_password
+from .validators import custom_validate_password, username_validator
 from .exceptions import ServiceUnavailable
 
 
 class UserSerializer(serializers.ModelSerializer):
     new_password = serializers.CharField(required=False, max_length=128, write_only=True)
+    username = serializers.CharField(max_length=32, validators=[
+        username_validator,
+        UniqueValidator(
+            queryset=User.objects.all(),
+            message="user with this username already exists." 
+            ),
+        ])
 
     class Meta:
         model = User
@@ -64,7 +72,7 @@ class UserSerializer(serializers.ModelSerializer):
     
     def get_fields(self):
         fields = super().get_fields()
-        if self.context['request'].method in ['POST']:
+        if 'request' in self.context and self.context['request'].method in ['POST']:
             del fields['new_password']
         return fields
 

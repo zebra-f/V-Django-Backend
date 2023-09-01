@@ -20,10 +20,11 @@ def custom_validate_password(password: str, user: User, error_key: Literal['pass
 
 # User.username (CharField)
 username_validator = RegexValidator(
-    regex=r"^[A-Za-z][A-Za-z0-9_]{3,29}$",
-    message="""
-            Username should start with an a letter,
-            username can only contain letters, numbers, and underscores.
-            username should have length of at least 5 characters
-            """
+    # Specify max_length in the model/serializer field.
+    regex=r"^[A-Za-z][A-Za-z0-9_]{2,}$",
+    message=(
+        "Username must begin with a letter. "
+        "Username may consist of letters, numbers, and underscores. "
+        "Username must be at least 3 characters in length."
+    )
 )

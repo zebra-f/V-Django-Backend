@@ -160,7 +160,7 @@ class UserTests(APITestCase):
         self.assertEqual(response.data['email'][0], 'Enter a valid email address.')
 
         data = {
-            'username': 'testuserthirteen' + ('x' * 32),
+            'username': 'testuserthirteen' + ('x' * (32 - len('testuserthirteen') + 1)),
             'email': 'testuserthirteen@email.com',
             'password': '6A37xvby&1!L'
             }

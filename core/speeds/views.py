@@ -3,18 +3,21 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticatedOrReadOnly
+from rest_framework.renderers import JSONRenderer
 
 from django.shortcuts import get_object_or_404
 from django.db.models import Q, Subquery, Case, FilteredRelation, Value, IntegerField, When, Exists, OuterRef
+from django.core.cache import cache
+ 
 
 from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedBookmark
 from .permissions import UserIsAuthorized, ForbiddenAction
 from .serializers import SpeedSerializer, SpeedFeedbackSerializer, SpeedFeedbackFrontendSerializer
+from .renderers import CustomBrowsableAPIRenderer
 
-from django.core.cache import cache
- 
 
 class SpeedViewSet(viewsets.ModelViewSet):
+    renderer_classes = [CustomBrowsableAPIRenderer, JSONRenderer]
     queryset = Speed.objects.prefetch_related('feedback_counter').annotate(user_speed_feedback=Value(-3))
     serializer_class = SpeedSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -124,7 +127,7 @@ class SpeedFeedbackViewSet(viewsets.ModelViewSet):
 
     @action(methods=['patch'], detail=False, url_path='frontend-partial-update')
     def frontend_partial_update(self, request):
-        ''' used by a frontend client, with no access to the SpeedFeedback pk '''
+        ''' used by a frontend client, with no access to a SpeedFeedback prmary key '''
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             speed_feedback = get_object_or_404(
