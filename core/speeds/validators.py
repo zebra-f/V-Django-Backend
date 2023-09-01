@@ -13,24 +13,18 @@ class CustomMinValueValidator(MinValueValidator):
 
 # Speed.name (CharField)
 name_validator = RegexValidator(
-    regex=r"^[A-Za-z0-9_'\"-]{2,128}$",
+    regex=r"^[A-Za-z0-9_'-]{2,128}$",
     message=(
-        "Name can only contain letters, numbers, and underscores, "
-        "name should have length of at least 2 characters."
+        "The name must consist of letters (both uppercase and lowercase), numbers, white spaces, and the following symbols (excluding the next comma): ' - , "
+        "the name should be between 2 and 128 characters in length." 
     )
 )
 
 # Speed.description (CharField)
 description_validator = RegexValidator(
-    regex=r"^[A-Za-z0-9_,'\". ()-]{9,127}$",
+    regex=r"^[A-Za-z0-9,'\".()-]{8,128}$",
     message=(
-        "Description should be at least 10 characters long, allowed symbols: \"_,''.-\"."
+        "The description must consist of letters (both uppercase and lowercase), numbers, white spaces, and the following symbols: , ' . - \" . ( ) , "
+        "the description should be between 8 and 128 characters in length." 
     )
 )
-
-# for Python's built in `re` module
-tags_pattern_validator = r"^[a-zA-Z0-9]+$"
-
-
-
-    
