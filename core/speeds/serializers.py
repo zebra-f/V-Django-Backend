@@ -1,3 +1,5 @@
+from typing import Union
+
 from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField
 
@@ -20,8 +22,9 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
     # -1 downvote, 
     # -2 no data for logged in user,
     # -3 not logged in user
-    # -4 update method default 
+    # -4 a response for the update/post method default 
     user_speed_feedback = serializers.SerializerMethodField()
+    user_speed_bookmark = serializers.SerializerMethodField()
 
     # validating Meta class fields
     name = serializers.CharField(validators=[name_validator])
@@ -41,18 +44,32 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
             'is_public', 
             'user', 
             'feedback_counter',
-            'user_speed_feedback'
+            'user_speed_feedback',
+            'user_speed_bookmark',
             ]
-        read_only_fields = ['id', 'created_at', 'user', 'feedback_counter', 'user_speed_feedback']
+        read_only_fields = ['id', 'created_at', 'user', 'feedback_counter', 'user_speed_feedback', 'user_speed_bookmark']
 
-    def get_user_speed_feedback(self, obj):
+    def get_user_speed_feedback(self, obj) -> int:
         try:
+            # obj.user_speed_feebdack might be equal to 0
             if obj.user_speed_feedback:
                 return obj.user_speed_feedback
             return -2
         except:
+            # related to a response of the post/update method response 
             # should never happen, workaround in `create` and `update` method
             return -4
+    
+    def get_user_speed_bookmark(self, obj) -> Union[None, str]:
+        try:
+            if obj.user_speed_bookmark:
+                return obj.user_speed_bookmark
+            # obj.user_speed_feedback == False
+            return None
+        except:
+            # related to a response of the post/update method
+            # should never happen, workaround in `create` and `update` method
+            return None
     
     def get_url(self, obj):
         return reverse('myapp:my-model-detail', args=[obj.pk])
@@ -65,11 +82,13 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
     def create(self, validated_data):
         instance = super().create(validated_data)
         instance.user_speed_feedback = 1
+        instance.user_speed_bookmark = None
         return instance
     
     def update(self, instance, validated_data):
         instance = super().update(instance, validated_data)
         instance.user_speed_feedback = -4
+        instance.user_speed_bookmark = None
         return instance
 
 
@@ -77,7 +96,12 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SpeedFeedback
-        fields = ['id', 'vote', 'speed', 'user']
+        fields = [
+            'id', 
+            'vote', 
+            'speed', 
+            'user'
+            ]
         read_only_fields = ['id', 'speed']
     
     def update(self, instance, validated_data):
@@ -107,7 +131,19 @@ class SpeedFeedbackFrontendSerializer(serializers.ModelSerializer):
         model = SpeedFeedback
         fields = ['vote', 'speed']
 
-# TODO       
+# TODO   
+
+class SpeedBookmarkSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model= SpeedBookmark
+        fields= [
+            'id', 
+            'category', 
+            'user', 
+            'speed'
+            ]
+        read_only_fields = ['id', 'user', ]    
 
 class SpeedReportSerializer(serializers.ModelSerializer):
 
@@ -115,19 +151,5 @@ class SpeedReportSerializer(serializers.ModelSerializer):
         model= SpeedReport
         fields= ['id', 'report', 'other', 'user', 'speed']
         read_only_fields = ['id']
-        extra_kwargs = {
-            'user': {'write_only': True},
-            'speed': {'write_only': True}
-            }
 
 
-class SpeedBookmarkSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model= SpeedBookmark
-        fields= ['id', 'category', 'user', 'speed']
-        read_only_fields = ['id']
-        extra_kwargs = {
-            'user': {'write_only': True},
-            'speed': {'write_only': True}
-            }

@@ -44,7 +44,7 @@ class TagsField(serializers.Field):
             
             total_len += len(item)
         
-        #  (len(data) - 1): number of commas that will be added by the join method
+        #  (len(data) - 1): the number of commas that will be added by the join method
         if total_len + (len(data) - 1) > 128:
             self.fail("input_too_long")
         

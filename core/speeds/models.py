@@ -102,6 +102,19 @@ class SpeedFeedbackCounter(models.Model):
         return f'{self.score}'
 
 
+class SpeedBookmark(models.Model):
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=('user', 'speed'), name="bm_unique_user_speed")
+            ]
+
+    category = models.CharField(_('category'), max_length=32, blank=True, null=True)
+    
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='bookmark')
+
+
 class SpeedReport(models.Model):
 
     class Meta:
@@ -121,16 +134,3 @@ class SpeedReport(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='report')
-
-
-class SpeedBookmark(models.Model):
-    
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=('user', 'speed'), name="bm_unique_user_speed")
-            ]
-
-    category = models.CharField(_('category'), max_length=64, blank=True, null=True)
-    
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='bookmark')
