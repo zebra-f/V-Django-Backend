@@ -10,7 +10,7 @@ from django.db import IntegrityError
 
 from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedReport, SpeedBookmark
 from core.users.models import User
-from .validators import name_validator, description_validator
+from .validators import name_validator, description_validator, bookmark_validator
 from .fields import TagsField
 
 
@@ -23,8 +23,8 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
     # -1 downvote, 
     # -2 no data for logged in user,
     # -3 not logged in user
-    # -4 a response for the update/post method default 
-    user_speed_feedback = serializers.SerializerMethodField()
+    # -4 a response for the update/post method default, nested related object in serializers with speed=SpeedSerializer() field
+    user_speed_feedback_vote = serializers.SerializerMethodField()
     user_speed_bookmark = serializers.SerializerMethodField()
 
     # validating Meta class fields
@@ -45,20 +45,19 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
             'is_public', 
             'user', 
             'feedback_counter',
-            'user_speed_feedback',
+            'user_speed_feedback_vote',
             'user_speed_bookmark',
             ]
-        read_only_fields = ['id', 'created_at', 'user', 'feedback_counter', 'user_speed_feedback', 'user_speed_bookmark']
+        read_only_fields = ['id', 'created_at', 'user', 'feedback_counter', 'user_speed_feedback_vote', 'user_speed_bookmark']
 
-    def get_user_speed_feedback(self, obj) -> int:
+    def get_user_speed_feedback_vote(self, obj) -> int:
         try:
             # obj.user_speed_feebdack might be equal to 0
-            if obj.user_speed_feedback:
-                return obj.user_speed_feedback
+            if obj.user_speed_feedback_vote:
+                return obj.user_speed_feedback_vote
             return -2
         except:
-            # related to a response of the post/update method response 
-            # should never happen, workaround in `create` and `update` method
+            # nested related object
             return -4
     
     def get_user_speed_bookmark(self, obj) -> Union[None, str]:
@@ -68,8 +67,7 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
             # obj.user_speed_feedback == False
             return None
         except:
-            # related to a response of the post/update method
-            # should never happen, workaround in `create` and `update` method
+            # nested related object
             return None
     
     def get_url(self, obj):
@@ -83,13 +81,13 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
     def create(self, validated_data):
         instance = super().create(validated_data)
         # default set by a signal
-        instance.user_speed_feedback = 1
+        instance.user_speed_feedback_vote = 1
         instance.user_speed_bookmark = None
         return instance
     
     def update(self, instance, validated_data):
         instance = super().update(instance, validated_data)
-        instance.user_speed_feedback = -4
+        instance.user_speed_feedback_vote = -4
         instance.user_speed_bookmark = None
         return instance
 
@@ -135,7 +133,8 @@ class SpeedFeedbackFrontendSerializer(serializers.ModelSerializer):
 
     
 class SpeedBookmarkSerializer(serializers.ModelSerializer):
-    category = serializers.CharField(default="favorites")
+    category = serializers.CharField(default="favorites", validators=[bookmark_validator])
+    speed = SpeedSerializer()
 
     class Meta:
         model= SpeedBookmark
@@ -143,7 +142,7 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
             'id', 
             'category', 
             'user', 
-            'speed'
+            'speed',
             ]
         read_only_fields = ['id', 'user',]
 

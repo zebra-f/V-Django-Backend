@@ -16,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
         username_validator,
         UniqueValidator(
             queryset=User.objects.all(),
-            message="user with this username already exists." 
+            message="A user with this username already exists." 
             ),
         ])
 

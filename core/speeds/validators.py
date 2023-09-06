@@ -33,6 +33,6 @@ bookmark_validator = RegexValidator(
     regex=r"^[A-Za-z0-9' -]{1,32}$",
     message=(
         "The bookmark must consist of letters (both uppercase and lowercase), numbers, white spaces, and the following symbols (excluding the next comma): ' - , "
-        "the description should be between 1 and 32 characters in length." 
+        "the bookmark should be between 1 and 32 characters in length." 
     )
 )

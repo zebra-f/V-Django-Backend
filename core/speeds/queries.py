@@ -1,4 +1,4 @@
-from django.db.models import Q, Subquery, Case, FilteredRelation, Value, IntegerField, When, Exists, OuterRef
+from django.db.models import Q, Subquery, Case, FilteredRelation, Value, IntegerField, When, Exists, OuterRef, Prefetch
 from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedBookmark
 
 
@@ -9,7 +9,7 @@ class SpeedViewSetQueries:
         return Speed.objects.filter(is_public=True).prefetch_related(
                 'feedback_counter'
             ).annotate(
-                user_speed_feedback=Value(False),
+                user_speed_feedback_vote=Value(False),
                 user_speed_bookmark=Value(False)
             )
 
@@ -20,7 +20,7 @@ class SpeedViewSetQueries:
             ).prefetch_related(
                 'feedback_counter'
             ).annotate(
-                user_speed_feedback=Subquery(
+                user_speed_feedback_vote=Subquery(
                     SpeedFeedback.objects.filter(
                         speed=OuterRef('pk'), user=user).values('vote')
                     ),
@@ -37,7 +37,7 @@ class SpeedViewSetQueries:
             ).prefetch_related(
                 'feedback_counter'
             ).annotate(
-                user_speed_feedback=Subquery(
+                user_speed_feedback_vote=Subquery(
                     SpeedFeedback.objects.filter(
                         speed=OuterRef('pk'), user=user).values('vote')
                     ),
@@ -52,7 +52,7 @@ class SpeedViewSetQueries:
         return Speed.objects.prefetch_related(
                 'feedback_counter'
             ).annotate(
-                user_speed_feedback=Subquery(
+                user_speed_feedback_vote=Subquery(
                     SpeedFeedback.objects.filter(
                         speed=OuterRef('pk'), user=user).values('vote')
                     ),
@@ -60,4 +60,13 @@ class SpeedViewSetQueries:
                     SpeedBookmark.objects.filter(
                         speed=OuterRef('pk'), user=user).values('category')
                     )
+            )
+    
+
+class SpeedBookmarkQueries:
+
+    @staticmethod
+    def get_user_query(user):
+        return SpeedBookmark.objects.filter(
+                 Q(user=user) | (Q(speed__is_public=True) & ~Q(speed__user=user))
             )

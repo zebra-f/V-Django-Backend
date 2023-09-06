@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticatedOrR
 from rest_framework.renderers import JSONRenderer
 
 from django.shortcuts import get_object_or_404
-from django.db.models import Q, Subquery, Case, FilteredRelation, Value, IntegerField, When, Exists, OuterRef
+from django.db.models import Value
 from django.core.cache import cache
  
 
@@ -14,7 +14,7 @@ from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedBookmark
 from .permissions import UserIsAuthorized, ForbiddenAction
 from .serializers import SpeedSerializer, SpeedFeedbackSerializer, SpeedFeedbackFrontendSerializer, SpeedBookmarkSerializer
 from .renderers import CustomBrowsableAPIRenderer
-from .queries import SpeedViewSetQueries
+from .queries import SpeedViewSetQueries, SpeedBookmarkQueries
 
 class SpeedViewSet(viewsets.ModelViewSet):
     renderer_classes = [CustomBrowsableAPIRenderer, JSONRenderer]
@@ -151,7 +151,7 @@ class SpeedBookmarkViewSet(viewsets.ModelViewSet):
             return super().get_queryset()
         # for the list view
         else:
-            return SpeedBookmark.objects.filter(user=self.request.user)
+            return SpeedBookmarkQueries.get_user_query(self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
