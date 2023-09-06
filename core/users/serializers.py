@@ -1,3 +1,5 @@
+from django.db import transaction
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.validators import UniqueValidator
@@ -41,12 +43,13 @@ class UserSerializer(serializers.ModelSerializer):
         except Exception:
             raise ServiceUnavailable()
         
-        user.save()
+        with transaction.atomic():
+            user.save()
+            user_personal_profile = UserPersonalProfile(
+                user=user
+            )
+            user_personal_profile.save()
         
-        user_personal_profile = UserPersonalProfile(
-            user=user
-        )
-        user_personal_profile.save()
         return user
 
     def update(self, user, validated_data):

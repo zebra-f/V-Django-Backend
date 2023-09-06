@@ -6,6 +6,7 @@ from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django import forms
+from django.db import IntegrityError
 
 from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedReport, SpeedBookmark
 from core.users.models import User
@@ -81,6 +82,7 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
     
     def create(self, validated_data):
         instance = super().create(validated_data)
+        # default set by a signal
         instance.user_speed_feedback = 1
         instance.user_speed_bookmark = None
         return instance
@@ -131,9 +133,9 @@ class SpeedFeedbackFrontendSerializer(serializers.ModelSerializer):
         model = SpeedFeedback
         fields = ['vote', 'speed']
 
-# TODO   
-
+    
 class SpeedBookmarkSerializer(serializers.ModelSerializer):
+    category = serializers.CharField(default="favorites")
 
     class Meta:
         model= SpeedBookmark
@@ -143,7 +145,31 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
             'user', 
             'speed'
             ]
-        read_only_fields = ['id', 'user', ]    
+        read_only_fields = ['id', 'user',]
+
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except IntegrityError as e:
+            if str(e) == "UNIQUE constraint failed: speeds_speedbookmark.user_id, speeds_speedbookmark.speed_id":
+                raise serializers.ValidationError("UNIQUE constraint failed; the speed is already bookmarked.")
+            raise serializers.ValidationError("Something went wrong.")
+        except Exception as e:
+            raise serializers.ValidationError("Something went wrong.")
+        
+    def update(self, instance, validated_data):
+        """ 
+        Only the 'category' field is modifiable via the PATCH method.
+        The PUT method is disabled in views.
+        """
+        if 'user' in validated_data:
+            raise serializers.ValidationError("Can't change the user field.")
+        if 'speed' in validated_data:
+            raise serializers.ValidationError("Can't change the speed field.")
+        return super().update(instance, validated_data)
+
+# TODO   
+
 
 class SpeedReportSerializer(serializers.ModelSerializer):
 

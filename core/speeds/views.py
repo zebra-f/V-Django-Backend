@@ -151,7 +151,7 @@ class SpeedBookmarkViewSet(viewsets.ModelViewSet):
             return super().get_queryset()
         # for the list view
         else:
-            return SpeedFeedback.objects.filter(user=self.request.user)
+            return SpeedBookmark.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
