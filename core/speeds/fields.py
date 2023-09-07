@@ -9,7 +9,7 @@ class TagsField(serializers.Field):
         "incorrect_data_type": "The data type provided is incorrect; it should be a list of strings.",
         "incorect_data_item_type": "The data type provided is incorrect; it should be a list of strings.",
         "string_contains_invalid_character": (
-            "The name must consist of letters (both uppercase and lowercase), numbers, and the following symbols (excluding the next dot): ' - ."
+            "Tags must consist of letters (both uppercase and lowercase), numbers, and the following symbols (excluding the next dot): ' - ."
         ),
         "input_too_long": "Excessive or elongated tags. Remove or shorten some tags",
     }
@@ -38,8 +38,11 @@ class TagsField(serializers.Field):
             if not isinstance(item, str):
                 self.fail("incorect_data_item_type", input_type=type(item).__name__)
             
-            pattern = r"^[a-zA-Z0-9'-]$"
-            if not re.match(pattern, item):
+            pattern = r"^[a-zA-Z0-9'-]+$"
+            print(item)
+            print(re.fullmatch(pattern, item))
+            print(re.fullmatch(pattern, 'a'))
+            if not re.fullmatch(pattern, item):
                 self.fail("string_contains_invalid_character")
             
             total_len += len(item)

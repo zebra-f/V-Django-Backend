@@ -11,10 +11,10 @@ from django.core.cache import cache
  
 
 from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedBookmark
-from .permissions import UserIsAuthorized, ForbiddenAction
+from .permissions import UserIsAuthorized, ForbiddenAction, SpeedFeedbackPermissions, SpeedBookmarkPermissions
 from .serializers import SpeedSerializer, SpeedFeedbackSerializer, SpeedFeedbackFrontendSerializer, SpeedBookmarkSerializer
 from .renderers import CustomBrowsableAPIRenderer
-from .queries import SpeedViewSetQueries, SpeedBookmarkQueries
+from .queries import SpeedViewSetQueries, SpeedFeedbackQueries, SpeedBookmarkQueries
 
 class SpeedViewSet(viewsets.ModelViewSet):
     renderer_classes = [CustomBrowsableAPIRenderer, JSONRenderer]
@@ -92,6 +92,8 @@ class SpeedFeedbackViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in self.forbidden_object_level_actions:
             self.permission_classes = [ForbiddenAction]
+        if self.action in self.object_level_actions:
+            self.permission_classes = [SpeedFeedbackPermissions]
         return super().get_permissions()
 
     def get_queryset(self):
@@ -100,7 +102,7 @@ class SpeedFeedbackViewSet(viewsets.ModelViewSet):
             return super().get_queryset()
         # for the list view
         else:
-            return SpeedFeedback.objects.filter(user=self.request.user)
+            return SpeedFeedbackQueries.get_user_query(self.request.user)
 
     def get_serializer_class(self):
         if self.action in ('frontend_partial_update',):
@@ -143,6 +145,8 @@ class SpeedBookmarkViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in self.forbidden_object_level_actions:
             self.permission_classes = [ForbiddenAction]
+        if self.action in self.object_level_actions:
+            self.permission_classes = [SpeedBookmarkPermissions]
         return super().get_permissions()
     
     def get_queryset(self):

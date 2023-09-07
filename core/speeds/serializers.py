@@ -100,7 +100,6 @@ class SpeedSerializer(BaseSpeedSerializer):
 
 
 class SpeedFeedbackSerializer(serializers.ModelSerializer):
-    speed = BaseSpeedSerializer()
 
     class Meta:
         model = SpeedFeedback
@@ -111,6 +110,10 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
             'user'
             ]
         read_only_fields = ['id', 'speed']
+
+    def to_representation(self, instance):
+        self.fields['speed'] = SpeedSerializer()
+        return super().to_representation(instance)
     
     def update(self, instance, validated_data):
         # vote field may be eqaul to 0
@@ -142,7 +145,6 @@ class SpeedFeedbackFrontendSerializer(serializers.ModelSerializer):
     
 class SpeedBookmarkSerializer(serializers.ModelSerializer):
     category = serializers.CharField(default="favorites", validators=[bookmark_validator])
-    speed = BaseSpeedSerializer()
 
     class Meta:
         model= SpeedBookmark
@@ -153,6 +155,10 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
             'speed',
             ]
         read_only_fields = ['id', 'user',]
+
+    def to_representation(self, instance):
+        self.fields['speed'] = SpeedSerializer()
+        return super().to_representation(instance)
 
     def create(self, validated_data):
         try:

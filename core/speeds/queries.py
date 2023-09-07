@@ -64,10 +64,19 @@ class SpeedViewSetQueries:
             )
     
 
+class SpeedFeedbackQueries:
+
+    @staticmethod
+    def get_user_query(user: User):
+        return SpeedFeedback.objects.filter(
+            (Q(user=user) & Q(speed__user=user)) | (Q(speed__is_public=True) & ~Q(speed__user=user) & Q(user=user))
+        )
+
+
 class SpeedBookmarkQueries:
 
     @staticmethod
     def get_user_query(user: User):
         return SpeedBookmark.objects.filter(
-                 Q(user=user) | (Q(speed__is_public=True) & ~Q(speed__user=user))
+                (Q(user=user) & Q(speed__user=user)) | (Q(speed__is_public=True) & ~Q(speed__user=user) & Q(user=user))
             )
