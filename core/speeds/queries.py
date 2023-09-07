@@ -1,6 +1,6 @@
 from django.db.models import Q, Subquery, Case, FilteredRelation, Value, IntegerField, When, Exists, OuterRef, Prefetch
 from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedBookmark
-
+from core.users.models import User
 
 class SpeedViewSetQueries:
 
@@ -9,12 +9,12 @@ class SpeedViewSetQueries:
         return Speed.objects.filter(is_public=True).prefetch_related(
                 'feedback_counter'
             ).annotate(
-                user_speed_feedback_vote=Value(False),
+                user_speed_feedback_vote=Value(-3),
                 user_speed_bookmark=Value(False)
             )
 
     @staticmethod
-    def get_logged_in_user_query(user):
+    def get_authenticated_user_query(user: User):
         return Speed.objects.filter(
                 Q(is_public=True) | Q(user=user)
             ).prefetch_related(
@@ -31,7 +31,8 @@ class SpeedViewSetQueries:
             )
     
     @staticmethod
-    def get_logged_in_user_query_personal(user):
+    def get_authenticated_user_personal_query(user: User):
+        """ A query to retrieve objects created by the authenticated user. """
         return Speed.objects.filter(
                 user=user
             ).prefetch_related(
@@ -48,7 +49,7 @@ class SpeedViewSetQueries:
             )
 
     @staticmethod
-    def get_admin_query(user):
+    def get_admin_query(user: User):
         return Speed.objects.prefetch_related(
                 'feedback_counter'
             ).annotate(
@@ -66,7 +67,7 @@ class SpeedViewSetQueries:
 class SpeedBookmarkQueries:
 
     @staticmethod
-    def get_user_query(user):
+    def get_user_query(user: User):
         return SpeedBookmark.objects.filter(
                  Q(user=user) | (Q(speed__is_public=True) & ~Q(speed__user=user))
             )

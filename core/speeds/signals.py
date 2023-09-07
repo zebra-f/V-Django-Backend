@@ -3,7 +3,7 @@ from .models import SpeedFeedback, SpeedFeedbackCounter, Vote
 
 # handlers
 
-def speed_post_save_hander(sender, instance, created, **kwargs):
+def speed_post_save_handler(sender, instance, created, **kwargs):
     if created:
         speed_feedback = SpeedFeedback(
             vote=Vote.UPVOTE, 

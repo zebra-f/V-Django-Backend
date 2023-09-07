@@ -9,5 +9,5 @@ class SpeedsConfig(AppConfig):
     def ready(self) -> None:
         from .models import Speed
         from . import signals
-        post_save.connect(signals.speed_post_save_hander, sender=Speed)
+        post_save.connect(signals.speed_post_save_handler, sender=Speed)
         return super().ready()

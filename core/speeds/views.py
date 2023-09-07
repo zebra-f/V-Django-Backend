@@ -53,12 +53,12 @@ class SpeedViewSet(viewsets.ModelViewSet):
                 return SpeedViewSetQueries.get_anonymous_user_query()
             # an user
             elif not self.request.user.is_admin:
-                return SpeedViewSetQueries.get_logged_in_user_query(self.request.user)
+                return SpeedViewSetQueries.get_authenticated_user_query(self.request.user)
             # an admin
             else:
                 return SpeedViewSetQueries.get_admin_query(self.request.user)
         if self.action in ('list_personal',):
-            return SpeedViewSetQueries.get_logged_in_user_query_personal(self.request.user)
+            return SpeedViewSetQueries.get_authenticated_user_personal_query(self.request.user)
 
         return super().get_queryset()
     
@@ -68,7 +68,7 @@ class SpeedViewSet(viewsets.ModelViewSet):
     
     @action(methods=['get'], detail=False, url_path='list-personal')
     def list_personal(self, request, *args, **kwargs):
-        ''' a queryset for this action is defined in the get_queryset() method '''
+        ''' a queryset for this action is defined in the `get_queryset` method '''
         return self.list(request, *args, **kwargs)
     
     def perform_create(self, serializer):

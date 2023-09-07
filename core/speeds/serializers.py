@@ -14,20 +14,10 @@ from .validators import name_validator, description_validator, bookmark_validato
 from .fields import TagsField
 
 
-class SpeedSerializer(serializers.HyperlinkedModelSerializer):
+class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
     tags = TagsField()
     feedback_counter = serializers.StringRelatedField()
-    # user_speed_feedback directions:
-    # 1 upvote 
-    # 0 default, 
-    # -1 downvote, 
-    # -2 no data for logged in user,
-    # -3 not logged in user
-    # -4 a response for the update/post method default, nested related object in serializers with speed=SpeedSerializer() field
-    user_speed_feedback_vote = serializers.SerializerMethodField()
-    user_speed_bookmark = serializers.SerializerMethodField()
-
-    # validating Meta class fields
+    # validating Meta's class model's fields
     name = serializers.CharField(validators=[name_validator])
     description = serializers.CharField(validators=[description_validator])
 
@@ -45,19 +35,45 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
             'is_public', 
             'user', 
             'feedback_counter',
+            ]
+        read_only_fields = ['id', 'created_at', 'user', 'feedback_counter']
+
+    def get_url(self, obj):
+        return reverse('myapp:my-model-detail', args=[obj.pk])
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['user'] = instance.user.username
+        return representation
+
+
+class SpeedSerializer(BaseSpeedSerializer):
+    # user_speed_feedback directions:
+    #  1 upvote 
+    #  0 default, 
+    # -1 downvote, 
+    # -2 no data for authenticated user,
+    # -3 an anonymous user
+    # -4 a response for the update/post method default, nested related object in serializers with speed=SpeedSerializer() field
+    user_speed_feedback_vote = serializers.SerializerMethodField()
+    user_speed_bookmark = serializers.SerializerMethodField()
+
+    class Meta(BaseSpeedSerializer.Meta):
+        fields = [
+            *BaseSpeedSerializer.Meta.fields, 
             'user_speed_feedback_vote',
             'user_speed_bookmark',
             ]
-        read_only_fields = ['id', 'created_at', 'user', 'feedback_counter', 'user_speed_feedback_vote', 'user_speed_bookmark']
+        read_only_fields = [*BaseSpeedSerializer.Meta.read_only_fields, 'user_speed_feedback_vote', 'user_speed_bookmark',]
 
     def get_user_speed_feedback_vote(self, obj) -> int:
         try:
             # obj.user_speed_feebdack might be equal to 0
-            if obj.user_speed_feedback_vote:
+            # in this context user might be anonymous (-3)
+            if obj.user_speed_feedback_vote in (1, 0, -1, -3,):
                 return obj.user_speed_feedback_vote
             return -2
         except:
-            # nested related object
             return -4
     
     def get_user_speed_bookmark(self, obj) -> Union[None, str]:
@@ -67,20 +83,11 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
             # obj.user_speed_feedback == False
             return None
         except:
-            # nested related object
             return None
-    
-    def get_url(self, obj):
-        return reverse('myapp:my-model-detail', args=[obj.pk])
-    
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        representation['user'] = instance.user.username
-        return representation
     
     def create(self, validated_data):
         instance = super().create(validated_data)
-        # default set by a signal
+        # set by a signal on create
         instance.user_speed_feedback_vote = 1
         instance.user_speed_bookmark = None
         return instance
@@ -93,6 +100,7 @@ class SpeedSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class SpeedFeedbackSerializer(serializers.ModelSerializer):
+    speed = BaseSpeedSerializer()
 
     class Meta:
         model = SpeedFeedback
@@ -134,7 +142,7 @@ class SpeedFeedbackFrontendSerializer(serializers.ModelSerializer):
     
 class SpeedBookmarkSerializer(serializers.ModelSerializer):
     category = serializers.CharField(default="favorites", validators=[bookmark_validator])
-    speed = SpeedSerializer()
+    speed = BaseSpeedSerializer()
 
     class Meta:
         model= SpeedBookmark
