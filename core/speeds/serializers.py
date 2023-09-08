@@ -45,6 +45,33 @@ class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
         representation = super().to_representation(instance)
         representation['user'] = instance.user.username
         return representation
+    
+
+class BaseSpeedFeedbackSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = SpeedFeedback
+        fields = [
+            'id', 
+            'vote', 
+            'speed', 
+            'user'
+            ]
+        read_only_fields = ['id', 'user']
+
+
+class BaseSpeedBookmarkSerializer(serializers.ModelSerializer):
+    category = serializers.CharField(default="favorites", validators=[bookmark_validator])
+
+    class Meta:
+        model= SpeedBookmark
+        fields= [
+            'id', 
+            'category', 
+            'speed',
+            'user', 
+            ]
+        read_only_fields = ['id', 'user',]
 
 
 class SpeedSerializer(BaseSpeedSerializer):
@@ -99,17 +126,7 @@ class SpeedSerializer(BaseSpeedSerializer):
         return instance
 
 
-class SpeedFeedbackSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = SpeedFeedback
-        fields = [
-            'id', 
-            'vote', 
-            'speed', 
-            'user'
-            ]
-        read_only_fields = ['id', 'speed']
+class SpeedFeedbackSerializer(BaseSpeedSerializer):
 
     def to_representation(self, instance):
         self.fields['speed'] = SpeedSerializer()
@@ -143,18 +160,7 @@ class SpeedFeedbackFrontendSerializer(serializers.ModelSerializer):
         fields = ['vote', 'speed']
 
     
-class SpeedBookmarkSerializer(serializers.ModelSerializer):
-    category = serializers.CharField(default="favorites", validators=[bookmark_validator])
-
-    class Meta:
-        model= SpeedBookmark
-        fields= [
-            'id', 
-            'category', 
-            'user', 
-            'speed',
-            ]
-        read_only_fields = ['id', 'user',]
+class SpeedBookmarkSerializer(BaseSpeedBookmarkSerializer):
 
     def to_representation(self, instance):
         self.fields['speed'] = SpeedSerializer()
