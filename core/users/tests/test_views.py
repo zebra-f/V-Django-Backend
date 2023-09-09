@@ -139,7 +139,7 @@ class UserTests(APITestCase):
             }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data['username'][0], 'user with this username already exists.')
+        self.assertEqual(response.data['username'][0], 'A user with this username already exists.')
 
         data = {
             'username': 'testuserthirteen',
