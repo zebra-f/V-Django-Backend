@@ -39,7 +39,7 @@ class Speed(models.Model):
 
     # for user:
     # >>> s1.feedback.add(user, through_defaults={"vote": 1})
-    feedback = models.ManyToManyField(settings.AUTH_USER_MODEL, through='SpeedFeedback', related_name='+')
+    feedbacks = models.ManyToManyField(settings.AUTH_USER_MODEL, through='SpeedFeedback', related_name='+')
 
     created_at = models.DateTimeField(_('created at'), default=timezone.now)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)

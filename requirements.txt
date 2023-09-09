@@ -21,6 +21,7 @@ kombu==5.2.4
 meilisearch==0.28.2
 packaging==23.0
 prompt-toolkit==3.0.36
+psycopg==3.1.10
 pydantic==2.1.1
 pydantic_core==2.4.0
 PyJWT==2.6.0
