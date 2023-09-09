@@ -45,36 +45,10 @@ class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
         representation = super().to_representation(instance)
         representation['user'] = instance.user.username
         return representation
-    
-
-class BaseSpeedFeedbackSerializer(serializers.ModelSerializer):
-    
-    class Meta:
-        model = SpeedFeedback
-        fields = [
-            'id', 
-            'vote', 
-            'speed', 
-            'user'
-            ]
-        read_only_fields = ['id', 'user']
-
-
-class BaseSpeedBookmarkSerializer(serializers.ModelSerializer):
-    category = serializers.CharField(default="favorites", validators=[bookmark_validator])
-
-    class Meta:
-        model= SpeedBookmark
-        fields= [
-            'id', 
-            'category', 
-            'speed',
-            'user', 
-            ]
-        read_only_fields = ['id', 'user',]
 
 
 class SpeedSerializer(BaseSpeedSerializer):
+    ''' SpeedSerialzier for authenticated users '''
     # user_speed_feedback directions:
     #  1 upvote 
     #  0 default, 
@@ -127,9 +101,20 @@ class SpeedSerializer(BaseSpeedSerializer):
 
 
 class SpeedFeedbackSerializer(BaseSpeedSerializer):
+    """ TODO: FIX ADDING private speed """
+
+    class Meta:
+        model = SpeedFeedback
+        fields = [
+            'id', 
+            'vote', 
+            'speed', 
+            'user'
+            ]
+        read_only_fields = ['id', 'user']
 
     def to_representation(self, instance):
-        self.fields['speed'] = SpeedSerializer()
+        self.fields['speed'] = BaseSpeedSerializer()
         return super().to_representation(instance)
     
     def update(self, instance, validated_data):
@@ -159,12 +144,24 @@ class SpeedFeedbackFrontendSerializer(serializers.ModelSerializer):
         model = SpeedFeedback
         fields = ['vote', 'speed']
 
-    
-class SpeedBookmarkSerializer(BaseSpeedBookmarkSerializer):
+
+class SpeedBookmarkSerializer(serializers.ModelSerializer):
+    """ TODO: FIX ADDING private speed """
+    category = serializers.CharField(default="favorites", validators=[bookmark_validator])
 
     def to_representation(self, instance):
-        self.fields['speed'] = SpeedSerializer()
+        self.fields['speed'] = BaseSpeedSerializer()
         return super().to_representation(instance)
+
+    class Meta:
+        model= SpeedBookmark
+        fields= [
+            'id', 
+            'category',
+            'speed',
+            'user', 
+            ]
+        read_only_fields = ['id', 'user',]
 
     def create(self, validated_data):
         try:

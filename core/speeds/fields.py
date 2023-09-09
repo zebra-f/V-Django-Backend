@@ -21,12 +21,7 @@ class TagsField(serializers.Field):
     # escape_sequences = ['\\', '\'', '\"', '\n', '\t', '\r', '\b', '\f', '\v', '\ooo', '\xhh']
     
     def to_representation(self, value: str) -> list:
-        """ 
-            TODO: cahnge to split by a comma!!!
-            TODO: cahnge to split by a comma!!! 
-            TODO: cahnge to split by a comma!!! 
-        """
-        return value.split(' ')
+        return value.split(',')
     
     def to_internal_value(self, data: list[str]) -> str:
         if not isinstance(data, list):
@@ -39,9 +34,6 @@ class TagsField(serializers.Field):
                 self.fail("incorect_data_item_type", input_type=type(item).__name__)
             
             pattern = r"^[a-zA-Z0-9'-]+$"
-            print(item)
-            print(re.fullmatch(pattern, item))
-            print(re.fullmatch(pattern, 'a'))
             if not re.fullmatch(pattern, item):
                 self.fail("string_contains_invalid_character")
             
