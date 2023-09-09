@@ -58,14 +58,16 @@ class SpeedSerializer(BaseSpeedSerializer):
     # -4 a response for the update/post method default, nested related object in serializers with speed=SpeedSerializer() field
     user_speed_feedback_vote = serializers.SerializerMethodField()
     user_speed_bookmark = serializers.SerializerMethodField()
+    test = serializers.SerializerMethodField()
 
     class Meta(BaseSpeedSerializer.Meta):
         fields = [
             *BaseSpeedSerializer.Meta.fields, 
             'user_speed_feedback_vote',
             'user_speed_bookmark',
+            'test'
             ]
-        read_only_fields = [*BaseSpeedSerializer.Meta.read_only_fields, 'user_speed_feedback_vote', 'user_speed_bookmark',]
+        read_only_fields = [*BaseSpeedSerializer.Meta.read_only_fields, 'user_speed_feedback_vote', 'user_speed_bookmark', 'test']
 
     def get_user_speed_feedback_vote(self, obj) -> int:
         try:
@@ -85,6 +87,10 @@ class SpeedSerializer(BaseSpeedSerializer):
             return None
         except:
             return None
+        
+    def get_test(self, obj):
+        print(obj.test)
+        return 'test serialzier'
     
     def create(self, validated_data):
         instance = super().create(validated_data)
@@ -100,7 +106,7 @@ class SpeedSerializer(BaseSpeedSerializer):
         return instance
 
 
-class SpeedFeedbackSerializer(BaseSpeedSerializer):
+class SpeedFeedbackSerializer(serializers.ModelSerializer):
     """ TODO: FIX ADDING private speed """
 
     class Meta:
@@ -118,23 +124,10 @@ class SpeedFeedbackSerializer(BaseSpeedSerializer):
         return super().to_representation(instance)
     
     def update(self, instance, validated_data):
-        # vote field may be eqaul to 0
-        if validated_data.get('vote', None) != None:
-            prev_vote = instance.vote
-            curr_vote = validated_data['vote']
-            if prev_vote != curr_vote:
-                speed_feedback_counter = get_object_or_404(SpeedFeedbackCounter, speed=instance.speed)
-                if prev_vote == 1:
-                    speed_feedback_counter.upvotes -= 1
-                    if curr_vote == -1:
-                        speed_feedback_counter.downvotes += 1
-                if prev_vote == -1:
-                    speed_feedback_counter.downvotes -= 1
-                    if curr_vote == 1:
-                        speed_feedback_counter.upvotes += 1
-                speed_feedback_counter.save()
-        
-        return super().update(instance, validated_data)
+        # temporary solution
+        x =  super().update(instance, validated_data)
+        SpeedFeedbackCounter.recount_all_votes()
+        return x
 
  
 class SpeedFeedbackFrontendSerializer(serializers.ModelSerializer):
@@ -167,7 +160,7 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
         try:
             return super().create(validated_data)
         except IntegrityError as e:
-            if str(e) == "UNIQUE constraint failed: speeds_speedbookmark.user_id, speeds_speedbookmark.speed_id":
+            if "already exists" in str(e):
                 raise serializers.ValidationError("UNIQUE constraint failed; the speed is already bookmarked.")
             raise serializers.ValidationError("Something went wrong.")
         except Exception as e:

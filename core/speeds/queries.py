@@ -1,6 +1,8 @@
 from django.db.models import Q, Subquery, Case, FilteredRelation, Value, IntegerField, When, Exists, OuterRef, Prefetch
 from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedBookmark
 from core.users.models import User
+from django.contrib.postgres.expressions import ArraySubquery
+from django.db.models.functions import JSONObject
 
 class SpeedViewSetQueries:
 
@@ -15,6 +17,9 @@ class SpeedViewSetQueries:
 
     @staticmethod
     def get_authenticated_user_query(user: User):
+        test_subquery = SpeedFeedback.objects.filter(
+                            speed=OuterRef('pk'), user=user
+                        ).values(json=JSONObject(test_vote="vote", test_id="id"))
         return Speed.objects.filter(
                 Q(is_public=True) | Q(user=user)
             ).prefetch_related(
@@ -27,7 +32,8 @@ class SpeedViewSetQueries:
                 user_speed_bookmark=Subquery(
                     SpeedBookmark.objects.filter(
                         speed=OuterRef('pk'), user=user).values('category')
-                    )
+                    ),
+                test=ArraySubquery(test_subquery)
             )
     
     @staticmethod
