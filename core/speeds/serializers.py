@@ -10,6 +10,7 @@ from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedReport, Spe
 from core.users.models import User
 from .validators import name_validator, description_validator, bookmark_validator
 from .fields import TagsField
+from .decorators import prevent_unauthorized_create_and_data_reveal
 
 
 class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
@@ -68,18 +69,25 @@ class SpeedSerializer(BaseSpeedSerializer):
             ]
 
     def get_user_speed_feedback(self, obj) -> None | dict:
-        if len(obj.user_speed_feedback) == 1:
-            return obj.user_speed_feedback[0]
+        try:
+            print('\na', obj.user_speed_feedback)
+            if len(obj.user_speed_feedback) == 1:
+                return obj.user_speed_feedback[0]
+        except:
+            return None
         return None
     
     def get_user_speed_bookmark(self, obj) -> None | dict:
-        if len(obj.user_speed_bookmark) == 1:
-            return obj.user_speed_bookmark[0]
+        try:
+            print('\nb', obj.user_speed_feedback)
+            if len(obj.user_speed_bookmark) == 1:
+                return obj.user_speed_bookmark[0]
+        except:
+            return None
         return None
 
 
 class SpeedFeedbackSerializer(serializers.ModelSerializer):
-    """ TODO: FIX ADDING private speed """
 
     class Meta:
         model = SpeedFeedback
@@ -95,6 +103,10 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
         self.fields['speed'] = BaseSpeedSerializer()
         return super().to_representation(instance)
     
+    @prevent_unauthorized_create_and_data_reveal
+    def create(self, validated_data):
+        return super().create(validated_data)
+    
     def update(self, instance, validated_data):
         # temporary solution
         x =  super().update(instance, validated_data)
@@ -103,7 +115,6 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
 
 
 class SpeedBookmarkSerializer(serializers.ModelSerializer):
-    """ TODO: FIX ADDING private speed """
     category = serializers.CharField(default="favorites", validators=[bookmark_validator])
 
     def to_representation(self, instance):
@@ -120,6 +131,7 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
             ]
         read_only_fields = ['id', 'user',]
 
+    @prevent_unauthorized_create_and_data_reveal
     def create(self, validated_data):
         try:
             return super().create(validated_data)

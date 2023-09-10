@@ -5,7 +5,6 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.renderers import JSONRenderer
 
-from django.shortcuts import get_object_or_404
 from django.db.models import Value
 from django.core.cache import cache
  
@@ -18,7 +17,7 @@ from .queries import SpeedViewSetQueries, SpeedFeedbackQueries, SpeedBookmarkQue
 
 class SpeedViewSet(viewsets.ModelViewSet):
     renderer_classes = [CustomBrowsableAPIRenderer, JSONRenderer]
-    queryset = Speed.objects.prefetch_related('feedback_counter').annotate(user_speed_feedback=Value(-3))
+    queryset = Speed.objects.filter(is_public=True).prefetch_related('feedback_counter')
     serializer_class = SpeedSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     object_level_actions = [
@@ -47,7 +46,8 @@ class SpeedViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_queryset(self):
-        if self.action in ('list', 'retrieve',):
+            if self.action in ('list_personal',) and not self.request.user.is_anonymous:
+                return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'personal')
             # an anonymous user
             if self.request.user.is_anonymous:
                 return SpeedViewSetQueries.get_anonymous_user_query()
@@ -57,10 +57,9 @@ class SpeedViewSet(viewsets.ModelViewSet):
             # an admin
             else:
                 return SpeedViewSetQueries.get_admin_query(self.request.user)
-        if self.action in ('list_personal',):
-            return SpeedViewSetQueries.get_authenticated_user_personal_query(self.request.user, 'personal')
 
-        return super().get_queryset()
+
+
     
     def get_serializer_class(self):
         if self.request.user.is_anonymous:
