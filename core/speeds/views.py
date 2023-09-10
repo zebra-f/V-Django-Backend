@@ -46,26 +46,22 @@ class SpeedViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_queryset(self):
-            if self.action in ('list_personal',) and not self.request.user.is_anonymous:
-                return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'personal')
-            # an anonymous user
-            if self.request.user.is_anonymous:
-                return SpeedViewSetQueries.get_anonymous_user_query()
-            # an user
-            elif not self.request.user.is_admin:
-                return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'public_and_personal')
-            # an admin
-            else:
-                return SpeedViewSetQueries.get_admin_query(self.request.user)
+        if self.action in ('list_personal',) and not self.request.user.is_anonymous:
+            return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'personal')
+        # an anonymous user
+        if self.request.user.is_anonymous:
+            return SpeedViewSetQueries.get_anonymous_user_query()
+        # an user
+        elif not self.request.user.is_admin:
+            return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'public_and_personal')
+        # an admin
+        else:
+            return SpeedViewSetQueries.get_admin_query(self.request.user)
 
-
-
-    
     def get_serializer_class(self):
         if self.request.user.is_anonymous:
             return BaseSpeedSerializer
         return super().get_serializer_class()
-    
     
     @action(methods=['get'], detail=False, url_path='list-personal')
     def list_personal(self, request, *args, **kwargs):

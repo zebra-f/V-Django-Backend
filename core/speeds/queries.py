@@ -58,10 +58,13 @@ class SpeedViewSetQueries:
 
 
 class SpeedFeedbackQueries:
-    ''' Retrieves user's feedbacks of user's speeds or user's feedbacks of public speeds (which may have been changed to private after voting) '''
 
     @staticmethod
     def get_user_query(user: User):
+        ''' 
+        Retrieves user's feedbacks of user's speeds or user's feedbacks of public speeds 
+        (which may have been changed to private after voting).
+        '''
         return SpeedFeedback.objects\
                 .filter(
                     (Q(user=user) & Q(speed__user=user)) | (Q(speed__is_public=True) & ~Q(speed__user=user) & Q(user=user))
@@ -72,7 +75,10 @@ class SpeedBookmarkQueries:
 
     @staticmethod
     def get_user_query(user: User):
-        ''' Retrieves user's bookmarks of user's speeds or user's bookmarks of public speeds (which may have been changed to private after bookmarking) '''
+        ''' 
+        Retrieves user's bookmarks of user's speeds or user's bookmarks of public speeds 
+        (which may have been changed to private after bookmarking).
+        '''
         return SpeedBookmark.objects\
                 .filter(
                     (Q(user=user) & Q(speed__user=user)) | (Q(speed__is_public=True) & ~Q(speed__user=user) & Q(user=user))
