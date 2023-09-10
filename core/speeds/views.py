@@ -12,7 +12,7 @@ from django.core.cache import cache
 
 from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedBookmark
 from .permissions import UserIsAuthorized, ForbiddenAction, SpeedFeedbackPermissions, SpeedBookmarkPermissions
-from .serializers import SpeedSerializer, SpeedFeedbackSerializer, SpeedFeedbackFrontendSerializer, SpeedBookmarkSerializer
+from .serializers import BaseSpeedSerializer, SpeedSerializer, SpeedFeedbackSerializer, SpeedBookmarkSerializer
 from .renderers import CustomBrowsableAPIRenderer
 from .queries import SpeedViewSetQueries, SpeedFeedbackQueries, SpeedBookmarkQueries
 
@@ -53,18 +53,20 @@ class SpeedViewSet(viewsets.ModelViewSet):
                 return SpeedViewSetQueries.get_anonymous_user_query()
             # an user
             elif not self.request.user.is_admin:
-                return SpeedViewSetQueries.get_authenticated_user_query(self.request.user)
+                return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'public_and_personal')
             # an admin
             else:
                 return SpeedViewSetQueries.get_admin_query(self.request.user)
         if self.action in ('list_personal',):
-            return SpeedViewSetQueries.get_authenticated_user_personal_query(self.request.user)
+            return SpeedViewSetQueries.get_authenticated_user_personal_query(self.request.user, 'personal')
 
         return super().get_queryset()
     
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        return response
+    def get_serializer_class(self):
+        if self.request.user.is_anonymous:
+            return BaseSpeedSerializer
+        return super().get_serializer_class()
+    
     
     @action(methods=['get'], detail=False, url_path='list-personal')
     def list_personal(self, request, *args, **kwargs):
@@ -103,30 +105,9 @@ class SpeedFeedbackViewSet(viewsets.ModelViewSet):
         # for the list view
         else:
             return SpeedFeedbackQueries.get_user_query(self.request.user)
-
-    def get_serializer_class(self):
-        if self.action in ('frontend_partial_update',):
-            return SpeedFeedbackFrontendSerializer
-        return super().get_serializer_class()
-
+    
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
-    @action(methods=['patch'], detail=False, url_path='frontend-partial-update')
-    def frontend_partial_update(self, request):
-        ''' used by a frontend client, with no access to a SpeedFeedback primary key '''
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            speed_feedback = get_object_or_404(
-                SpeedFeedback,
-                speed=serializer.data['speed'], 
-                user=self.request.user
-                )
-            speed_feedback.vote = serializer.data['vote']
-            speed_feedback.save(update_fields=['vote'])
-            return Response(status=status.HTTP_200_OK, data=serializer.data)
-        
-        return Response(status=status.HTTP_400_BAD_REQUEST)
     
 
 class SpeedBookmarkViewSet(viewsets.ModelViewSet):
@@ -159,6 +140,3 @@ class SpeedBookmarkViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-        
-
-

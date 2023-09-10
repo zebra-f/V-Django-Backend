@@ -1,5 +1,3 @@
-from typing import Union
-
 from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField
 
@@ -36,7 +34,12 @@ class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
             'user', 
             'feedback_counter',
             ]
-        read_only_fields = ['id', 'created_at', 'user', 'feedback_counter']
+        read_only_fields = [
+            'id', 
+            'created_at', 
+            'user', 
+            'feedback_counter'
+            ]
 
     def get_url(self, obj):
         return reverse('myapp:my-model-detail', args=[obj.pk])
@@ -49,61 +52,30 @@ class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
 
 class SpeedSerializer(BaseSpeedSerializer):
     ''' SpeedSerialzier for authenticated users '''
-    # user_speed_feedback directions:
-    #  1 upvote 
-    #  0 default, 
-    # -1 downvote, 
-    # -2 no data for authenticated user,
-    # -3 an anonymous user
-    # -4 a response for the update/post method default, nested related object in serializers with speed=SpeedSerializer() field
-    user_speed_feedback_vote = serializers.SerializerMethodField()
+    user_speed_feedback = serializers.SerializerMethodField()
     user_speed_bookmark = serializers.SerializerMethodField()
-    test = serializers.SerializerMethodField()
 
     class Meta(BaseSpeedSerializer.Meta):
         fields = [
             *BaseSpeedSerializer.Meta.fields, 
-            'user_speed_feedback_vote',
+            'user_speed_feedback',
             'user_speed_bookmark',
-            'test'
             ]
-        read_only_fields = [*BaseSpeedSerializer.Meta.read_only_fields, 'user_speed_feedback_vote', 'user_speed_bookmark', 'test']
+        read_only_fields = [
+            *BaseSpeedSerializer.Meta.read_only_fields, 
+            'user_speed_feedback', 
+            'user_speed_bookmark',
+            ]
 
-    def get_user_speed_feedback_vote(self, obj) -> int:
-        try:
-            # obj.user_speed_feebdack might be equal to 0
-            # in this context user might be anonymous (-3)
-            if obj.user_speed_feedback_vote in (1, 0, -1, -3,):
-                return obj.user_speed_feedback_vote
-            return -2
-        except:
-            return -4
+    def get_user_speed_feedback(self, obj) -> None | dict:
+        if len(obj.user_speed_feedback) == 1:
+            return obj.user_speed_feedback[0]
+        return None
     
-    def get_user_speed_bookmark(self, obj) -> Union[None, str]:
-        try:
-            if obj.user_speed_bookmark:
-                return obj.user_speed_bookmark
-            # obj.user_speed_feedback == False
-            return None
-        except:
-            return None
-        
-    def get_test(self, obj):
-        print(obj.test)
-        return 'test serialzier'
-    
-    def create(self, validated_data):
-        instance = super().create(validated_data)
-        # set by a signal on create
-        instance.user_speed_feedback_vote = 1
-        instance.user_speed_bookmark = None
-        return instance
-    
-    def update(self, instance, validated_data):
-        instance = super().update(instance, validated_data)
-        instance.user_speed_feedback_vote = -4
-        instance.user_speed_bookmark = None
-        return instance
+    def get_user_speed_bookmark(self, obj) -> None | dict:
+        if len(obj.user_speed_bookmark) == 1:
+            return obj.user_speed_bookmark[0]
+        return None
 
 
 class SpeedFeedbackSerializer(serializers.ModelSerializer):
@@ -128,14 +100,6 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
         x =  super().update(instance, validated_data)
         SpeedFeedbackCounter.recount_all_votes()
         return x
-
- 
-class SpeedFeedbackFrontendSerializer(serializers.ModelSerializer):
-    ''' Utilized by methods in views.py tailored for frontend requests that do not include a Vote pk. '''
-
-    class Meta:
-        model = SpeedFeedback
-        fields = ['vote', 'speed']
 
 
 class SpeedBookmarkSerializer(serializers.ModelSerializer):
