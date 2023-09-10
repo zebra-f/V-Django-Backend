@@ -69,21 +69,13 @@ class SpeedSerializer(BaseSpeedSerializer):
             ]
 
     def get_user_speed_feedback(self, obj) -> None | dict:
-        try:
-            print('\na', obj.user_speed_feedback)
-            if len(obj.user_speed_feedback) == 1:
-                return obj.user_speed_feedback[0]
-        except:
-            return None
+        if len(obj.user_speed_feedback) == 1:
+            return obj.user_speed_feedback[0]
         return None
     
     def get_user_speed_bookmark(self, obj) -> None | dict:
-        try:
-            print('\nb', obj.user_speed_feedback)
-            if len(obj.user_speed_bookmark) == 1:
-                return obj.user_speed_bookmark[0]
-        except:
-            return None
+        if len(obj.user_speed_bookmark) == 1:
+            return obj.user_speed_bookmark[0]
         return None
 
 

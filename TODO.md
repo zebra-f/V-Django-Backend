@@ -5,4 +5,4 @@
 5. Change paths in UserViewSet, replace _ with -
 6. Check the response in SpeedFeedback, SpeedBoomark on create
 7. Check SpeedFeedback `get_permissions` method
-8. pagination, check bookmark delete
+8. pagination, check bookmark delete, check constraint error in feedback create

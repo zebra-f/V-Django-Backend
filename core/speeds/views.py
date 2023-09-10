@@ -115,6 +115,7 @@ class SpeedBookmarkViewSet(viewsets.ModelViewSet):
     # a user should always be authorized for any action in this ViewSet
     permission_classes = [UserIsAuthorized]
     object_level_actions = [
+        'destroy',
         'retrieve',
         'partial_update',
         ]

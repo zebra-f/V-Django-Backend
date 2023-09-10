@@ -7,7 +7,7 @@ from .models import Speed
 
 def prevent_unauthorized_create_and_data_reveal(func):
     '''
-    Decorate the create method of SpeedFeedbackSerializer, SpeedBookmarkSerializer method.
+    Decorate the create method of SpeedFeedbackSerializer and SpeedBookmarkSerializer.
     Prevents authenticated users from creating objects like SpeedFeedback, SpeedBookmark 
     that could reveal non-public speed data created by another user.
     ("Another user might have modified the 'is_public' attribute of their Speed object to `False`. 
@@ -24,7 +24,7 @@ def prevent_unauthorized_create_and_data_reveal(func):
         user = self.context['request'].user
 
         if user != speed.user and speed.is_public == False:
-            raise PermissionDenied("You do not have permission to perform this action. b")
+            raise PermissionDenied("You do not have permission to perform this action.")
         
         return func(*args, **kwargs)
     
