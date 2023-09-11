@@ -20,7 +20,7 @@ class TagsField(serializers.Field):
     #     }
     # escape_sequences = ['\\', '\'', '\"', '\n', '\t', '\r', '\b', '\f', '\v', '\ooo', '\xhh']
     
-    def to_representation(self, value: str) -> list:
+    def to_representation(self, value: str) -> list[str]:
         return value.split(',')
     
     def to_internal_value(self, data: list[str]) -> str:

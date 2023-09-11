@@ -10,7 +10,7 @@ from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedReport, Spe
 from core.users.models import User
 from .validators import name_validator, description_validator, bookmark_validator
 from .fields import TagsField
-from .decorators import prevent_unauthorized_create_and_data_reveal
+from .decorators import prevent_unauthorized_create_and_data_reveal, restrict_field_updates
 
 
 class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
@@ -47,7 +47,10 @@ class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
+        
         representation['user'] = instance.user.username
+        representation['feedback_counter'] = int(representation['feedback_counter'])
+        
         return representation
 
 
@@ -99,7 +102,12 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         return super().create(validated_data)
     
+    @restrict_field_updates('speed', 'user')
     def update(self, instance, validated_data):
+        """ 
+        Only the 'vote' field is modifiable via the PATCH method.
+        The PUT method is disabled in views.
+        """
         # temporary solution
         x =  super().update(instance, validated_data)
         SpeedFeedbackCounter.recount_all_votes()
@@ -134,18 +142,13 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
         except Exception as e:
             raise serializers.ValidationError("Something went wrong.")
         
+    @restrict_field_updates('speed', 'user')
     def update(self, instance, validated_data):
         """ 
         Only the 'category' field is modifiable via the PATCH method.
         The PUT method is disabled in views.
         """
-        if 'user' in validated_data:
-            raise serializers.ValidationError("Can't change the user field.")
-        if 'speed' in validated_data:
-            raise serializers.ValidationError("Can't change the speed field.")
         return super().update(instance, validated_data)
-
-# TODO   
 
 
 class SpeedReportSerializer(serializers.ModelSerializer):
@@ -153,6 +156,6 @@ class SpeedReportSerializer(serializers.ModelSerializer):
     class Meta:
         model= SpeedReport
         fields= ['id', 'report', 'other', 'user', 'speed']
-        read_only_fields = ['id']
+        read_only_fields = ['id', 'user']
 
 
