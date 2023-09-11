@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField
+from rest_framework.validators import UniqueTogetherValidator
 
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -16,7 +17,7 @@ from .decorators import prevent_unauthorized_create_and_data_reveal, restrict_fi
 class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
     tags = TagsField()
     feedback_counter = serializers.StringRelatedField()
-    # validating Meta's class model's fields
+
     name = serializers.CharField(validators=[name_validator])
     description = serializers.CharField(validators=[description_validator])
 
@@ -93,6 +94,13 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
             'user'
             ]
         read_only_fields = ['id', 'user']
+        validators = [
+            UniqueTogetherValidator(
+                queryset=SpeedFeedback.objects.all(),
+                fields=['user', 'speed'],
+                message='UNIQUE constraint failed; the speed is already bookmarked.'
+            )
+        ]
 
     def to_representation(self, instance):
         self.fields['speed'] = BaseSpeedSerializer()
@@ -105,8 +113,8 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
     @restrict_field_updates('speed', 'user')
     def update(self, instance, validated_data):
         """ 
-        Only the 'vote' field is modifiable via the PATCH method.
-        The PUT method is disabled in views.
+        Only the 'vote' field is modifiable via the HTTP `PATCH` method.
+        The HTTP `PUT` method is disabled in the feedback related view.
         """
         # temporary solution
         x =  super().update(instance, validated_data)
@@ -130,23 +138,23 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
             'user', 
             ]
         read_only_fields = ['id', 'user',]
+        validators = [
+            UniqueTogetherValidator(
+                queryset=SpeedBookmark.objects.all(),
+                fields=['user', 'speed'],
+                message='UNIQUE constraint failed; the speed is already bookmarked.'
+            )
+        ]
 
     @prevent_unauthorized_create_and_data_reveal
     def create(self, validated_data):
-        try:
-            return super().create(validated_data)
-        except IntegrityError as e:
-            if "already exists" in str(e):
-                raise serializers.ValidationError("UNIQUE constraint failed; the speed is already bookmarked.")
-            raise serializers.ValidationError("Something went wrong.")
-        except Exception as e:
-            raise serializers.ValidationError("Something went wrong.")
+        return super().create(validated_data)
         
     @restrict_field_updates('speed', 'user')
     def update(self, instance, validated_data):
         """ 
-        Only the 'category' field is modifiable via the PATCH method.
-        The PUT method is disabled in views.
+        Only the 'category' field is modifiable via the HTTP `PATCH` method.
+        The HTTP `PUT` method is disabled in the bookmark related view.
         """
         return super().update(instance, validated_data)
 

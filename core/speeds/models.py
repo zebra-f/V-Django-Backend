@@ -99,6 +99,8 @@ class SpeedFeedbackCounter(models.Model):
             object.recount_votes()
     
     def __str__(self):
+        # don't modify the return statement
+        # the returned value is used by serializers.StringRelatedField()
         return f'{self.score}'
 
 
@@ -122,15 +124,15 @@ class SpeedReport(models.Model):
             models.UniqueConstraint(fields=('user', 'speed'), name="rp_unique_user_speed")
             ]
     
-    class Report(models.TextChoices):
+    class ReportReason(models.TextChoices):
         SPAM = "spam"
         INCORRECT_DATA = "incorrcect data"
         NON_ENGLISH = "non english"
         INAPPROPRIATE_LANGUAGE = "inappropriate language"
         OTHER = "other"
 
-    report = models.TextField(_('report'), choices=Report.choices, null=True, blank=True)
-    other = models.TextField(_('other'), max_length=256, blank=True, null=True)
+    report_reason = models.TextField(_('report reason'), choices=ReportReason.choices, null=True, blank=True)
+    detail = models.TextField(_('detail'), max_length=256, blank=True, null=True)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='report')
