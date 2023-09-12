@@ -117,8 +117,10 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         self.fields['speed'] = BaseSpeedSerializer()
-        self.fields['user'] = instance.user.username
-        return super().to_representation(instance)
+        
+        representation = super().to_representation(instance)
+        representation['user'] = instance.user.username
+        return representation
     
     @prevent_unauthorized_create_and_data_reveal
     def create(self, validated_data):
@@ -159,8 +161,10 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         self.fields['speed'] = BaseSpeedSerializer()
-        self.fields['user'] = instance.user.username
-        return super().to_representation(instance)
+
+        representation = super().to_representation(instance)
+        representation['user'] = instance.user.username
+        return representation
 
     @prevent_unauthorized_create_and_data_reveal
     def create(self, validated_data):
@@ -198,8 +202,10 @@ class SpeedReportSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         self.fields['speed'] = BaseSpeedSerializer()
-        self.fields['user'] = instance.user.username
-        return super().to_representation(instance)
+        
+        representation = super().to_representation(instance)
+        representation['user'] = instance.user.username
+        return representation
 
     def create(self, validated_data):
         obj, created = SpeedReport.objects.update_or_create(
@@ -212,6 +218,3 @@ class SpeedReportSerializer(serializers.ModelSerializer):
             )
         
         return obj
-    
-
-
