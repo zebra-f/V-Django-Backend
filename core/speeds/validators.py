@@ -29,10 +29,20 @@ description_validator = RegexValidator(
     )
 )
 
-bookmark_validator = RegexValidator(
+# SpeedBookmark.category (CharField)
+category_validator = RegexValidator(
     regex=r"^[A-Za-z0-9' -]{1,32}$",
     message=(
-        "The bookmark must consist of letters (both uppercase and lowercase), numbers, white spaces, and the following symbols (excluding the next comma): ' - , "
-        "the bookmark should be between 1 and 32 characters in length." 
+        "The category must consist of letters (both uppercase and lowercase), numbers, white spaces, and the following symbols (excluding the next comma): ' - , "
+        "the category should be between 1 and 32 characters in length." 
+    )
+)
+
+# SpeedReport.detail (TextField)
+detail_validator = RegexValidator(
+    regex=r"^[A-Za-z0-9'.,,:;?!() -]{1,256}$",
+    message=(
+        "The category must consist of letters (both uppercase and lowercase), numbers, white spaces, and the following symbols: ' . , , : ; ? ! ( ) - , "
+        "the category should be between 1 and 256 characters in length." 
     )
 )

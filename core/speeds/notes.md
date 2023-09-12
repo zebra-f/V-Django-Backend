@@ -114,3 +114,13 @@ class SpeedFeedbackFrontendSerializer(serializers.ModelSerializer):
         fields = ['vote', 'speed']
 ```
 
+http_method_names = [
+        "get",
+        "post",
+        "put",
+        "patch",
+        "delete",
+        "head",
+        "options",
+        "trace",
+    ]
