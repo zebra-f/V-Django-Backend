@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.conf import settings
 from django.core.validators import MaxValueValidator
+from django.contrib.postgres.indexes import GinIndex
 
 from uuid import uuid4
 
@@ -12,7 +13,8 @@ from core.speeds.validators import CustomMinValueValidator
 class Speed(models.Model):
 
     class Meta:
-        ordering = ['-created_at']
+        ordering = ['-updated_at']
+        indexes = [GinIndex(fields=['tags'])]
 
     class SpeedType(models.TextChoices):
         AVERAGE = 'average'
@@ -24,8 +26,8 @@ class Speed(models.Model):
     
     name = models.CharField(_('name'), max_length=128)
     description = models.CharField(_('description'), max_length=128, null=True, blank=True)
-    speed_type = models.TextField(_('speed type'), choices=SpeedType.choices)
-    tags = models.TextField(_('tags'), max_length=128)
+    speed_type = models.CharField(_('speed type'), choices=SpeedType.choices)
+    tags = models.CharField(_('tags'), max_length=128)
     
     kmph = models.FloatField(_('speed in km/h'), validators=[
         MaxValueValidator(1_080_000_000),
@@ -55,6 +57,7 @@ class Vote(models.IntegerChoices):
 class SpeedFeedback(models.Model):
 
     class Meta:
+        ordering = ['-created_at']
         constraints = [
             models.UniqueConstraint(fields=('user', 'speed'), name="fb_unique_user_speed")
             ]
@@ -107,6 +110,7 @@ class SpeedFeedbackCounter(models.Model):
 class SpeedBookmark(models.Model):
     
     class Meta:
+        ordering = ['-created_at']
         constraints = [
             models.UniqueConstraint(fields=('user', 'speed'), name="bm_unique_user_speed")
             ]
@@ -122,6 +126,7 @@ class SpeedBookmark(models.Model):
 class SpeedReport(models.Model):
 
     class Meta:
+        ordering = ['-updated_at']
         constraints = [
             models.UniqueConstraint(fields=('user', 'speed'), name="rp_unique_user_speed")
             ]
@@ -133,8 +138,8 @@ class SpeedReport(models.Model):
         INAPPROPRIATE_LANGUAGE = "inappropriate language"
         OTHER = "other"
 
-    report_reason = models.TextField(_('report reason'), choices=ReportReason.choices, null=True, blank=True)
-    detail = models.TextField(_('detail'), max_length=256, blank=True, null=True)
+    report_reason = models.CharField(_('report reason'), choices=ReportReason.choices, null=True, blank=True)
+    detail = models.CharField(_('detail'), max_length=256, blank=True, null=True)
 
     created_at = models.DateTimeField(_('created at'), default=timezone.now)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)

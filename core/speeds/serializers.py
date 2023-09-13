@@ -107,13 +107,6 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
             'id', 
             'user',
             ]
-        validators = [
-            UniqueTogetherValidator(
-                queryset=SpeedFeedback.objects.all(),
-                fields=['user', 'speed'],
-                message='The UNIQUE constraint failed; the speed object has already been voted on.'
-            )
-        ]
 
     def to_representation(self, instance):
         self.fields['speed'] = BaseSpeedSerializer()

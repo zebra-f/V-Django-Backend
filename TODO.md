@@ -5,4 +5,6 @@
 5. Change paths in UserViewSet, replace _ with -
 6. Check the response in SpeedFeedback, SpeedBoomark on create
 7. Check SpeedFeedback `get_permissions` method
-8. pagination, check bookmark delete, check constraint error in feedback create
+8. Pagination, check bookmark delete, check constraint error in feedback create
+9. Add speed filtering (tag)
+10. CORS

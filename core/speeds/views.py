@@ -45,16 +45,26 @@ class SpeedViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_queryset(self):
-        if self.action in ('personal_list',) and not self.request.user.is_anonymous:
-            return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'personal')
-        if self.request.user.is_anonymous:
-            return SpeedViewSetQueries.get_anonymous_user_query()
-        # an user
-        elif not self.request.user.is_admin:
-            return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'public_and_personal')
-        # an admin
-        else:
-            return SpeedViewSetQueries.get_admin_query(self.request.user)
+        
+        def select_queryset(self):
+            if self.action in ('personal_list',) and not self.request.user.is_anonymous:
+                return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'personal')
+            
+            if self.request.user.is_anonymous:
+                return SpeedViewSetQueries.get_anonymous_user_query()
+            # an user
+            elif not self.request.user.is_admin:
+                return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'public_and_personal')
+            # an admin
+            else:
+                return SpeedViewSetQueries.get_admin_query(self.request.user)
+            
+        # filtering
+        tag = self.request.query_params.get('tag')
+        if tag:
+            return select_queryset(self).filter(tags__icontains=tag).order_by('-feedback_counter')
+        
+        return select_queryset(self)
 
     def get_serializer_class(self):
         if self.request.user.is_anonymous:
