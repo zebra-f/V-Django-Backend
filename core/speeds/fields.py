@@ -14,12 +14,6 @@ class TagsField(serializers.Field):
         "input_too_long": "Excessive or elongated tags. Remove or shorten some tags",
     }
     
-    # used for testing
-    # invalid_symbols = {
-    #     '*', '&', '$', '%', '#', '!', '?', ':', ';', '"', '[', ']', '{', '}', '(', ')', '/', '+', '=', '<', '>',
-    #     }
-    # escape_sequences = ['\\', '\'', '\"', '\n', '\t', '\r', '\b', '\f', '\v', '\ooo', '\xhh']
-    
     def to_representation(self, value: str) -> list[str]:
         return value.split(',')
     

@@ -24,7 +24,6 @@ class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
     ''' 
     Serialzier for unauthenticated users. 
     '''
-
     tags = TagsField()
     feedback_counter = serializers.StringRelatedField()
 
@@ -47,8 +46,7 @@ class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
             'feedback_counter',
             ]
         read_only_fields = [
-            'id', 
-            'created_at', 
+            'id',
             'user', 
             'feedback_counter'
             ]
@@ -69,7 +67,6 @@ class SpeedSerializer(BaseSpeedSerializer):
     ''' 
     Serialzier for authenticated users. 
     '''
-
     user_speed_feedback = serializers.SerializerMethodField()
     user_speed_bookmark = serializers.SerializerMethodField()
 
@@ -106,7 +103,10 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
             'speed', 
             'user'
             ]
-        read_only_fields = ['id', 'user']
+        read_only_fields = [
+            'id', 
+            'user',
+            ]
         validators = [
             UniqueTogetherValidator(
                 queryset=SpeedFeedback.objects.all(),
@@ -157,7 +157,10 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
             'speed',
             'user', 
             ]
-        read_only_fields = ['id', 'user',]
+        read_only_fields = [
+            'id', 
+            'user',
+            ]
 
     def to_representation(self, instance):
         self.fields['speed'] = BaseSpeedSerializer()
@@ -197,8 +200,14 @@ class SpeedReportSerializer(serializers.ModelSerializer):
             'report_reason', 
             'detail', 
             'user', 
-            'speed']
-        read_only_fields = ['id', 'user']
+            'speed',
+            'updated_at'
+            ]
+        read_only_fields = [
+            'id', 
+            'user', 
+            'updated_at'
+            ]
 
     def to_representation(self, instance):
         self.fields['speed'] = BaseSpeedSerializer()

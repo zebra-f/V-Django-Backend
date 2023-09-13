@@ -37,8 +37,6 @@ class Speed(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.CASCADE)
     is_public = models.BooleanField(default=True)
 
-    # for user:
-    # >>> s1.feedback.add(user, through_defaults={"vote": 1})
     feedbacks = models.ManyToManyField(settings.AUTH_USER_MODEL, through='SpeedFeedback', related_name='+')
 
     created_at = models.DateTimeField(_('created at'), default=timezone.now)
@@ -63,6 +61,8 @@ class SpeedFeedback(models.Model):
 
     # aka direction
     vote = models.IntegerField(_('vote'), choices=Vote.choices, default=Vote.DEFAULT_STATE)
+
+    created_at = models.DateTimeField(_('created at'), default=timezone.now)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE)
@@ -112,6 +112,8 @@ class SpeedBookmark(models.Model):
             ]
 
     category = models.CharField(_('category'), max_length=32, blank=True, null=True)
+
+    created_at = models.DateTimeField(_('created at'), default=timezone.now)
     
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='bookmark')
@@ -133,6 +135,9 @@ class SpeedReport(models.Model):
 
     report_reason = models.TextField(_('report reason'), choices=ReportReason.choices, null=True, blank=True)
     detail = models.TextField(_('detail'), max_length=256, blank=True, null=True)
+
+    created_at = models.DateTimeField(_('created at'), default=timezone.now)
+    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='report')

@@ -7,12 +7,28 @@ from django.contrib.postgres.expressions import ArraySubquery
 from django.db.models.functions import JSONObject
 
 class SpeedViewSetQueries:
-
+    
+    # anonymous users
+    
     @staticmethod
     def get_anonymous_user_query():
         return Speed.objects\
                 .filter(is_public=True)\
                 .prefetch_related('feedback_counter')
+    
+    # authenticated users
+    
+    @staticmethod
+    def get_user_speed_feebdack_subquery(user: User):
+        return SpeedFeedback.objects\
+                .filter(speed=OuterRef('pk'), user=user)\
+                .values(json=JSONObject(feedback_id="id", feedback_vote="vote"))
+
+    @staticmethod
+    def get_user_speed_bookmark_subquery(user: User):
+        return SpeedBookmark.objects\
+                .filter(speed=OuterRef('pk'), user=user)\
+                .values(json=JSONObject(bookmark_id="id", bookmark_category="category"))
 
     @staticmethod
     def get_authenticated_user_query(user: User, mode: Literal['public_and_personal', 'personal']):
@@ -25,35 +41,21 @@ class SpeedViewSetQueries:
         elif mode == 'personal':
             query_filter = Q(user=user)
 
-        user_speed_feedback = SpeedFeedback.objects\
-                .filter(speed=OuterRef('pk'), user=user)\
-                .values(json=JSONObject(feedback_id="id", feedback_vote="vote"))
-        user_speed_bookmark = SpeedBookmark.objects\
-                .filter(speed=OuterRef('pk'), user=user)\
-                .values(json=JSONObject(bookmark_id="id", bookmark_category="category"))
-        
         return Speed.objects\
                 .filter(query_filter)\
                 .prefetch_related('feedback_counter')\
                 .annotate(
-                    user_speed_feedback=ArraySubquery(user_speed_feedback),
-                    user_speed_bookmark=ArraySubquery(user_speed_bookmark)
+                    user_speed_feedback=ArraySubquery(SpeedViewSetQueries.get_user_speed_feebdack_subquery(user)),
+                    user_speed_bookmark=ArraySubquery(SpeedViewSetQueries.get_user_speed_bookmark_subquery(user))
                 )
     
     @staticmethod
     def get_admin_query(user: User):
-        user_speed_feedback = SpeedFeedback.objects\
-                .filter(speed=OuterRef('pk'), user=user)\
-                .values(json=JSONObject(feedback_id="id", feedback_vote="vote"))
-        user_speed_bookmark = SpeedBookmark.objects\
-                .filter(speed=OuterRef('pk'), user=user)\
-                .values(json=JSONObject(bookmark_id="id", bookmark_category="category"))
-        
         return Speed.objects\
                 .prefetch_related('feedback_counter')\
                 .annotate(
-                    user_speed_feedback=ArraySubquery(user_speed_feedback),
-                    user_speed_bookmark=ArraySubquery(user_speed_bookmark)
+                    user_speed_feedback=ArraySubquery(SpeedViewSetQueries.get_user_speed_feebdack_subquery(user)),
+                    user_speed_bookmark=ArraySubquery(SpeedViewSetQueries.get_user_speed_bookmark_subquery(user))
                 )
 
 

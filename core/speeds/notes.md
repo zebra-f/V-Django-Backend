@@ -114,6 +114,7 @@ class SpeedFeedbackFrontendSerializer(serializers.ModelSerializer):
         fields = ['vote', 'speed']
 ```
 
+```
 http_method_names = [
         "get",
         "post",
@@ -124,3 +125,9 @@ http_method_names = [
         "options",
         "trace",
     ]
+# used for testing
+# invalid_symbols = {
+#     '*', '&', '$', '%', '#', '!', '?', ':', ';', '"', '[', ']', '{', '}', '(', ')', '/', '+', '=', '<', '>',
+#     }
+# escape_sequences = ['\\', '\'', '\"', '\n', '\t', '\r', '\b', '\f', '\v', '\ooo', '\xhh']
+```
