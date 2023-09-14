@@ -1,4 +1,4 @@
-from .models import SpeedFeedback, SpeedFeedbackCounter, Vote
+from .models import SpeedFeedback, Vote
 
 
 # handlers
@@ -11,9 +11,3 @@ def speed_post_save_handler(sender, instance, created, **kwargs):
             speed=instance
             )
         speed_feedback.save()
-        
-        speed_feedback_counter = SpeedFeedbackCounter(
-            speed=instance, 
-            upvotes=1
-            )
-        speed_feedback_counter.save()

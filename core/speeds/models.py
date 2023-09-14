@@ -1,9 +1,10 @@
-from django.db import models, transaction
+from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.conf import settings
 from django.core.validators import MaxValueValidator
 from django.contrib.postgres.indexes import GinIndex
+from django.contrib.postgres.fields import ArrayField
 
 from uuid import uuid4
 
@@ -27,7 +28,7 @@ class Speed(models.Model):
     name = models.CharField(_('name'), max_length=128)
     description = models.CharField(_('description'), max_length=128, null=True, blank=True)
     speed_type = models.CharField(_('speed type'), choices=SpeedType.choices)
-    tags = models.CharField(_('tags'), max_length=128)
+    tags = ArrayField(models.CharField(max_length=20), size=4, blank=True)
     
     kmph = models.FloatField(_('speed in km/h'), validators=[
         MaxValueValidator(1_080_000_000),
@@ -43,6 +44,37 @@ class Speed(models.Model):
 
     created_at = models.DateTimeField(_('created at'), default=timezone.now)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+
+    # feedback counter 
+    downvotes = models.PositiveIntegerField(_('downvotes'), default=0)
+    # default `1` is set accordingly to SpeedFeedback; which is created by the `speed_post_save_handler` signal
+    upvotes = models.PositiveIntegerField(_('upvotes'), default=1)
+    score = models.IntegerField(_('score'), default=1)
+
+    def set_score(self) -> int:
+        self.score = self.upvotes - self.downvotes
+        self.save()
+        return self.score
+    
+    def recount_votes(self):
+        downvotes_counter = 0
+        upvotes_counter = 0
+        for feedback in SpeedFeedback.objects.select_for_update().filter(speed=self):
+            if feedback.vote == Vote.DOWNVOTE:
+                downvotes_counter += 1
+            if feedback.vote == Vote.UPVOTE:
+                upvotes_counter += 1
+    
+        self.downvotes = downvotes_counter
+        self.upvotes = upvotes_counter
+        self.score = upvotes_counter - downvotes_counter
+        self.save(update_fields=['downvotes', 'upvotes', 'score'])
+
+    @classmethod
+    def recount_all_votes(cls):
+        queryset = cls.objects.all()
+        for object in queryset:
+            object.recount_votes()
 
     def __repr__(self) -> str:
         return self.name + ' ' + self.description
@@ -68,43 +100,43 @@ class SpeedFeedback(models.Model):
     created_at = models.DateTimeField(_('created at'), default=timezone.now)
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    speed = models.ForeignKey(Speed, on_delete=models.CASCADE)
+    speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='feedback')
     
 
-class SpeedFeedbackCounter(models.Model):
-    speed = models.OneToOneField(Speed, on_delete=models.CASCADE, related_name='feedback_counter')
+# class SpeedFeedbackCounter(models.Model):
+#     speed = models.OneToOneField(Speed, on_delete=models.CASCADE, related_name='feedback_counter')
     
-    downvotes = models.PositiveIntegerField(_('downvotes'), default=0)
-    upvotes = models.PositiveIntegerField(_('upvotes'), default=0)
+#     downvotes = models.PositiveIntegerField(_('downvotes'), default=0)
+#     upvotes = models.PositiveIntegerField(_('upvotes'), default=0)
 
-    @property
-    def score(self) -> int:
-        return self.upvotes - self.downvotes
+#     @property
+#     def score(self) -> int:
+#         return self.upvotes - self.downvotes
     
-    def recount_votes(self):
-        with transaction.atomic():
-            downvotes_counter = 0
-            upvotes_counter = 0
-            for feedback in SpeedFeedback.objects.select_for_update().filter(speed=self.speed):
-                if feedback.vote == Vote.DOWNVOTE:
-                    downvotes_counter += 1
-                if feedback.vote == Vote.UPVOTE:
-                    upvotes_counter += 1
+#     def recount_votes(self):
+#         with transaction.atomic():
+#             downvotes_counter = 0
+#             upvotes_counter = 0
+#             for feedback in SpeedFeedback.objects.select_for_update().filter(speed=self.speed):
+#                 if feedback.vote == Vote.DOWNVOTE:
+#                     downvotes_counter += 1
+#                 if feedback.vote == Vote.UPVOTE:
+#                     upvotes_counter += 1
         
-            self.downvotes = downvotes_counter
-            self.upvotes = upvotes_counter
-            self.save(update_fields=['downvotes', 'upvotes'])
+#             self.downvotes = downvotes_counter
+#             self.upvotes = upvotes_counter
+#             self.save(update_fields=['downvotes', 'upvotes'])
 
-    @classmethod
-    def recount_all_votes(cls):
-        queryset = cls.objects.all()
-        for object in queryset:
-            object.recount_votes()
+#     @classmethod
+#     def recount_all_votes(cls):
+#         queryset = cls.objects.all()
+#         for object in queryset:
+#             object.recount_votes()
     
-    def __str__(self):
-        # don't modify the return statement
-        # the returned value is used by serializers.StringRelatedField()
-        return f'{self.score}'
+#     def __str__(self):
+#         # don't modify the return statement
+#         # the returned value is used by serializers.StringRelatedField()
+#         return f'{self.score}'
 
 
 class SpeedBookmark(models.Model):

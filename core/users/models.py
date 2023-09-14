@@ -67,7 +67,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     email_verified = models.BooleanField(default=False)
     
-    username = models.CharField(_('username'), max_length=32, unique=True)
+    username = models.CharField(_('username'), max_length=32, unique=True, db_index=True)
 
     created_at = models.DateTimeField(_('created at'), default=timezone.now)
     updated_at = models.DateTimeField(_('updated at'), auto_now=True)

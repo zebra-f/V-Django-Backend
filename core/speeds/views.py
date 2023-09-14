@@ -25,7 +25,7 @@ from .queries import SpeedViewSetQueries, SpeedFeedbackQueries, SpeedBookmarkQue
 
 class SpeedViewSet(viewsets.ModelViewSet):
     renderer_classes = [CustomBrowsableAPIRenderer, JSONRenderer]
-    queryset = Speed.objects.filter(is_public=True).prefetch_related('feedback_counter')
+    queryset = Speed.objects.filter(is_public=True)
     serializer_class = SpeedSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     
@@ -45,31 +45,26 @@ class SpeedViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_queryset(self):
+        print('bbbbbbbbbbbbbbbbb')
+        if self.action in ('personal_list',) and not self.request.user.is_anonymous:
+            return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'personal')
         
-        def select_queryset(self):
-            if self.action in ('personal_list',) and not self.request.user.is_anonymous:
-                return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'personal')
-            
-            if self.request.user.is_anonymous:
-                return SpeedViewSetQueries.get_anonymous_user_query()
-            # an user
-            elif not self.request.user.is_admin:
-                return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'public_and_personal')
-            # an admin
-            else:
-                return SpeedViewSetQueries.get_admin_query(self.request.user)
-            
-        # filtering
-        tag = self.request.query_params.get('tag')
-        if tag:
-            return select_queryset(self).filter(tags__icontains=tag).order_by('-feedback_counter')
+        if self.request.user.is_anonymous:
+            return SpeedViewSetQueries.get_anonymous_user_query()
+        # an user
+        elif not self.request.user.is_admin:
+            return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'public_and_personal')
+        # an admin
+        else:
+            return SpeedViewSetQueries.get_admin_query(self.request.user)
         
-        return select_queryset(self)
-
     def get_serializer_class(self):
         if self.request.user.is_anonymous:
             return BaseSpeedSerializer
         return super().get_serializer_class()
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
     
     @action(methods=['get'], detail=False, url_path='personal-list')
     def personal_list(self, request, *args, **kwargs):
@@ -80,9 +75,6 @@ class SpeedViewSet(viewsets.ModelViewSet):
         A permission for this action is defined in the `get_permissions`.
         '''
         return self.list(request, *args, **kwargs)
-    
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
 
 
 class SpeedFeedbackViewSet(viewsets.ModelViewSet):
@@ -147,10 +139,6 @@ class SpeedBookmarkViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-
-    def update(self, request, *args, **kwargs):
-        print(self.http_method_names)
-        return super().update(request, *args, **kwargs)
 
 
 class SpeedReportViewSet(viewsets.ModelViewSet):

@@ -5,9 +5,9 @@ from rest_framework.validators import UniqueTogetherValidator
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django import forms
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
-from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedReport, SpeedBookmark
+from .models import Speed, SpeedFeedback, SpeedReport, SpeedBookmark, Vote
 from .validators import (
     name_validator, 
     description_validator, 
@@ -25,7 +25,6 @@ class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
     Serialzier for unauthenticated users. 
     '''
     tags = TagsField()
-    feedback_counter = serializers.StringRelatedField()
 
     name = serializers.CharField(validators=[name_validator])
     description = serializers.CharField(validators=[description_validator])
@@ -43,12 +42,12 @@ class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
             'estimated', 
             'is_public', 
             'user', 
-            'feedback_counter',
+            'score',
             ]
         read_only_fields = [
             'id',
             'user', 
-            'feedback_counter'
+            'score'
             ]
 
     def get_url(self, obj):
@@ -58,7 +57,6 @@ class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
         representation = super().to_representation(instance)
         
         representation['user'] = instance.user.username
-        representation['feedback_counter'] = int(representation['feedback_counter'])
         
         return representation
 
@@ -134,8 +132,8 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
         The HTTP `PUT` method is disabled in the feedback related view.
         '''
         # temporary solution
-        x =  super().update(instance, validated_data)
-        SpeedFeedbackCounter.recount_all_votes()
+        x = super().update(instance, validated_data)
+        Speed.recount_all_votes()
         return x
 
 

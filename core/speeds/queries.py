@@ -1,7 +1,7 @@
 from typing import Literal
 
-from django.db.models import Q, Subquery, Case, FilteredRelation, Value, IntegerField, When, Exists, OuterRef, Prefetch
-from .models import Speed, SpeedFeedback, SpeedFeedbackCounter, SpeedBookmark
+from django.db.models import Q, OuterRef
+from .models import Speed, SpeedFeedback, SpeedBookmark
 from core.users.models import User
 from django.contrib.postgres.expressions import ArraySubquery
 from django.db.models.functions import JSONObject
@@ -13,13 +13,12 @@ class SpeedViewSetQueries:
     @staticmethod
     def get_anonymous_user_query():
         return Speed.objects\
-                .filter(is_public=True)\
-                .prefetch_related('feedback_counter')
+                .filter(is_public=True)
     
     # authenticated users
     
     @staticmethod
-    def get_user_speed_feebdack_subquery(user: User):
+    def get_user_speed_feedback_subquery(user: User):
         return SpeedFeedback.objects\
                 .filter(speed=OuterRef('pk'), user=user)\
                 .values(json=JSONObject(feedback_id="id", feedback_vote="vote"))
@@ -40,21 +39,19 @@ class SpeedViewSetQueries:
             query_filter = Q(is_public=True) | Q(user=user)
         elif mode == 'personal':
             query_filter = Q(user=user)
-
+        print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\n\n')
         return Speed.objects\
                 .filter(query_filter)\
-                .prefetch_related('feedback_counter')\
                 .annotate(
-                    user_speed_feedback=ArraySubquery(SpeedViewSetQueries.get_user_speed_feebdack_subquery(user)),
+                    user_speed_feedback=ArraySubquery(SpeedViewSetQueries.get_user_speed_feedback_subquery(user)),
                     user_speed_bookmark=ArraySubquery(SpeedViewSetQueries.get_user_speed_bookmark_subquery(user))
                 )
     
     @staticmethod
     def get_admin_query(user: User):
         return Speed.objects\
-                .prefetch_related('feedback_counter')\
                 .annotate(
-                    user_speed_feedback=ArraySubquery(SpeedViewSetQueries.get_user_speed_feebdack_subquery(user)),
+                    user_speed_feedback=ArraySubquery(SpeedViewSetQueries.get_user_speed_feedback_subquery(user)),
                     user_speed_bookmark=ArraySubquery(SpeedViewSetQueries.get_user_speed_bookmark_subquery(user))
                 )
 

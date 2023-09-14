@@ -8,3 +8,4 @@
 8. Pagination, check bookmark delete, check constraint error in feedback create
 9. Add speed filtering (tag)
 10. CORS
+11. add index on username
