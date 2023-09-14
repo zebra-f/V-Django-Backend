@@ -86,9 +86,32 @@ class SpeedSerializer(BaseSpeedSerializer):
         return None
     
     def get_user_speed_bookmark(self, obj) -> None | dict:
+        # a workaround for the 'POST' method
+        request = self.context.get('request')
+        if request.method == 'POST':
+            return None
+        
         if len(obj.user_speed_bookmark) == 1:
             return obj.user_speed_bookmark[0]
         return None
+    
+    def create(self, validated_data):
+        instance = super().create(validated_data)
+        speed_feedback = SpeedFeedback(
+            vote=Vote.UPVOTE, 
+            user=instance.user, 
+            speed=instance
+            )
+        speed_feedback.save()
+
+        # don't save, a workaround for the 'POST' method
+        instance.user_speed_feedback = [
+            {
+            'feedback_id': speed_feedback.id,
+            'feedback_vote': speed_feedback.vote,
+            },
+        ]
+        return instance
 
 
 class SpeedFeedbackSerializer(serializers.ModelSerializer):

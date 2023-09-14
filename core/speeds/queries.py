@@ -39,7 +39,6 @@ class SpeedViewSetQueries:
             query_filter = Q(is_public=True) | Q(user=user)
         elif mode == 'personal':
             query_filter = Q(user=user)
-        print('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n\n\n')
         return Speed.objects\
                 .filter(query_filter)\
                 .annotate(

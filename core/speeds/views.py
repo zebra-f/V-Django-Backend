@@ -45,7 +45,6 @@ class SpeedViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_queryset(self):
-        print('bbbbbbbbbbbbbbbbb')
         if self.action in ('personal_list',) and not self.request.user.is_anonymous:
             return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'personal')
         
