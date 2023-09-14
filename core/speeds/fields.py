@@ -21,20 +21,20 @@ class TagsField(serializers.Field):
     def to_internal_value(self, data: list[str]) -> list[str]:
         if not isinstance(data, list):
             self.fail("incorrect_data_type", input_type=type(data).__name__)
-        
-        # validation
         if len(data) > 4:
             self.fail('data_too_long')
 
+        tags = []
         for item in data:
             if not isinstance(item, str):
                 self.fail("incorect_data_item_type", input_type=type(item).__name__)
-
             if len(item) > 20:
                 self.fail("item_too_long")
             
             pattern = r"^[a-zA-Z0-9'-]+$"
             if not re.fullmatch(pattern, item):
                 self.fail("string_contains_invalid_character")
+
+            tags.append(item.lower())
             
-        return data
+        return tags
