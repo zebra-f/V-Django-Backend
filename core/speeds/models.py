@@ -6,6 +6,8 @@ from django.core.validators import MaxValueValidator
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.fields import ArrayField
 
+from django.db import transaction
+
 from uuid import uuid4
 
 from core.speeds.validators import CustomMinValueValidator
@@ -59,16 +61,17 @@ class Speed(models.Model):
     def recount_votes(self):
         downvotes_counter = 0
         upvotes_counter = 0
-        for feedback in SpeedFeedback.objects.select_for_update().filter(speed=self):
-            if feedback.vote == Vote.DOWNVOTE:
-                downvotes_counter += 1
-            if feedback.vote == Vote.UPVOTE:
-                upvotes_counter += 1
-    
-        self.downvotes = downvotes_counter
-        self.upvotes = upvotes_counter
-        self.score = upvotes_counter - downvotes_counter
-        self.save(update_fields=['downvotes', 'upvotes', 'score'])
+        with transaction.atomic():
+            for feedback in SpeedFeedback.objects.select_for_update().filter(speed=self):
+                if feedback.vote == Vote.DOWNVOTE:
+                    downvotes_counter += 1
+                if feedback.vote == Vote.UPVOTE:
+                    upvotes_counter += 1
+        
+            self.downvotes = downvotes_counter
+            self.upvotes = upvotes_counter
+            self.score = upvotes_counter - downvotes_counter
+            self.save(update_fields=['downvotes', 'upvotes', 'score'])
 
     @classmethod
     def recount_all_votes(cls):

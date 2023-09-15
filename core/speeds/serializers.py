@@ -2,10 +2,8 @@ from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 
-from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from django import forms
-from django.db import IntegrityError, transaction
+from django.db import transaction
 
 from .models import Speed, SpeedFeedback, SpeedReport, SpeedBookmark, Vote
 from .validators import (
@@ -154,10 +152,29 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
         Only the 'vote' field is modifiable via the HTTP `PATCH` method.
         The HTTP `PUT` method is disabled in the feedback related view.
         '''
-        # temporary solution
-        x = super().update(instance, validated_data)
-        Speed.recount_all_votes()
-        return x
+        
+        prev_vote = instance.vote
+        curr_vote = validated_data['vote']
+        if curr_vote == prev_vote:
+            return instance
+        
+        speed = instance.speed
+        
+        if prev_vote == -1:
+            speed.downvotes -= 1
+        elif prev_vote == 1:
+            speed.upvotes -= 1
+        
+        if curr_vote == -1:
+            speed.downvotes += 1
+        elif curr_vote == 1:
+            speed.upvotes += 1
+
+        speed.score = speed.upvotes - speed.downvotes
+        
+        with transaction.atomic():
+            speed.save()
+            return super().update(instance, validated_data)
 
 
 class SpeedBookmarkSerializer(serializers.ModelSerializer):
