@@ -56,6 +56,8 @@ INSTALLED_APPS = [
     'core.speeds',
 
     'rest_framework_simplejwt.token_blacklist',
+
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -184,7 +186,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ]
+    ],
 }
 
 SIMPLE_JWT = {

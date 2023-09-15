@@ -4,7 +4,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.renderers import JSONRenderer
 from rest_framework.exceptions import NotFound
 
-from django.core.cache import cache
+from django_filters.rest_framework import DjangoFilterBackend
  
 from .models import Speed, SpeedFeedback, SpeedBookmark, SpeedReport
 from .permissions import (
@@ -21,13 +21,19 @@ from .serializers import (
 )
 from core.common.renderers import CustomBrowsableAPIRenderer
 from .queries import SpeedViewSetQueries, SpeedFeedbackQueries, SpeedBookmarkQueries
+from .filters import SpeedFilter
 
 
 class SpeedViewSet(viewsets.ModelViewSet):
     renderer_classes = [CustomBrowsableAPIRenderer, JSONRenderer]
+    
     queryset = Speed.objects.filter(is_public=True)
     serializer_class = SpeedSerializer
+    
     permission_classes = [IsAuthenticatedOrReadOnly]
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = SpeedFilter
     
     object_level_actions = ['destroy', 'update', 'partial_update',]
     object_level_actions_to_restrict = [*object_level_actions]
@@ -83,6 +89,7 @@ class SpeedFeedbackViewSet(viewsets.ModelViewSet):
     queryset = SpeedFeedback.objects.all()
     serializer_class = SpeedFeedbackSerializer
     permission_classes = [UserIsAuthorized]
+    
     not_allowed_http_method_names = ['put', 'delete']
     http_method_names = []
     for method_name in viewsets.ModelViewSet.http_method_names:
@@ -115,6 +122,7 @@ class SpeedBookmarkViewSet(viewsets.ModelViewSet):
     queryset = SpeedBookmark.objects.all()
     serializer_class = SpeedBookmarkSerializer
     permission_classes = [UserIsAuthorized]
+    
     not_allowed_http_method_names = ['put']
     http_method_names = []
     for method_name in viewsets.ModelViewSet.http_method_names:
