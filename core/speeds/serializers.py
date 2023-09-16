@@ -158,23 +158,28 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
         if curr_vote == prev_vote:
             return instance
         
-        speed = instance.speed
-        
-        if prev_vote == -1:
-            speed.downvotes -= 1
-        elif prev_vote == 1:
-            speed.upvotes -= 1
-        
-        if curr_vote == -1:
-            speed.downvotes += 1
-        elif curr_vote == 1:
-            speed.upvotes += 1
-
-        speed.score = speed.upvotes - speed.downvotes
-        
+        # prevents a race conditions
         with transaction.atomic():
+            speed = Speed.objects.select_for_update()\
+                                 .get(id=instance.speed.id)
+            
+            if prev_vote == -1:
+                speed.downvotes -= 1
+            elif prev_vote == 1:
+                speed.upvotes -= 1
+            
+            if curr_vote == -1:
+                speed.downvotes += 1
+            elif curr_vote == 1:
+                speed.upvotes += 1
+
+            speed.score = speed.upvotes - speed.downvotes
             speed.save()
-            return super().update(instance, validated_data)
+
+            speed_feedback = super().update(instance, validated_data)
+            # fix for the nested representation of the Speed's score
+            speed_feedback.speed.score = speed.score
+            return speed_feedback
 
 
 class SpeedBookmarkSerializer(serializers.ModelSerializer):

@@ -9,3 +9,4 @@
 9. Add speed filtering (tag)
 10. CORS
 11. add index on username
+12. remove speefeedback signal
