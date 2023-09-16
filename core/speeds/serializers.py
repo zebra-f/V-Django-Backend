@@ -14,6 +14,7 @@ from .validators import (
 )
 from .fields import TagsField
 from .decorators import prevent_unauthorized_create_and_data_reveal
+from .validators import tags_validator
 from core.users.models import User
 from core.common.decorators import restrict_field_updates
 
@@ -22,7 +23,7 @@ class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
     ''' 
     Serialzier for unauthenticated users. 
     '''
-    tags = TagsField()
+    tags = TagsField(validators=[tags_validator])
 
     name = serializers.CharField(validators=[name_validator])
     description = serializers.CharField(validators=[description_validator])

@@ -18,23 +18,34 @@ class CustomMinValueValidator(MinValueValidator):
 @deconstructible
 class TagsValidator:
 
-    def __call__(self, tags: list, max_length: int=4):
+    def __call__(self, tags: list[str], max_length: int=4):
+        error_messages = {}
+        valid = True
+        
         if not isinstance(tags, list):
-            raise serializers.ValidationError("The data type provided is incorrect; it should be a list.")
-        if len(tags) > max_length:
-            raise serializers.ValidationError(f"Maximum limit exceeded. The list can have a maximum of {max_length} items.")
+            error_messages['incorrect_data_type'] = "The data type provided is incorrect; it should be a list."
+            valid = False
+        if isinstance(tags, list) and len(tags) > max_length:
+            error_messages['incorect_data_item_type'] = f"Maximum limit exceeded. The list can have a maximum of {max_length} items."
+            valid = False
 
-        for tag in tags:
-            if not isinstance(tag, str):
-                raise serializers.ValidationError("The data's item type provided is incorrect; it should be a string.")
-            if len(tag) > 20:
-                raise serializers.ValidationError("Tag length exceeds the maximum limit. Each tag inside can have a maximum of 20 characters.")
-            
-            pattern = r"^[a-zA-Z0-9'-]+$"
-            if not re.fullmatch(pattern, tag):
-                raise serializers.ValidationError(
-                    "Tags must consist of letters (both uppercase and lowercase), numbers, and the following symbols (excluding the next dot): ' - ."
-                    )
+        if isinstance(tags, list):
+            for tag in tags:
+                if not isinstance(tag, str):
+                    error_messages['incorect_data_item_type'] = "The data's item type provided is incorrect; it should be a string."
+                    valid = False
+                if isinstance(tag, str) and len(tag) > 20:
+                    error_messages['item_too_long'] = "Tag length exceeds the maximum limit. Each tag can have a maximum of 20 characters."
+                    valid = False 
+                
+                pattern = r"^[a-zA-Z0-9'-]+$"
+                if isinstance(tag, str) and not re.fullmatch(pattern, tag):
+                    error_messages['string_contains_invalid_character'] = "Tags must consist of letters (both uppercase and lowercase), numbers, and the following symbols (excluding the next dot): ' - ."
+                    valid = False
+        
+        if not valid:
+            raise serializers.ValidationError(error_messages)
+
 
 # Speed.tags (ArrayField)
 tags_validator = TagsValidator()
