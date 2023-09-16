@@ -30,6 +30,8 @@ class SpeedFeedbackPermissions(UserIsAuthorized):
     def has_object_permission(self, request, view, obj):
         has_object_permission = super().has_object_permission(request, view, obj)
         
+        # prevent authenticated users from updating objects
+        # that could reveal non-public speed data created by another user
         if request.user != obj.speed.user:
             if not obj.speed.is_public:
                 return False
