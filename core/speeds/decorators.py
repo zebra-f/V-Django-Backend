@@ -14,7 +14,7 @@ def prevent_unauthorized_create_and_data_reveal(func):
     ("The `update` method is protected by a permission.")
     '''
 
-    @wraps
+    @wraps(func)
     def wrapper(*args, **kwargs):
         if len(args) != 2:
                 raise ValueError("Invalid number of keyword arguments.")
