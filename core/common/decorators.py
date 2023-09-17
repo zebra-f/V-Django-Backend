@@ -1,12 +1,14 @@
+from functools import wraps
+
 from rest_framework.exceptions import MethodNotAllowed
 from rest_framework import serializers
-
 
 def check_http_method_allowance(func):
     '''
     Checks whether an action is allowed for ViewsSets.
     '''
 
+    @wraps(func)
     def wrapper(*args, **kwargs):
         viewset_instance = args[0]
         request = args[1]
@@ -23,18 +25,23 @@ def check_http_method_allowance(func):
 
 def restrict_field_updates(*fields: str):
     '''
-    Applies field-level restrictions to the update method (that forbids the `PUT` HTTP method) 
+    Applies field-level restrictions to the Serializers's update method via  the `PATCH` method
     of serializers.ModelSerializer to prevent certain fields from being updated.
     '''
     
     def decorator(func):
-
+        
+        @wraps(func)
         def wrapper(*args, **kwargs):
             if len(args) != 3:
                 raise ValueError("Invalid number of keyword arguments.")
             
+            serializer_instance = args[0]
             validated_data = args[2]
-            
+
+            if serializer_instance.context.get('request').method != 'PATCH':
+                return func(*args, **kwargs)
+
             for field_name in fields:
                 if field_name in validated_data:
                     raise serializers.ValidationError(f"Can't change the {field_name} field.")

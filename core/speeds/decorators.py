@@ -1,3 +1,5 @@
+from functools import wraps
+
 from rest_framework.exceptions import PermissionDenied, MethodNotAllowed
 
 
@@ -12,6 +14,7 @@ def prevent_unauthorized_create_and_data_reveal(func):
     ("The `update` method is protected by a permission.")
     '''
 
+    @wraps
     def wrapper(*args, **kwargs):
         if len(args) != 2:
                 raise ValueError("Invalid number of keyword arguments.")
