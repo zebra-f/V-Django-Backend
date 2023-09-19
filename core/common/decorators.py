@@ -25,8 +25,8 @@ def check_http_method_allowance(func):
 
 def restrict_field_updates(*fields: str):
     '''
-    Applies field-level restrictions to the Serializers's update method via  the `PATCH` method
-    of serializers.ModelSerializer to prevent certain fields from being updated.
+    Applies field-level restrictions to the Serializers's update method via the `PATCH` HTTP method
+    to prevent certain fields from being updated.
     '''
     
     def decorator(func):
