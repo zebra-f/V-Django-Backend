@@ -1,7 +1,7 @@
 from django.utils.datastructures import MultiValueDict
 from django_filters import rest_framework as filters, widgets
 
-from .models import Speed
+from .models import Speed, SpeedFeedback, SpeedBookmark
 from .validators import tags_validator
 
 
@@ -22,7 +22,7 @@ class CustomQueryArrayWidget(widgets.QueryArrayWidget):
 
         # add the following `if` statement
         if len(values_list) == 1:
-            if isinstance(values_list[0], str):
+            if isinstance(values_list[0], str) and len(values_list[0]) > 0:
                 ret = values_list[0].lower().split(',')
             else:
                 ret = []
@@ -33,6 +33,7 @@ class CustomQueryArrayWidget(widgets.QueryArrayWidget):
             ret = [x.lower() for x in values_list if x and isinstance(x, str)]  
         else:
             ret = []
+        
         return list(set(ret))
 
 
@@ -52,6 +53,27 @@ class SpeedFilter(filters.FilterSet):
             'tags'
             ]
         
-    def tags_filter(self, queryset, name: str, value: list):
+    def tags_filter(self, queryset, name: str, value: list[str]):
         tags_validator(value, max_length=4)
         return queryset.filter(tags__contains=value)
+    
+
+class SpeedFeedbackFilter(filters.FilterSet):
+    speed = filters.UUIDFilter()
+
+    class Meta:
+        model = SpeedFeedback
+        fields = [
+            'speed'
+        ]
+
+
+class SpeedBookmarkFilter(filters.FilterSet):
+    speed = filters.UUIDFilter()
+
+    class Meta:
+        model = SpeedBookmark
+        fields = [
+            'speed'
+        ]
+

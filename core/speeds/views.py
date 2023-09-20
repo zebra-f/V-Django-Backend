@@ -6,7 +6,12 @@ from rest_framework.exceptions import NotFound
 
 from django_filters.rest_framework import DjangoFilterBackend
  
-from .models import Speed, SpeedFeedback, SpeedBookmark, SpeedReport
+from .models import (
+    Speed, 
+    SpeedFeedback, 
+    SpeedBookmark, 
+    SpeedReport
+)
 from .permissions import (
     UserIsAuthorized, 
     SpeedFeedbackPermissions, 
@@ -20,8 +25,16 @@ from .serializers import (
     SpeedReportSerializer
 )
 from core.common.renderers import CustomBrowsableAPIRenderer
-from .queries import SpeedViewSetQueries, SpeedFeedbackQueries, SpeedBookmarkQueries
-from .filters import SpeedFilter
+from .queries import (
+    SpeedViewSetQueries, 
+    SpeedFeedbackQueries, 
+    SpeedBookmarkQueries
+)
+from .filters import (
+    SpeedFilter, 
+    SpeedFeedbackFilter, 
+    SpeedBookmarkFilter
+)
 
 
 class SpeedViewSet(viewsets.ModelViewSet):
@@ -89,6 +102,9 @@ class SpeedFeedbackViewSet(viewsets.ModelViewSet):
     queryset = SpeedFeedback.objects.all()
     serializer_class = SpeedFeedbackSerializer
     permission_classes = [UserIsAuthorized]
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = SpeedFeedbackFilter
     
     not_allowed_http_method_names = ['put', 'delete']
     http_method_names = []
@@ -122,6 +138,9 @@ class SpeedBookmarkViewSet(viewsets.ModelViewSet):
     queryset = SpeedBookmark.objects.all()
     serializer_class = SpeedBookmarkSerializer
     permission_classes = [UserIsAuthorized]
+
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = SpeedBookmarkFilter
     
     not_allowed_http_method_names = ['put']
     http_method_names = []
@@ -178,4 +197,3 @@ class SpeedReportViewSet(viewsets.ModelViewSet):
         if self.request.user.is_admin:
             return super().destroy(request, *args, **kwargs)
         raise NotFound()
-    
