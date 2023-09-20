@@ -10,3 +10,4 @@
 10. CORS
 11. add index on username
 12. remove speefeedback signal
+13. Change email backed (admins, logger)

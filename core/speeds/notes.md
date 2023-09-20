@@ -1,3 +1,6 @@
+Don't read it!
+
+
 **Potentially essential:**  
 a queryset that allows to retrieve every field in the related SpeedFeedback model  
 
@@ -87,7 +90,7 @@ class SpeedSerializer(BaseSpeedSerializer):
         return instance
 ```
 
-partial update wihout id
+partial update wihout an id
 
 ```
     @action(methods=['patch'], detail=False, url_path='frontend-partial-update')
@@ -130,4 +133,21 @@ http_method_names = [
 #     '*', '&', '$', '%', '#', '!', '?', ':', ';', '"', '[', ']', '{', '}', '(', ')', '/', '+', '=', '<', '>',
 #     }
 # escape_sequences = ['\\', '\'', '\"', '\n', '\t', '\r', '\b', '\f', '\v', '\ooo', '\xhh']
+```
+
+cache idea for voting
+```
+# key = cached_votes, value: dict of tuples
+# (user-uuid, post-uuid) in cached_votes lookup time complexity (O(1))
+
+# add or replace cached_votes[(user-uuid, post-uuid)] = new_vote
+
+{
+    cached_votes: {
+        (user1-uuid, post1-uuid): vote,
+        (user2-uuid, post1-uuid): vote,
+        (user1-uuid, post2-uuid): vote
+    }
+}
+
 ```

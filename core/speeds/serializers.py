@@ -1,10 +1,12 @@
 from rest_framework import serializers
 from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField
 from rest_framework.validators import UniqueTogetherValidator
+from rest_framework.exceptions import APIException
 
 from django.urls import reverse
-from django.db import transaction
+from django.db import transaction, IntegrityError
 
+from . import logger
 from .models import Speed, SpeedFeedback, SpeedReport, SpeedBookmark, Vote
 from .validators import (
     name_validator, 
@@ -175,12 +177,23 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
                 speed.upvotes += 1
 
             speed.score = speed.upvotes - speed.downvotes
-            speed.save()
+            try:
+                speed.save()
+                speed_feedback = super().update(instance, validated_data)
+            except IntegrityError as e:
+                logger.error(f"speeds(app); {str(e)}")
+                raise APIException(
+                    "An unexpected error occurred while processing your request. Please try again later."
+                    )
+            except Exception as e:
+                logger.warning(f"speeds(app); {str(e)}")
+                raise APIException(
+                    "An unexpected error occurred while processing your request. Please try again later."
+                    )
 
-            speed_feedback = super().update(instance, validated_data)
-            # fix for the nested representation of the Speed's score
-            speed_feedback.speed.score = speed.score
-            return speed_feedback
+        # fix for the nested representation of the Speed's score
+        speed_feedback.speed.score = speed.score
+        return speed_feedback
 
 
 class SpeedBookmarkSerializer(serializers.ModelSerializer):
