@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, response
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.renderers import JSONRenderer
@@ -18,15 +18,15 @@ from .permissions import (
     SpeedBookmarkPermissions
 )
 from .serializers import (
-    BaseSpeedSerializer, 
-    SpeedSerializer, 
+    BaseHyperlinkedSpeedSerializer, 
+    SpeedHyperlinkedSerializer, 
     SpeedFeedbackSerializer, 
     SpeedBookmarkSerializer, 
     SpeedReportSerializer
 )
 from core.common.renderers import CustomBrowsableAPIRenderer
 from .queries import (
-    SpeedViewSetQueries, 
+    SpeedQueries, 
     SpeedFeedbackQueries, 
     SpeedBookmarkQueries
 )
@@ -35,13 +35,14 @@ from .filters import (
     SpeedFeedbackFilter, 
     SpeedBookmarkFilter
 )
+from .services import get_random_speeds
 
 
 class SpeedViewSet(viewsets.ModelViewSet):
     renderer_classes = [CustomBrowsableAPIRenderer, JSONRenderer]
     
     queryset = Speed.objects.filter(is_public=True)
-    serializer_class = SpeedSerializer
+    serializer_class = SpeedHyperlinkedSerializer
     
     permission_classes = [IsAuthenticatedOrReadOnly]
 
@@ -65,20 +66,20 @@ class SpeedViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         if self.action in ('personal_list',) and not self.request.user.is_anonymous:
-            return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'personal')
+            return SpeedQueries.get_authenticated_user_query(self.request.user, 'personal')
         
         if self.request.user.is_anonymous:
-            return SpeedViewSetQueries.get_anonymous_user_query()
+            return SpeedQueries.get_anonymous_user_query()
         # an user
         elif not self.request.user.is_admin:
-            return SpeedViewSetQueries.get_authenticated_user_query(self.request.user, 'public_and_personal')
+            return SpeedQueries.get_authenticated_user_query(self.request.user, 'public_and_personal')
         # an admin
         else:
-            return SpeedViewSetQueries.get_admin_query(self.request.user)
+            return SpeedQueries.get_admin_query(self.request.user)
         
     def get_serializer_class(self):
         if self.request.user.is_anonymous:
-            return BaseSpeedSerializer
+            return BaseHyperlinkedSpeedSerializer
         return super().get_serializer_class()
     
     def perform_create(self, serializer):
@@ -93,6 +94,21 @@ class SpeedViewSet(viewsets.ModelViewSet):
         A permission for this action is defined in the `get_permissions`.
         '''
         return self.list(request, *args, **kwargs)
+    
+    @action(methods=['get'], detail=False, url_path='random-list')
+    def random_list(self, request, *args, **kwargs):
+        '''
+        An endpoint that retrieves a collection of random public Speed objects 
+        stored in the Redis cache. 
+        '''
+        random_speeds_ord_dict = get_random_speeds()
+        if random_speeds_ord_dict['count'] > 0:
+            return response.Response(data=random_speeds_ord_dict, status=200)
+        else:
+            data = {
+                "message": "Data not available. Please try again later."
+                }
+            return response.Response(data=data, status=404)
 
 
 class SpeedFeedbackViewSet(viewsets.ModelViewSet):

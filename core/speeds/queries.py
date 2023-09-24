@@ -1,19 +1,30 @@
 from typing import Literal
 
 from django.db.models import Q, OuterRef
+from django.db.models.functions import JSONObject, Random
+from django.contrib.postgres.expressions import ArraySubquery
+
 from .models import Speed, SpeedFeedback, SpeedBookmark
 from core.users.models import User
-from django.contrib.postgres.expressions import ArraySubquery
-from django.db.models.functions import JSONObject
 
-class SpeedViewSetQueries:
+
+class SpeedQueries:
     
     # anonymous users
     
     @staticmethod
     def get_anonymous_user_query():
         return Speed.objects\
-                .filter(is_public=True)
+                .filter(is_public=True)\
+                .select_related('user')
+        
+    @staticmethod
+    def get_random_list_query(limit: int):
+        return Speed.objects\
+                .filter(is_public=True, score__gt=0)\
+                .order_by(Random())\
+                .select_related('user')\
+                [:limit]
     
     # authenticated users
     
@@ -42,17 +53,19 @@ class SpeedViewSetQueries:
         return Speed.objects\
                 .filter(query_filter)\
                 .annotate(
-                    user_speed_feedback=ArraySubquery(SpeedViewSetQueries.get_user_speed_feedback_subquery(user)),
-                    user_speed_bookmark=ArraySubquery(SpeedViewSetQueries.get_user_speed_bookmark_subquery(user))
-                )
+                    user_speed_feedback=ArraySubquery(SpeedQueries.get_user_speed_feedback_subquery(user)),
+                    user_speed_bookmark=ArraySubquery(SpeedQueries.get_user_speed_bookmark_subquery(user))
+                )\
+                .select_related('user')
     
     @staticmethod
     def get_admin_query(user: User):
         return Speed.objects\
                 .annotate(
-                    user_speed_feedback=ArraySubquery(SpeedViewSetQueries.get_user_speed_feedback_subquery(user)),
-                    user_speed_bookmark=ArraySubquery(SpeedViewSetQueries.get_user_speed_bookmark_subquery(user))
-                )
+                    user_speed_feedback=ArraySubquery(SpeedQueries.get_user_speed_feedback_subquery(user)),
+                    user_speed_bookmark=ArraySubquery(SpeedQueries.get_user_speed_bookmark_subquery(user))
+                )\
+                .select_related('user')
 
 
 class SpeedFeedbackQueries:
@@ -66,7 +79,9 @@ class SpeedFeedbackQueries:
         return SpeedFeedback.objects\
                 .filter(
                     (Q(user=user) & Q(speed__user=user)) | (Q(speed__is_public=True) & ~Q(speed__user=user) & Q(user=user))
-                )
+                )\
+                .select_related('user')\
+                .select_related('speed')
 
 
 class SpeedBookmarkQueries:
@@ -80,4 +95,6 @@ class SpeedBookmarkQueries:
         return SpeedBookmark.objects\
                 .filter(
                     (Q(user=user) & Q(speed__user=user)) | (Q(speed__is_public=True) & ~Q(speed__user=user) & Q(user=user))
-                )
+                )\
+                .select_related('user')\
+                .select_related('speed')

@@ -21,7 +21,32 @@ from core.users.models import User
 from core.common.decorators import restrict_field_updates
 
 
-class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
+class BasicSpeedSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Speed
+        fields = [ 
+            'id', 
+            'name', 
+            'description', 
+            'speed_type', 
+            'tags', 
+            'kmph', 
+            'estimated', 
+            'is_public', 
+            'user', 
+            'score',
+            ]
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        
+        representation['user'] = instance.user.username
+        
+        return representation
+
+
+class BaseHyperlinkedSpeedSerializer(serializers.HyperlinkedModelSerializer):
     ''' 
     Serialzier for unauthenticated users. 
     '''
@@ -62,21 +87,21 @@ class BaseSpeedSerializer(serializers.HyperlinkedModelSerializer):
         return representation
 
 
-class SpeedSerializer(BaseSpeedSerializer):
+class SpeedHyperlinkedSerializer(BaseHyperlinkedSpeedSerializer):
     ''' 
     Serialzier for authenticated users. 
     '''
     user_speed_feedback = serializers.SerializerMethodField()
     user_speed_bookmark = serializers.SerializerMethodField()
 
-    class Meta(BaseSpeedSerializer.Meta):
+    class Meta(BaseHyperlinkedSpeedSerializer.Meta):
         fields = [
-            *BaseSpeedSerializer.Meta.fields, 
+            *BaseHyperlinkedSpeedSerializer.Meta.fields, 
             'user_speed_feedback',
             'user_speed_bookmark',
             ]
         read_only_fields = [
-            *BaseSpeedSerializer.Meta.read_only_fields, 
+            *BaseHyperlinkedSpeedSerializer.Meta.read_only_fields, 
             'user_speed_feedback', 
             'user_speed_bookmark',
             ]
@@ -131,7 +156,7 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
             ]
 
     def to_representation(self, instance):
-        self.fields['speed'] = BaseSpeedSerializer()
+        self.fields['speed'] = BaseHyperlinkedSpeedSerializer()
         
         representation = super().to_representation(instance)
         representation['user'] = instance.user.username
@@ -213,7 +238,7 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
             ]
 
     def to_representation(self, instance):
-        self.fields['speed'] = BaseSpeedSerializer()
+        self.fields['speed'] = BaseHyperlinkedSpeedSerializer()
 
         representation = super().to_representation(instance)
         representation['user'] = instance.user.username
@@ -260,7 +285,7 @@ class SpeedReportSerializer(serializers.ModelSerializer):
             ]
 
     def to_representation(self, instance):
-        self.fields['speed'] = BaseSpeedSerializer()
+        self.fields['speed'] = BaseHyperlinkedSpeedSerializer()
         
         representation = super().to_representation(instance)
         representation['user'] = instance.user.username
