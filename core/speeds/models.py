@@ -81,6 +81,9 @@ class Speed(models.Model):
 
     def __repr__(self) -> str:
         return self.name + ' ' + self.description
+    
+    def __str__(self) -> str:
+        return self.name + ' (' + self.description[:25] + '...)'
 
 
 class Vote(models.IntegerChoices):
@@ -104,6 +107,9 @@ class SpeedFeedback(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='feedback')
+
+    def __str__(self) -> str:
+        return str(self.vote)
     
 
 # class SpeedFeedbackCounter(models.Model):
@@ -157,6 +163,9 @@ class SpeedBookmark(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='bookmark')
 
+    def __str__(self) -> str:
+        return self.category
+
 
 class SpeedReport(models.Model):
 
@@ -168,7 +177,7 @@ class SpeedReport(models.Model):
     
     class ReportReason(models.TextChoices):
         SPAM = "spam"
-        INCORRECT_DATA = "incorrcect data"
+        INCORRECT_DATA = "incorrect data"
         NON_ENGLISH = "non english"
         INAPPROPRIATE_LANGUAGE = "inappropriate language"
         OTHER = "other"
@@ -181,3 +190,6 @@ class SpeedReport(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
     speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='report')
+
+    def __str__(self) -> str:
+        return self.report_reason + ' (' + self.detail[:25] + '...)'

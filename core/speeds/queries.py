@@ -1,6 +1,6 @@
 from typing import Literal
 
-from django.db.models import Q, OuterRef
+from django.db.models import Q, OuterRef, Count
 from django.db.models.functions import JSONObject, Random
 from django.contrib.postgres.expressions import ArraySubquery
 
@@ -50,6 +50,7 @@ class SpeedQueries:
             query_filter = Q(is_public=True) | Q(user=user)
         elif mode == 'personal':
             query_filter = Q(user=user)
+        
         return Speed.objects\
                 .filter(query_filter)\
                 .annotate(
@@ -66,6 +67,15 @@ class SpeedQueries:
                     user_speed_bookmark=ArraySubquery(SpeedQueries.get_user_speed_bookmark_subquery(user))
                 )\
                 .select_related('user')
+
+    # admin site
+
+    @staticmethod
+    def get_admin_site_query():
+        return Speed.objects\
+                .annotate(reports_count=Count('report'))\
+                .order_by('-reports_count')\
+                .prefetch_related('report')
 
 
 class SpeedFeedbackQueries:

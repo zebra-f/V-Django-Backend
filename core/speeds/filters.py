@@ -1,5 +1,6 @@
 from django.utils.datastructures import MultiValueDict
 from django_filters import rest_framework as filters, widgets
+from django.contrib import admin
 
 from .models import Speed, SpeedFeedback, SpeedBookmark
 from .validators import tags_validator
@@ -77,3 +78,25 @@ class SpeedBookmarkFilter(filters.FilterSet):
             'speed'
         ]
 
+
+class ReportsCountFilter(admin.SimpleListFilter):
+    title = 'Reports Count'
+    parameter_name = 'reports_count'
+
+    def lookups(self, request, model_admin):
+        return [
+            ('10', 'reports count >= 10'),
+            ('4', 'reports count >= 4'),
+            ('1', 'reports count >= 1'),
+        ]
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value == '1':
+            return queryset.filter(reports_count__gte=1)
+        elif value == '4':
+            return queryset.filter(reports_count__gte=4)
+        elif value == '10':
+            return queryset.filter(reports_count__gte=10)
+        
+        return queryset
