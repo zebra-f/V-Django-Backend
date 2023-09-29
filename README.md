@@ -40,7 +40,7 @@ Run an instance of PostgreSQL in Docker, or refer to the PostgreSQL documentatio
 (To free up the port if PostgreSQL is already running on your system, you can use the following command: `$ sudo systemctl stop postgresql.service` or modify the port number in the command below, which will require a corresponding update in `settings.py` as well).
 
     $ sudo docker pull postgres:14.9  
-    $ sudo docker run -itd -e POSTGRES_PASSWORD=$POSTGRES_V_ONE_PASSWORD -p 5432:5432 -v $(pwd)/postgres/data:/var/lib/postgresql/data --name postgres_v_one postgres:14.9
+    $ sudo docker run -itd -e POSTGRES_PASSWORD=$POSTGRES_V_ONE_PASSWORD -e POSTGRES_DB=v_one -p 5432:5432 -v $(pwd)/postgres/data:/var/lib/postgresql/data --name postgres_v_one postgres:14.9
     $ sudo docker exec -it postgres_v_one createdb -U postgres v_one
 
     $ python3 manage.py migrate
