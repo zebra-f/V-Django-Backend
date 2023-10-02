@@ -33,10 +33,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = get_env_variable('DJANGO_V_ONE_SECRET_KEY')
+SECRET_KEY = get_env_variable('DJANGO_V_1_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(int(get_env_variable('DEBUG')))
 
 ALLOWED_HOSTS = []
 
@@ -94,26 +94,16 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
-DATABASE = 'postgres'
-DATABASES = None
-if DATABASE == 'postgres':
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": "v_one",
-            "USER": "postgres",
-            "PASSWORD": get_env_variable('POSTGRES_V_ONE_PASSWORD'),
-            "HOST": "127.0.0.1",
-            "PORT": "5432",
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": get_env_variable('POSTGRES_DB_NAME'),
+        "USER": get_env_variable('POSTGRES_USER'),
+        "PASSWORD": get_env_variable('POSTGRES_V_1_PASSWORD'),
+        "HOST": get_env_variable('POSTGRES_HOST'),
+        "PORT": get_env_variable('POSTGRES_PORT'),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+}
 
 
 # Password validation
@@ -275,7 +265,7 @@ SIMPLE_JWT = {
 # Celery settings
 
 # CELERY_BROKER_URL = 'pyamqp://guest@localhost//'
-CELERY_BROKER_URL = 'redis://127.0.0.1:6379'
+CELERY_BROKER_URL = get_env_variable('REDIS_URL')
 
 
 # Redis cache settings
@@ -283,7 +273,7 @@ CELERY_BROKER_URL = 'redis://127.0.0.1:6379'
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379",
+        "LOCATION": get_env_variable('REDIS_URL'),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
@@ -294,10 +284,10 @@ CACHES = {
 # Meilisearch settings
 
 MEILISEARCH = {
-    'disabled': False,
+    'disabled': bool(int(get_env_variable('MEILISEARCH_DISABLED'))),
     'MASTER_KEY': None, 
-    'URL': 'http://127.0.0.1:7700'
+    'URL': get_env_variable('MEILISEARCH_URL')
 }
 
 if not MEILISEARCH['disabled']:
-    MEILISEARCH['MASTER_KEY'] = get_env_variable('MEILISEARCH_V_ONE_MASTER_KEY')
+    MEILISEARCH['MASTER_KEY'] = get_env_variable('MEILISEARCH_V_1_MASTER_KEY')

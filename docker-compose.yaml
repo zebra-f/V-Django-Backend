@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: debezium/postgres:14-alpine
+    container_name: postgres_v_1
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB_NAME}
+      POSTGRES_PASSWORD: ${POSTGRES_V_1_PASSWORD}
+    ports:
+      - 5432:5432
+    volumes:
+      - ${BIND_MOUNT_DATA_PATH}/postgres_data:/var/lib/postgresql/data
+  redis:
+    image: redis:7.2.1-alpine
+    container_name: redis_v_1_dev
+    ports:
+      - "6379:6379"
+  meilisearch:
+    image: getmeili/meilisearch:v1.3
+    container_name: meilisearch_v_1
+    ports:
+      - "7700:7700"
+    environment:
+      MEILI_MASTER_KEY: ${MEILISEARCH_V_1_MASTER_KEY}
+    volumes:
+      - ${BIND_MOUNT_DATA_PATH}/meili_data:/meili_data
+  django:
+    build:
+      context: .
+      dockerfile: ./compose/dev/django/Dockerfile
+    container_name: django_v_1_dev
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - 8000:8000
+    # env_file is used to manage the env variables of our project
+    environment:
+      MEILISEARCH_V_1_MASTER_KEY: ${MEILISEARCH_V_1_MASTER_KEY}
+      POSTGRES_V_1_PASSWORD: ${POSTGRES_V_1_PASSWORD}
+      DJANGO_V_1_SECRET_KEY: ${DJANGO_V_1_SECRET_KEY}
+    env_file:
+      - ./compose/dev/django/.env.dev
+    depends_on:
+      - postgres
+      - redis
+      - meilisearch
