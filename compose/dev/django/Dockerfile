@@ -12,6 +12,8 @@ RUN apt-get update \
   && apt-get install -y libpq-dev \
   # Translations dependencies
   && apt-get install -y gettext \
+  # netcat for the entrypoint.sh script
+  && apt-get install -y --no-install-recommends netcat-traditional \
   # cleaning up unused files
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/*
@@ -21,3 +23,8 @@ COPY ./requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt
 
 COPY . .
+
+RUN sed -i 's/\r$//g' ./compose/dev/django/entrypoint.sh
+RUN chmod +x ./compose/dev/django/entrypoint.sh
+
+ENTRYPOINT [ "./compose/dev/django/entrypoint.sh" ]

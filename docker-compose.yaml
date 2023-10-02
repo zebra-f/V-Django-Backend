@@ -29,6 +29,7 @@ services:
     build:
       context: .
       dockerfile: ./compose/dev/django/Dockerfile
+    image: django_v_1_dev:latest
     container_name: django_v_1_dev
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
