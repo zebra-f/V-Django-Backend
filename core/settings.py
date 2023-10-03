@@ -38,7 +38,7 @@ SECRET_KEY = get_env_variable('DJANGO_V_1_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = bool(int(get_env_variable('DEBUG')))
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = get_env_variable('ALLOWED_HOSTS').split(' ')
 
 
 # Application definition

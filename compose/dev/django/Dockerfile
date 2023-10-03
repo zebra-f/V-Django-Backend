@@ -27,4 +27,7 @@ COPY . .
 RUN sed -i 's/\r$//g' ./compose/dev/django/entrypoint.sh
 RUN chmod +x ./compose/dev/django/entrypoint.sh
 
+RUN sed -i 's/\r$//g' ./compose/dev/django/celery/entrypoint.sh
+RUN chmod +x ./compose/dev/django/celery/entrypoint.sh
+
 ENTRYPOINT [ "./compose/dev/django/entrypoint.sh" ]

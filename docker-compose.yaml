@@ -36,7 +36,6 @@ services:
       - .:/app
     ports:
       - 8000:8000
-    # env_file is used to manage the env variables of our project
     environment:
       MEILISEARCH_V_1_MASTER_KEY: ${MEILISEARCH_V_1_MASTER_KEY}
       POSTGRES_V_1_PASSWORD: ${POSTGRES_V_1_PASSWORD}
@@ -47,3 +46,19 @@ services:
       - postgres
       - redis
       - meilisearch
+  celery:
+    image: django_v_1_dev:latest
+    container_name: celery_v_1_dev
+    entrypoint: ./compose/dev/django/celery/entrypoint.sh
+    # starts a single process for Celery Workers and Celery Beat for the development of this app
+    command: celery -A core worker -B --loglevel=INFO 
+    environment:
+      MEILISEARCH_V_1_MASTER_KEY: ${MEILISEARCH_V_1_MASTER_KEY}
+      POSTGRES_V_1_PASSWORD: ${POSTGRES_V_1_PASSWORD}
+      DJANGO_V_1_SECRET_KEY: ${DJANGO_V_1_SECRET_KEY}
+    env_file:
+      - ./compose/dev/django/.env.dev
+    depends_on:
+      - postgres
+      - redis
+      - django
