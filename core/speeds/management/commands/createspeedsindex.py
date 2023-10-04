@@ -9,9 +9,15 @@ class Command(BaseCommand):
     help = "Creates the 'speeds' index for the Meilisearch search engine if it doesn't exists yet."
 
     def handle(self, *args, **options):
+        if not client.is_disabled():
+            timeout = 100  # 100 microseconds
+            while not client.is_healthy and timeout > 0:
+                time.sleep(0.2)
+                timeout -= 2
+        
         if not client.is_disabled() and client.is_healthy():
             try:
-                client.get_index('speeds')
+                client.get_index('speeds') 
             except Exception as e:
                 task = client.create_index(
                     uid='speeds',
