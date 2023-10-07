@@ -18,7 +18,7 @@ else
     exit 1
 fi
 
-python manage.py flush --no-input
+# python manage.py flush --no-input
 python manage.py migrate
 
 if [ "$MEILISEARCH_DISABLED" = "0" ]; then

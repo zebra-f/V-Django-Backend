@@ -10,7 +10,7 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - ${BIND_MOUNT_DATA_PATH}/postgres_data:/var/lib/postgresql/data
+      - ${BIND_MOUNT_DATA_PATH}/postgres_data/data:/var/lib/postgresql/data
   redis:
     image: redis:7.2.1-alpine
     container_name: redis_v_1_dev
@@ -18,13 +18,22 @@ services:
       - "6379:6379"
   meilisearch:
     image: getmeili/meilisearch:v1.3
-    container_name: meilisearch_v_1
+    container_name: meilisearch_v_1_dev
     ports:
       - "7700:7700"
     environment:
       MEILI_MASTER_KEY: ${MEILISEARCH_V_1_MASTER_KEY}
     volumes:
       - ${BIND_MOUNT_DATA_PATH}/meili_data:/meili_data
+  meilisync:
+    image: long2ice/meilisync
+    container_name: meilisync_v_1_dev
+    volumes:
+      - ./config.yml:/meilisync/config.yml
+    restart: always
+    depends_on:
+      - postgres
+      - meilisearch
   django:
     build:
       context: .
@@ -40,6 +49,7 @@ services:
       MEILISEARCH_V_1_MASTER_KEY: ${MEILISEARCH_V_1_MASTER_KEY}
       POSTGRES_V_1_PASSWORD: ${POSTGRES_V_1_PASSWORD}
       DJANGO_V_1_SECRET_KEY: ${DJANGO_V_1_SECRET_KEY}
+      POSTGRES_DB_NAME: ${POSTGRES_DB_NAME}
     env_file:
       - ./compose/dev/django/.env.dev
     depends_on:
@@ -56,6 +66,7 @@ services:
       MEILISEARCH_V_1_MASTER_KEY: ${MEILISEARCH_V_1_MASTER_KEY}
       POSTGRES_V_1_PASSWORD: ${POSTGRES_V_1_PASSWORD}
       DJANGO_V_1_SECRET_KEY: ${DJANGO_V_1_SECRET_KEY}
+      POSTGRES_DB_NAME: ${POSTGRES_DB_NAME}
     env_file:
       - ./compose/dev/django/.env.dev
     depends_on:
