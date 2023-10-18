@@ -21,6 +21,9 @@ fi
 # python manage.py flush --no-input
 python manage.py migrate
 
+# a custom management command
+python manage.py createuser --sentinel deleted
+
 if [ "$MEILISEARCH_DISABLED" = "0" ]; then
     
     python manage.py createspeedsindex

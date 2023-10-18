@@ -43,10 +43,12 @@ class Command(BaseCommand):
                     "The `--email` flag is either set incorrectly or not set at all. Provide an email or use the `--sentinel` flag to create a sentinel user."
                     )
         
-        user = get_user_model()(
-            email=email,
-            username=username,
-        )
-        user.set_password(password)
-        user.save()
-        self.stdout.write(self.style.SUCCESS(f"User {username} ({email}) has been created"))
+        user, created = get_user_model().objects.get_or_create(email=email, username=username)
+        if created:
+            # if sentintel:  
+            #   user.set_unusable_password()
+            user.set_password(password)
+            user.save()
+            self.stdout.write(self.style.SUCCESS(f"User {username} ({email}) has been created."))
+        else:
+            self.stdout.write(self.style.ERROR(f"User {username} ({email}) already exists!"))
