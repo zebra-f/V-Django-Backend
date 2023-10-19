@@ -286,8 +286,9 @@ CACHES = {
 MEILISEARCH = {
     'disabled': bool(int(get_env_variable('MEILISEARCH_DISABLED'))),
     'MASTER_KEY': None, 
-    'URL': get_env_variable('MEILISEARCH_URL')
+    'URL': None
 }
 
 if not MEILISEARCH['disabled']:
     MEILISEARCH['MASTER_KEY'] = get_env_variable('MEILISEARCH_V_1_MASTER_KEY')
+    MEILISEARCH['URL'] = get_env_variable('MEILISEARCH_URL')

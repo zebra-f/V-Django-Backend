@@ -67,6 +67,12 @@ class SpeedQueries:
                     user_speed_bookmark=ArraySubquery(SpeedQueries.get_user_speed_bookmark_subquery(user))
                 )\
                 .select_related('user')
+    
+    @staticmethod
+    def get_deleted_user_query(user: User):
+        return Speed.objects\
+                    .filter(user=user)\
+                    .select_related('user')
 
     # admin site
 

@@ -19,7 +19,7 @@ class Command(BaseCommand):
             try:
                 client.get_index('speeds') 
             except Exception as e:
-                task = client.create_index(
+                task_info = client.create_index(
                     uid='speeds',
                     # same as a Speed's model pk (UUID4)
                     options={
@@ -27,21 +27,10 @@ class Command(BaseCommand):
                     }
                 )
 
-                time.sleep(0.1)
-
-                task = client.get_task(task.task_uid)
-                start_time = time.time()
-                check_interval = 0.2
-                while time.time() - start_time < 4 and task.status != 'succeeded':
-                    if time.time() - start_time > check_interval:
-                        # refreshes task status
-                        task = client.get_task(task.uid)
-                        check_interval += 0.2
-                
-                if task.status != 'succeeded':
+                if client.task_succeeded(task_info):
+                    self.stdout.write(self.style.SUCCESS("Meilisearch's `speeds` index was created!"))
+                else:
                     raise Exception("Meiliserch `create_index()` has timed out.")
-                
-                self.stdout.write(self.style.SUCCESS("Meilisearch's `speeds` index was created!"))
         elif not client.is_disabled() and not client.is_healthy():
             raise Exception("Meilisearch is not healthy :(.")
         else:
