@@ -14,7 +14,7 @@ from core.speeds.validators import CustomMinValueValidator
 
 
 def get_sentinel_user():
-    return get_user_model().objects.get(username="deleted")[0]
+    return get_user_model().objects.get(username="deleted")
 
 
 class Speed(models.Model):
