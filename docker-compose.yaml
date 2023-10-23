@@ -25,15 +25,6 @@ services:
       MEILI_MASTER_KEY: ${MEILISEARCH_V_1_MASTER_KEY}
     volumes:
       - ${BIND_MOUNT_DATA_PATH}/meili_data:/meili_data
-  meilisync:
-    image: long2ice/meilisync
-    container_name: meilisync_v_1_dev
-    volumes:
-      - ./config.yml:/meilisync/config.yml
-    restart: always
-    depends_on:
-      - postgres
-      - meilisearch
   django:
     build:
       context: .
