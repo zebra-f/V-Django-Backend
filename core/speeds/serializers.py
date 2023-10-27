@@ -4,6 +4,7 @@ from rest_framework.exceptions import APIException
 
 from django.urls import reverse
 from django.db import transaction, IntegrityError
+from django.contrib.auth import get_user_model
 
 from . import logger
 from .models import Speed, SpeedFeedback, SpeedReport, SpeedBookmark, Vote
@@ -123,9 +124,9 @@ class SpeedHyperlinkedSerializer(SpeedBaseHyperlinkedSerializer):
     
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        
+
         method = self.context.get('request').method
-        if method in ('POST', 'PATCH', 'PUT'):
+        if method in ('POST', 'PATCH', 'PUT', 'DELETE'):
             data = {
                 key: val for key, val in representation.items() if key in ms_client.speeds_displayed_attributes
             }
@@ -155,6 +156,18 @@ class SpeedHyperlinkedSerializer(SpeedBaseHyperlinkedSerializer):
         ]
 
         return instance
+    
+    def update(self, instance, validated_data):
+        # ref: `core.speeds.views.SpeedViewSet.perform_delete`
+        method = self.context.get('request').method
+        if method == 'DELETE':
+            # set this here to bypass `read_only_fields`
+            validated_data = {
+                "user": get_user_model().objects.get(username="deleted"),
+                "is_public": False
+            }
+
+        return super().update(instance, validated_data)
 
 
 class SpeedFeedbackSerializer(serializers.ModelSerializer):

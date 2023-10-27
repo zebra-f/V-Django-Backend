@@ -84,12 +84,31 @@ class SpeedViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    def perform_destroy(self, instance):
+        """
+        This method handles `DELETE` requests for a resource, but instead of
+        deleting data, it changes the user to `deleted` and public
+        status to `False` of the resource. 
+        
+        The actual deletion of the resource will be handled by a Celery periodic
+        task at a later time.
+        """
+        serializer = self.get_serializer(instance, data={}, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        if getattr(instance, '_prefetched_objects_cache', None):
+            # If 'prefetch_related' has been applied to a queryset, we need to
+            # forcibly invalidate the prefetch cache on the instance.
+            instance._prefetched_objects_cache = {}
+        # invokes `to_represent` method resposible for syncing data
+        serializer.data
     
     @action(methods=['get'], detail=False, url_path='personal-list')
     def personal_list(self, request, *args, **kwargs):
         '''
-        In this context, 'personal list' refers to all the `Speed` data, including both public and private entries, 
-        that have been added exclusively by the authenticated user.
+        In this context, 'personal list' refers to all the `Speed` data, including both 
+        public and private entries, that have been added exclusively by the authenticated user.
         A queryset for this action is defined in the `get_queryset` method.
         A permission for this action is defined in the `get_permissions`.
         '''
