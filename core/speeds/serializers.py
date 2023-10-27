@@ -1,5 +1,4 @@
 from rest_framework import serializers
-from rest_framework.relations import PrimaryKeyRelatedField, StringRelatedField
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework.exceptions import APIException
 
@@ -12,13 +11,14 @@ from .validators import (
     name_validator, 
     description_validator, 
     category_validator, 
-    detail_validator
+    detail_validator,
+    tags_validator
 )
 from .fields import TagsField
 from .decorators import prevent_unauthorized_create_and_data_reveal
-from .validators import tags_validator
-from core.users.models import User
+from .tasks import sync_or_add_document_to_meiliserach
 from core.common.decorators import restrict_field_updates
+from core.meilisearch import client as ms_client
 
 
 class BasicSpeedSerializer(serializers.ModelSerializer):
@@ -46,7 +46,7 @@ class BasicSpeedSerializer(serializers.ModelSerializer):
         return representation
 
 
-class BaseHyperlinkedSpeedSerializer(serializers.HyperlinkedModelSerializer):
+class SpeedBaseHyperlinkedSerializer(serializers.HyperlinkedModelSerializer):
     ''' 
     Serialzier for unauthenticated users. 
     '''
@@ -87,21 +87,21 @@ class BaseHyperlinkedSpeedSerializer(serializers.HyperlinkedModelSerializer):
         return representation
 
 
-class SpeedHyperlinkedSerializer(BaseHyperlinkedSpeedSerializer):
+class SpeedHyperlinkedSerializer(SpeedBaseHyperlinkedSerializer):
     ''' 
     Serialzier for authenticated users. 
     '''
     user_speed_feedback = serializers.SerializerMethodField()
     user_speed_bookmark = serializers.SerializerMethodField()
 
-    class Meta(BaseHyperlinkedSpeedSerializer.Meta):
+    class Meta(SpeedBaseHyperlinkedSerializer.Meta):
         fields = [
-            *BaseHyperlinkedSpeedSerializer.Meta.fields, 
+            *SpeedBaseHyperlinkedSerializer.Meta.fields, 
             'user_speed_feedback',
             'user_speed_bookmark',
             ]
         read_only_fields = [
-            *BaseHyperlinkedSpeedSerializer.Meta.read_only_fields, 
+            *SpeedBaseHyperlinkedSerializer.Meta.read_only_fields, 
             'user_speed_feedback', 
             'user_speed_bookmark',
             ]
@@ -121,6 +121,22 @@ class SpeedHyperlinkedSerializer(BaseHyperlinkedSpeedSerializer):
             return obj.user_speed_bookmark[0]
         return None
     
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        
+        method = self.context.get('request').method
+        if method in ('POST', 'PATCH', 'PUT'):
+            data = {
+                key: val for key, val in representation.items() if key in ms_client.speeds_displayed_attributes
+            }
+            sync_or_add_document_to_meiliserach.delay(
+                index='speeds',
+                action='add' if method == 'POST' else 'update',
+                data=data
+            )
+        
+        return representation
+    
     def create(self, validated_data):
         instance = super().create(validated_data)
         speed_feedback = SpeedFeedback(
@@ -137,6 +153,7 @@ class SpeedHyperlinkedSerializer(BaseHyperlinkedSpeedSerializer):
             'feedback_vote': speed_feedback.vote,
             },
         ]
+
         return instance
 
 
@@ -156,7 +173,7 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
             ]
 
     def to_representation(self, instance):
-        self.fields['speed'] = BaseHyperlinkedSpeedSerializer()
+        self.fields['speed'] = SpeedBaseHyperlinkedSerializer()
         
         representation = super().to_representation(instance)
         representation['user'] = instance.user.username
@@ -206,12 +223,12 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
                 speed.save()
                 speed_feedback = super().update(instance, validated_data)
             except IntegrityError as e:
-                logger.error(f"speeds(app); {str(e)}")
+                logger.error(f"core.speeds.{__name__}; {str(e)}")
                 raise APIException(
                     "An unexpected error occurred while processing your request. Please try again later."
                     )
             except Exception as e:
-                logger.warning(f"speeds(app); {str(e)}")
+                logger.warning(f"core.speeds.{__name__}; {str(e)}")
                 raise APIException(
                     "An unexpected error occurred while processing your request. Please try again later."
                     )
@@ -238,7 +255,7 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
             ]
 
     def to_representation(self, instance):
-        self.fields['speed'] = BaseHyperlinkedSpeedSerializer()
+        self.fields['speed'] = SpeedBaseHyperlinkedSerializer()
 
         representation = super().to_representation(instance)
         representation['user'] = instance.user.username
@@ -285,7 +302,7 @@ class SpeedReportSerializer(serializers.ModelSerializer):
             ]
 
     def to_representation(self, instance):
-        self.fields['speed'] = BaseHyperlinkedSpeedSerializer()
+        self.fields['speed'] = SpeedBaseHyperlinkedSerializer()
         
         representation = super().to_representation(instance)
         representation['user'] = instance.user.username

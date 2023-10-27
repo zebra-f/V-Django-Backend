@@ -28,22 +28,10 @@ class Command(BaseCommand):
             if not index:
                 raise Exception('Something went wrong')
             
-            displayed_attributes = [
-                'id',
-                'name',
-                'description',
-                'speed_type',
-                'tags',
-                'kmph',
-                'estimated',
-                'user',
-                'updated_at',
-                'score'
-            ]
             fields = [field.name for field in Speed._meta.get_fields()]
             # checks if all `displayed_attributes` are present in the `Speed` model
-            if not all([attr in fields for attr in displayed_attributes]):
-                logger.critical("A field in the `Speed` model has been changed!")
+            if not all([attr in fields for attr in client.speeds_displayed_attributes]):
+                logger.critical("core.speeds(app); a field in the `Speed` model has been changed!")
                 raise Exception("A field in the `Speed` model has been changed!")
             
             index.update_settings({
@@ -61,15 +49,7 @@ class Command(BaseCommand):
                     'speed_type'
                     ],
                 'displayedAttributes': [
-                    'id',
-                    'name',
-                    'description',
-                    'speed_type',
-                    'tags',
-                    'kmph',
-                    'username',
-                    'updated_at',
-                    'score',
+                    *client.speeds_displayed_attributes
                     ],
                 'sortableAttributes': [],
                 'stopWords': [

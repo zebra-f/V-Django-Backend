@@ -5,6 +5,7 @@ from django.core.validators import MaxValueValidator
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth import get_user_model
+from django.utils import timezone 
 
 from django.db import transaction
 
@@ -53,9 +54,16 @@ class Speed(models.Model):
 
     # feedback counter 
     downvotes = models.PositiveIntegerField(_('downvotes'), default=0)
-    # default `1` is set accordingly to SpeedFeedback; which is created by the `speed_post_save_handler` signal
     upvotes = models.PositiveIntegerField(_('upvotes'), default=1)
     score = models.IntegerField(_('score'), default=1)
+
+    # Meilisearch fields
+    # update
+    last_synced_to_meilisearch_at = models.DateTimeField(blank=True, null=True)
+    is_synced_in_meilisearch = models.BooleanField(default=False)
+    # add
+    added_to_mielisearch_at = models.DateField(blank=True, null=True)
+    is_added_to_meilisearch = models.BooleanField(default=False)
 
     def set_score(self) -> int:
         self.score = self.upvotes - self.downvotes
@@ -82,6 +90,18 @@ class Speed(models.Model):
         queryset = cls.objects.all()
         for object in queryset:
             object.recount_votes()
+
+    def mark_synced_in_meilisearch(self):
+        self.last_synced_to_meilisearch_at = timezone.now()
+        self.is_synced_in_meilisearch = True
+        self.save()
+        return self
+    
+    def mark_added_to_meilisearch(self):
+        self.added_to_mielisearch_at = timezone.now()
+        self.added_to_mielisearch = True
+        self.save()
+        return self
 
     def __repr__(self) -> str:
         return self.name + ' ' + self.description

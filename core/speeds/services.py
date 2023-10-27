@@ -5,8 +5,7 @@ from collections import OrderedDict
 from django.core.cache import cache
 
 from .queries import SpeedQueries
-from .serializers import BasicSpeedSerializer
-from . import logger
+from .import logger
 
 
 r = cache.client.get_client()
@@ -18,18 +17,22 @@ def cache_random_speeds(k: int=1200) -> None:
     Random speed objects are cached as key-value pairs, 
     where keys (integers) are within the closed range from 0 to (`upper_limit` - 1).
     '''
+    
+    from .serializers import BasicSpeedSerializer
     random_speeds_list = BasicSpeedSerializer(
         SpeedQueries.get_random_list_query(k), 
         many=True,
     )
-    mapping = {}
+
+    # redis hset doesn't allow an empy dict 
+    mapping = {'-1': 'dummy'}
     for i, speed in enumerate(random_speeds_list.data):
         # <class 'collections.OrderedDict'>
         pickled = pickle.dumps(speed)
         mapping[str(i)] = pickled
     
     # `mapping` keys range from 0 to (`upper_limit` - 1) inclusive
-    upper_limit = len(mapping)
+    upper_limit = len(mapping) - 1
     
     r.hset('random_speeds_hash', mapping=mapping)
     #                               s  m  h    s  m
@@ -58,7 +61,7 @@ def get_random_speeds(k: int=10) -> OrderedDict:
     
     if flag:
         logger.debug(
-            f"speeds(app); `{get_random_speeds.__name__}` is not functioning correctly. " + \
+            f"core.speeds.{__name__}; `{get_random_speeds.__name__}` is not functioning correctly. " + \
             f"Length of random_speeds_list == {len(random_speeds_list)}, upper_limit == {upper_limit}."
             )
 
@@ -69,6 +72,3 @@ def get_random_speeds(k: int=10) -> OrderedDict:
     random_speeds['results'] = random_speeds_list
 
     return random_speeds
-
-
-

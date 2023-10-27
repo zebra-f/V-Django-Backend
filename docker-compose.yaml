@@ -53,6 +53,8 @@ services:
     entrypoint: ./compose/dev/django/celery/entrypoint.sh
     # starts a single process for Celery Workers and Celery Beat for the development of this app
     command: celery -A core worker -B --loglevel=INFO 
+    volumes:
+      - .:/app
     environment:
       MEILISEARCH_V_1_MASTER_KEY: ${MEILISEARCH_V_1_MASTER_KEY}
       POSTGRES_V_1_PASSWORD: ${POSTGRES_V_1_PASSWORD}

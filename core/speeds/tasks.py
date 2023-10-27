@@ -1,13 +1,15 @@
 import time
+from typing import Literal
 
 from celery.schedules import crontab
+from celery import shared_task
 
 from django.contrib.auth import get_user_model
 
 from core.celery import app
 from core.meilisearch import client as ms_client
-from .services import cache_random_speeds
 from .queries import SpeedQueries
+from .services import cache_random_speeds
 from . import logger
 
 
@@ -20,7 +22,7 @@ def setup_periodic_tasks(sender, **kwargs):
         cache_random_speeds()
         cache_flag = True
     except Exception as e:
-        logger.error(f"speeds(app); {setup_periodic_tasks.__name__} initial caching failed, {str(e)}")
+        logger.error(f"core.speeds.{__name__}; {setup_periodic_tasks.__name__} initial caching failed, {str(e)}")
     
     if cache_flag:
         sender.add_periodic_task(
@@ -44,7 +46,7 @@ def cache_random_speeds_task(**kwargs):
     try:
         cache_random_speeds()
     except Exception as e:
-        logger.error(f"speeds(app).tasks; {cache_random_speeds_task.__name__} is not working properly, {str(e)}")
+        logger.error(f"core.speeds.{__name__}; {cache_random_speeds_task.__name__} is not working properly, {str(e)}")
 
 @app.task
 def delete_meilisearch_deleted_user_data(**kwargs):
@@ -54,7 +56,7 @@ def delete_meilisearch_deleted_user_data(**kwargs):
     )
     
     timestamp = time.time()
-    
+
     for speed in qs:
         try:
             task_info = ms_client.index('speeds').delete_document(speed.id)
@@ -64,10 +66,18 @@ def delete_meilisearch_deleted_user_data(**kwargs):
                 except:
                     raise Exception(f'the `delete()` for {speed.id} has failed')
             else:
-                logger.error(f'speeds(app).tasks; the `delete_document()` for {speed.id} has not succeeded.')
+                logger.error(f'core.speeds.{__name__}; the `delete_document()` for {speed.id} has not succeeded.')
         except Exception as e:
-            logger.error(f'speeds(app).tasks; {str(e)}.')
+            logger.error(f'core.speeds.{__name__}; {str(e)}.')
     
     logger.info(
-        f'speeds(app).tasks; the `delete_meilisearch_deleted_user_data` perdiodic task has finished in {time.time() - timestamp} seconds.'
+        f'core.speeds.{__name__}; the `delete_meilisearch_deleted_user_data` perdiodic task has finished in {time.time() - timestamp} seconds.'
         )
+
+@shared_task
+def sync_or_add_document_to_meiliserach(
+        index: Literal['speeds'], 
+        action: Literal['add', 'update'], 
+        data: dict,
+    ):
+    ms_client.sync_document(index, action, data)

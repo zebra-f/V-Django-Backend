@@ -18,7 +18,7 @@ from .permissions import (
     SpeedBookmarkPermissions
 )
 from .serializers import (
-    BaseHyperlinkedSpeedSerializer, 
+    SpeedBaseHyperlinkedSerializer, 
     SpeedHyperlinkedSerializer, 
     SpeedFeedbackSerializer, 
     SpeedBookmarkSerializer, 
@@ -79,7 +79,7 @@ class SpeedViewSet(viewsets.ModelViewSet):
         
     def get_serializer_class(self):
         if self.request.user.is_anonymous:
-            return BaseHyperlinkedSpeedSerializer
+            return SpeedBaseHyperlinkedSerializer
         return super().get_serializer_class()
     
     def perform_create(self, serializer):
