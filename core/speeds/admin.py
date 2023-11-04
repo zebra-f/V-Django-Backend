@@ -11,33 +11,33 @@ from .filters import ReportsCountFilter
 class SpeedAdmin(admin.ModelAdmin):
     list_per_page = 20
     readonly_fields = [
-        'id',
-        'user', 
-        'downvotes', 
-        'upvotes', 
-        'score',
-        'created_at',
+        "id",
+        "user",
+        "downvotes",
+        "upvotes",
+        "score",
+        "created_at",
     ]
     list_display = [
-        'id',
-        'user',
-        'downvotes',
-        'upvotes',
-        'score',
-        'updated_at',
-        'reports_count'
+        "id",
+        "user",
+        "downvotes",
+        "upvotes",
+        "score",
+        "updated_at",
+        "reports_count",
     ]
     search_fields = [
-        'user__username',
+        "user__username",
     ]
     list_filter = [
-        'created_at',
+        "created_at",
         ReportsCountFilter,
     ]
 
     def get_queryset(self, request: HttpRequest) -> QuerySet[Any]:
         return SpeedQueries.get_admin_site_query()
-    
+
     def reports_count(self, obj):
         return obj.reports_count
 
@@ -45,15 +45,15 @@ class SpeedAdmin(admin.ModelAdmin):
 class SpeedFeedbackAdmin(admin.ModelAdmin):
     list_per_page = 20
     readonly_fields = [
-        'id', 
-        'user',
-        'speed',
-        'created_at',
+        "id",
+        "user",
+        "speed",
+        "created_at",
     ]
     list_display = [
-        'id',
-        'user',
-        'speed',
+        "id",
+        "user",
+        "speed",
     ]
 
     def has_add_permission(self, request, obj=None):
@@ -63,33 +63,33 @@ class SpeedFeedbackAdmin(admin.ModelAdmin):
 class SpeedBookmarkAdmin(admin.ModelAdmin):
     list_per_page = 20
     readonly_fields = [
-        'id', 
-        'user',
-        'speed',
-        'created_at',
+        "id",
+        "user",
+        "speed",
+        "created_at",
     ]
     list_display = [
-        'id',
-        'user',
-        'speed',
+        "id",
+        "user",
+        "speed",
     ]
 
     def has_add_permission(self, request, obj=None):
         return False
-    
+
 
 class SpeedReportAdmin(admin.ModelAdmin):
     list_per_page = 20
     readonly_fields = [
-        'id', 
-        'user',
-        'speed',
-        'created_at',
+        "id",
+        "user",
+        "speed",
+        "created_at",
     ]
     list_display = [
-        'id',
-        'user',
-        'speed',
+        "id",
+        "user",
+        "speed",
     ]
 
     def has_add_permission(self, request, obj=None):

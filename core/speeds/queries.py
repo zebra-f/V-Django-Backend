@@ -8,6 +8,9 @@ from .models import Speed, SpeedFeedback, SpeedBookmark
 from core.users.models import User
 
 
+# fmt: off
+
+
 class SpeedQueries:
     
     # anonymous users

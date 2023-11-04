@@ -5,7 +5,7 @@ from django.core.validators import MaxValueValidator
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth import get_user_model
-from django.utils import timezone 
+from django.utils import timezone
 
 from django.db import transaction
 
@@ -19,43 +19,53 @@ def get_sentinel_user():
 
 
 class Speed(models.Model):
-
     class Meta:
-        ordering = ['-updated_at']
-        indexes = [GinIndex(fields=['tags'])]
+        ordering = ["-updated_at"]
+        indexes = [GinIndex(fields=["tags"])]
 
     class SpeedType(models.TextChoices):
-        AVERAGE = 'average'
-        TOP = 'top'
-        CONSTANT = 'constant'
-        RELATIVE = 'relative'
+        AVERAGE = "average"
+        TOP = "top"
+        CONSTANT = "constant"
+        RELATIVE = "relative"
 
     id = models.UUIDField(primary_key=True, default=uuid4)
-    
-    name = models.CharField(_('name'), max_length=128)
-    description = models.CharField(_('description'), max_length=128, null=True, blank=True)
-    speed_type = models.CharField(_('speed type'), choices=SpeedType.choices)
-    tags = ArrayField(models.CharField(max_length=20), size=4, blank=True)
-    
-    kmph = models.FloatField(_('speed in km/h'), validators=[
-        MaxValueValidator(1_080_000_000),
-        # CustomMinValueValidator checks whether a value is greater than 0
-        CustomMinValueValidator(0)  
-    ])
-    estimated = models.BooleanField(_('estimated'), default=False)
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET(get_sentinel_user))
+    name = models.CharField(_("name"), max_length=128)
+    description = models.CharField(
+        _("description"), max_length=128, null=True, blank=True
+    )
+    speed_type = models.CharField(_("speed type"), choices=SpeedType.choices)
+    tags = ArrayField(models.CharField(max_length=20), size=4, blank=True)
+
+    kmph = models.FloatField(
+        _("speed in km/h"),
+        validators=[
+            MaxValueValidator(1_080_000_000),
+            # CustomMinValueValidator checks whether a value is greater than 0
+            CustomMinValueValidator(0),
+        ],
+    )
+    estimated = models.BooleanField(_("estimated"), default=False)
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.SET(get_sentinel_user),
+    )
     is_public = models.BooleanField(default=True)
 
-    feedbacks = models.ManyToManyField(settings.AUTH_USER_MODEL, through='SpeedFeedback', related_name='+')
+    feedbacks = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, through="SpeedFeedback", related_name="+"
+    )
 
-    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
-    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
 
-    # feedback counter 
-    downvotes = models.PositiveIntegerField(_('downvotes'), default=0)
-    upvotes = models.PositiveIntegerField(_('upvotes'), default=1)
-    score = models.IntegerField(_('score'), default=1)
+    # feedback counter
+    downvotes = models.PositiveIntegerField(_("downvotes"), default=0)
+    upvotes = models.PositiveIntegerField(_("upvotes"), default=1)
+    score = models.IntegerField(_("score"), default=1)
 
     # Meilisearch fields
     # update
@@ -69,21 +79,23 @@ class Speed(models.Model):
         self.score = self.upvotes - self.downvotes
         self.save()
         return self.score
-    
+
     def recount_votes(self):
         downvotes_counter = 0
         upvotes_counter = 0
         with transaction.atomic():
-            for feedback in SpeedFeedback.objects.select_for_update().filter(speed=self):
+            for feedback in SpeedFeedback.objects.select_for_update().filter(
+                speed=self
+            ):
                 if feedback.vote == Vote.DOWNVOTE:
                     downvotes_counter += 1
                 if feedback.vote == Vote.UPVOTE:
                     upvotes_counter += 1
-        
+
             self.downvotes = downvotes_counter
             self.upvotes = upvotes_counter
             self.score = upvotes_counter - downvotes_counter
-            self.save(update_fields=['downvotes', 'upvotes', 'score'])
+            self.save(update_fields=["downvotes", "upvotes", "score"])
 
     @classmethod
     def recount_all_votes(cls):
@@ -96,7 +108,7 @@ class Speed(models.Model):
         self.is_synced_in_meilisearch = True
         self.save()
         return self
-    
+
     def mark_added_to_meilisearch(self):
         self.added_to_mielisearch_at = timezone.now()
         self.added_to_mielisearch = True
@@ -104,49 +116,56 @@ class Speed(models.Model):
         return self
 
     def __repr__(self) -> str:
-        return self.name + ' ' + self.description
-    
+        return self.name + " " + self.description
+
     def __str__(self) -> str:
-        return self.name + ' (' + self.description[:25] + '...)'
+        return self.name + " (" + self.description[:25] + "...)"
 
 
 class Vote(models.IntegerChoices):
-    DOWNVOTE = -1, _('Downvote')
-    DEFAULT_STATE = 0, _('Default State')
-    UPVOTE = 1, _('Upvote')
+    DOWNVOTE = -1, _("Downvote")
+    DEFAULT_STATE = 0, _("Default State")
+    UPVOTE = 1, _("Upvote")
 
 
 class SpeedFeedback(models.Model):
-
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         constraints = [
-            models.UniqueConstraint(fields=('user', 'speed'), name="fb_unique_user_speed")
-            ]
+            models.UniqueConstraint(
+                fields=("user", "speed"), name="fb_unique_user_speed"
+            )
+        ]
 
     # aka direction
-    vote = models.IntegerField(_('vote'), choices=Vote.choices, default=Vote.DEFAULT_STATE)
+    vote = models.IntegerField(
+        _("vote"), choices=Vote.choices, default=Vote.DEFAULT_STATE
+    )
 
-    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
-    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='feedback')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+    )
+    speed = models.ForeignKey(
+        Speed, on_delete=models.CASCADE, related_name="feedback"
+    )
 
     def __str__(self) -> str:
         return str(self.vote)
-    
+
 
 # class SpeedFeedbackCounter(models.Model):
 #     speed = models.OneToOneField(Speed, on_delete=models.CASCADE, related_name='feedback_counter')
-    
+
 #     downvotes = models.PositiveIntegerField(_('downvotes'), default=0)
 #     upvotes = models.PositiveIntegerField(_('upvotes'), default=0)
 
 #     @property
 #     def score(self) -> int:
 #         return self.upvotes - self.downvotes
-    
+
 #     def recount_votes(self):
 #         with transaction.atomic():
 #             downvotes_counter = 0
@@ -156,7 +175,7 @@ class SpeedFeedback(models.Model):
 #                     downvotes_counter += 1
 #                 if feedback.vote == Vote.UPVOTE:
 #                     upvotes_counter += 1
-        
+
 #             self.downvotes = downvotes_counter
 #             self.upvotes = upvotes_counter
 #             self.save(update_fields=['downvotes', 'upvotes'])
@@ -166,7 +185,7 @@ class SpeedFeedback(models.Model):
 #         queryset = cls.objects.all()
 #         for object in queryset:
 #             object.recount_votes()
-    
+
 #     def __str__(self):
 #         # don't modify the return statement
 #         # the returned value is used by serializers.StringRelatedField()
@@ -174,33 +193,41 @@ class SpeedFeedback(models.Model):
 
 
 class SpeedBookmark(models.Model):
-    
     class Meta:
-        ordering = ['-created_at']
+        ordering = ["-created_at"]
         constraints = [
-            models.UniqueConstraint(fields=('user', 'speed'), name="bm_unique_user_speed")
-            ]
+            models.UniqueConstraint(
+                fields=("user", "speed"), name="bm_unique_user_speed"
+            )
+        ]
 
-    category = models.CharField(_('category'), max_length=32, blank=True, null=True)
+    category = models.CharField(
+        _("category"), max_length=32, blank=True, null=True
+    )
 
-    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
-    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
-    
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='bookmark')
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
+    )
+    speed = models.ForeignKey(
+        Speed, on_delete=models.CASCADE, related_name="bookmark"
+    )
 
     def __str__(self) -> str:
         return self.category
 
 
 class SpeedReport(models.Model):
-
     class Meta:
-        ordering = ['-updated_at']
+        ordering = ["-updated_at"]
         constraints = [
-            models.UniqueConstraint(fields=('user', 'speed'), name="rp_unique_user_speed")
-            ]
-    
+            models.UniqueConstraint(
+                fields=("user", "speed"), name="rp_unique_user_speed"
+            )
+        ]
+
     class ReportReason(models.TextChoices):
         SPAM = "spam"
         INCORRECT_DATA = "incorrect data"
@@ -208,14 +235,22 @@ class SpeedReport(models.Model):
         INAPPROPRIATE_LANGUAGE = "inappropriate language"
         OTHER = "other"
 
-    report_reason = models.CharField(_('report reason'), choices=ReportReason.choices, null=True, blank=True)
-    detail = models.CharField(_('detail'), max_length=256, blank=True, null=True)
+    report_reason = models.CharField(
+        _("report reason"), choices=ReportReason.choices, null=True, blank=True
+    )
+    detail = models.CharField(
+        _("detail"), max_length=256, blank=True, null=True
+    )
 
-    created_at = models.DateTimeField(_('created at'), auto_now_add=True)
-    updated_at = models.DateTimeField(_('updated at'), auto_now=True)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    updated_at = models.DateTimeField(_("updated at"), auto_now=True)
 
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
-    speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name='report')
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
+    )
+    speed = models.ForeignKey(
+        Speed, on_delete=models.CASCADE, related_name="report"
+    )
 
     def __str__(self) -> str:
-        return self.report_reason + ' (' + self.detail[:25] + '...)'
+        return self.report_reason + " (" + self.detail[:25] + "...)"

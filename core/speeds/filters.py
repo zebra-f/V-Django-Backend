@@ -7,16 +7,17 @@ from .validators import tags_validator
 
 
 class CustomQueryArrayWidget(widgets.QueryArrayWidget):
-
     def value_from_datadict(self, data, files, name):
-        # source code: leave it as is just in case; 
+        # source code: leave it as is just in case;
         # it appears that it won't ever run as the `data` should be always a QueryDict
         if not isinstance(data, MultiValueDict):
             data = data.copy()
             for key, value in data.items():
                 # treat value as csv string: ?foo=1,2
                 if isinstance(value, str):
-                    data[key] = [x.strip() for x in value.rstrip(",").split(",") if x]
+                    data[key] = [
+                        x.strip() for x in value.rstrip(",").split(",") if x
+                    ]
             data = MultiValueDict(data)
 
         values_list = data.getlist(name, data.getlist("%s[]" % name)) or []
@@ -24,49 +25,42 @@ class CustomQueryArrayWidget(widgets.QueryArrayWidget):
         # add the following `if` statement
         if len(values_list) == 1:
             if isinstance(values_list[0], str) and len(values_list[0]) > 0:
-                ret = values_list[0].lower().split(',')
+                ret = values_list[0].lower().split(",")
             else:
                 ret = []
         # replace the `if len(values_list) > 0` with the following line
         elif len(values_list) > 1:
             # add `.lower()` method to the following line
             # add `and isinstance(x, str)` to the following line
-            ret = [x.lower() for x in values_list if x and isinstance(x, str)]  
+            ret = [x.lower() for x in values_list if x and isinstance(x, str)]
         else:
             ret = []
-        
+
         return list(set(ret))
 
 
 class SpeedFilter(filters.FilterSet):
     tags = filters.Filter(
         widget=CustomQueryArrayWidget,
-        method='tags_filter',
-        label='Speed tags, comma separated (example: `tag1,tag2,tag3`):'
+        method="tags_filter",
+        label="Speed tags, comma separated (example: `tag1,tag2,tag3`):",
     )
 
     class Meta:
         model = Speed
-        fields = [
-            'is_public', 
-            'speed_type', 
-            'user__username',
-            'tags'
-            ]
-        
+        fields = ["is_public", "speed_type", "user__username", "tags"]
+
     def tags_filter(self, queryset, name: str, value: list[str]):
         tags_validator(value, max_length=4)
         return queryset.filter(tags__contains=value)
-    
+
 
 class SpeedFeedbackFilter(filters.FilterSet):
     speed = filters.UUIDFilter()
 
     class Meta:
         model = SpeedFeedback
-        fields = [
-            'speed'
-        ]
+        fields = ["speed"]
 
 
 class SpeedBookmarkFilter(filters.FilterSet):
@@ -74,29 +68,27 @@ class SpeedBookmarkFilter(filters.FilterSet):
 
     class Meta:
         model = SpeedBookmark
-        fields = [
-            'speed'
-        ]
+        fields = ["speed"]
 
 
 class ReportsCountFilter(admin.SimpleListFilter):
-    title = 'Reports Count'
-    parameter_name = 'reports_count'
+    title = "Reports Count"
+    parameter_name = "reports_count"
 
     def lookups(self, request, model_admin):
         return [
-            ('10', 'reports count >= 10'),
-            ('4', 'reports count >= 4'),
-            ('1', 'reports count >= 1'),
+            ("10", "reports count >= 10"),
+            ("4", "reports count >= 4"),
+            ("1", "reports count >= 1"),
         ]
 
     def queryset(self, request, queryset):
         value = self.value()
-        if value == '1':
+        if value == "1":
             return queryset.filter(reports_count__gte=1)
-        elif value == '4':
+        elif value == "4":
             return queryset.filter(reports_count__gte=4)
-        elif value == '10':
+        elif value == "10":
             return queryset.filter(reports_count__gte=10)
-        
+
         return queryset

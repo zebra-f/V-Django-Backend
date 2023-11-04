@@ -1,10 +1,9 @@
 import time
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from core.meilisearch import client
 from core.speeds.models import Speed
-from core.speeds import logger
 
 
 class Command(BaseCommand):
@@ -16,76 +15,70 @@ class Command(BaseCommand):
             while not client.is_healthy and timeout > 0:
                 time.sleep(0.2)
                 timeout -= 2
-        
+
         if not client.is_disabled() and client.is_healthy():
-            index = None
-            
+            index_name = None
+            for index, model in client.index_models.items():
+                if model == Speed:
+                    index_name = index
+
             try:
-                index = client.get_index('speeds')
+                index = client.get_index(index_name)
             except Exception as e:
                 raise e
-            
+
             if not index:
-                raise Exception('Something went wrong')
-            
-            fields = [field.name for field in Speed._meta.get_fields()]
-            # checks if all `displayed_attributes` are present in the `Speed` model
-            if not all([attr in fields for attr in client.speeds_displayed_attributes]):
-                logger.critical("core.speeds(app); a field in the `Speed` model has been changed!")
-                raise Exception("A field in the `Speed` model has been changed!")
-            
-            index.update_settings({
-                'rankingRules': [
-                    "words",
-                    "typo",
-                    "proximity",
-                    "attribute",
-                    "sort",
-                    "exactness"
+                raise Exception("Something went wrong")
+
+            index.update_settings(
+                {
+                    "rankingRules": [
+                        "words",
+                        "typo",
+                        "proximity",
+                        "attribute",
+                        "sort",
+                        "exactness",
                     ],
-                'searchableAttributes': [
-                    'name',
-                    'description',
-                    'speed_type'
+                    "searchableAttributes": [
+                        "name",
+                        "description",
+                        "speed_type",
                     ],
-                'displayedAttributes': [
-                    *client.speeds_displayed_attributes
+                    "displayedAttributes": [
+                        *client.displayed_attributes_dict[index_name]
                     ],
-                'sortableAttributes': [],
-                'stopWords': [
-                    "the",
-                    "a",
-                    "an",
-                    "is",
-                    "on",
-                    "in",
-                    "of",
-                    "and",
-                    "to",
-                    "with",
-                    "for",
-                    "can",
-                    "be",
-                    "at"
+                    "sortableAttributes": [],
+                    "stopWords": [
+                        "the",
+                        "a",
+                        "an",
+                        "is",
+                        "on",
+                        "in",
+                        "of",
+                        "and",
+                        "to",
+                        "with",
+                        "for",
+                        "can",
+                        "be",
+                        "at",
                     ],
-                'typoTolerance': {
-                    'enabled': True,
-                    'minWordSizeForTypos': {
-                        'oneTypo': 6,
-                        'twoTypos': 10
-                        },
-                    'disableOnAttributes': ['description', 'speed_type']
+                    "typoTolerance": {
+                        "enabled": True,
+                        "minWordSizeForTypos": {"oneTypo": 6, "twoTypos": 10},
+                        "disableOnAttributes": ["description", "speed_type"],
                     },
-                'pagination': {
-                    'maxTotalHits': 10
-                    },
-                })
-            self.stdout.write(self.style.SUCCESS("Meilisearch's `speeds` index was updated!"))
+                    "pagination": {"maxTotalHits": 10},
+                }
+            )
+            self.stdout.write(
+                self.style.SUCCESS("Meilisearch's `speeds` index was updated!")
+            )
         elif not client.is_disabled() and not client.is_healthy():
             raise Exception("Meilisearch is not healthy :(.")
         else:
             raise Exception(
                 "Meilisearch is currently disabled in this application. If you'd like to enable it, please configure the settings in your settings.py file."
-                )
-
-        
+            )
