@@ -188,7 +188,25 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
             message="The UNIQUE constraint failed; the speed object has already been voted on.",
         )
         validator(validated_data, self)
-        return super().create(validated_data)
+
+        # prevents a race conditions
+        with transaction.atomic():
+            speed = Speed.objects.select_for_update().get(
+                id=validated_data["speed"].id
+            )
+            speed.upvotes += 1
+            speed.score += 1
+            try:
+                speed.save()
+                speed_feedback = super().create(validated_data)
+            except Exception as e:
+                logger.warning(f"core.speeds.{__name__}; {str(e)}")
+                raise APIException(
+                    "An unexpected error occurred while processing your request. Please try again later."
+                )
+        # fix for the nested representation of the Speed's score
+        speed_feedback.speed.score += 1
+        return speed_feedback
 
     @restrict_field_updates("speed", "user")
     def update(self, instance, validated_data):
