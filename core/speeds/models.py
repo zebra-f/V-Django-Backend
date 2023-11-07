@@ -1,4 +1,6 @@
-from django.db import models
+from uuid import uuid4
+
+from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.core.validators import MaxValueValidator
@@ -6,10 +8,6 @@ from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-
-from django.db import transaction
-
-from uuid import uuid4
 
 from core.speeds.validators import CustomMinValueValidator
 
@@ -72,7 +70,7 @@ class Speed(models.Model):
     last_synced_to_meilisearch_at = models.DateTimeField(blank=True, null=True)
     is_synced_in_meilisearch = models.BooleanField(default=False)
     # add
-    added_to_mielisearch_at = models.DateField(blank=True, null=True)
+    added_to_mielisearch_at = models.DateTimeField(blank=True, null=True)
     is_added_to_meilisearch = models.BooleanField(default=False)
 
     def set_score(self) -> int:
@@ -111,7 +109,7 @@ class Speed(models.Model):
 
     def mark_added_to_meilisearch(self):
         self.added_to_mielisearch_at = timezone.now()
-        self.added_to_mielisearch = True
+        self.is_added_to_meilisearch = True
         self.save()
         return self
 
