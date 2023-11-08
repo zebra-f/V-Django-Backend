@@ -180,6 +180,12 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
 
     @prevent_unauthorized_create_and_data_reveal
     def create(self, validated_data):
+        curr_vote = validated_data["vote"]
+        if curr_vote == 0:
+            raise APIException(
+                "You should either upvote or downvote, not vote with 0. Please use 1 or -1 instead."
+            )
+
         # this is a workaround since passing this validator into the Meta's `validators` attribute won't work
         # the 'user' field is only available during the 'create' operation in validated_data (passed by the 'perform_create' method).
         validator = UniqueTogetherValidator(
@@ -194,8 +200,15 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
             speed = Speed.objects.select_for_update().get(
                 id=validated_data["speed"].id
             )
-            speed.upvotes += 1
-            speed.score += 1
+
+            if curr_vote == -1:
+                speed.downvotes += 1
+            elif curr_vote == 1:
+                speed.upvotes += 1
+            speed.score = speed.upvotes - speed.downvotes
+
+            speed.is_synced_in_meilisearch = False
+
             try:
                 speed.save()
                 speed_feedback = super().create(validated_data)
@@ -204,8 +217,9 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
                 raise APIException(
                     "An unexpected error occurred while processing your request. Please try again later."
                 )
+
         # fix for the nested representation of the Speed's score
-        speed_feedback.speed.score += 1
+        speed_feedback.speed.score = speed.score
         return speed_feedback
 
     @restrict_field_updates("speed", "user")
@@ -233,8 +247,10 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
                 speed.downvotes += 1
             elif curr_vote == 1:
                 speed.upvotes += 1
-
             speed.score = speed.upvotes - speed.downvotes
+
+            speed.is_synced_in_meilisearch = False
+
             try:
                 speed.save()
                 speed_feedback = super().update(instance, validated_data)
