@@ -1,0 +1,339 @@
+[
+  {
+    "model": "users.user",
+    "pk": "3df1f628-5b82-4112-b1c6-47345352b9e5",
+    "fields": {
+      "password": "pbkdf2_sha256$600000$6LiBEsi6p4ViViRnFACovN$KZmkd6SUWoFhBnMK8cLFVpsvUxLerceWgLO3T0o8Qxs=",
+      "is_superuser": false,
+      "email": "testusertwo@email.com",
+      "email_verified": true,
+      "username": "testusertwo",
+      "created_at": "2023-11-07T17:37:34.543Z",
+      "updated_at": "2023-11-07T17:38:12.952Z",
+      "last_login": "2023-11-08T19:36:04.777Z",
+      "last_logout": null,
+      "is_admin": false,
+      "is_active": true,
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "users.user",
+    "pk": "82b6adad-6f5c-4c5d-94f3-b335ef563dc2",
+    "fields": {
+      "password": "pbkdf2_sha256$600000$B5KfgrvqvvGeTBknkG2A3P$kYQVw6qkc+RLkg0Ff+VMKp9mL7xK46tFIL/JJrQMQpw=",
+      "is_superuser": false,
+      "email": "deleted@v",
+      "email_verified": false,
+      "username": "deleted",
+      "created_at": "2023-11-07T17:30:10.945Z",
+      "updated_at": "2023-11-07T17:30:11.333Z",
+      "last_login": null,
+      "last_logout": null,
+      "is_admin": false,
+      "is_active": false,
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "users.user",
+    "pk": "e0251b37-b096-4d51-b4e4-d78e0c496c5a",
+    "fields": {
+      "password": "pbkdf2_sha256$600000$wzreijIBg6pP8444KzLscC$nPa+2hq+jMcYnNVe/CNdRhAwvRtUtGPtFIuIl3VB1kc=",
+      "is_superuser": false,
+      "email": "testuserone@email.com",
+      "email_verified": true,
+      "username": "testuserone",
+      "created_at": "2023-11-07T17:36:18.782Z",
+      "updated_at": "2023-11-07T17:36:22.251Z",
+      "last_login": "2023-11-08T18:51:01.734Z",
+      "last_logout": null,
+      "is_admin": false,
+      "is_active": true,
+      "groups": [],
+      "user_permissions": []
+    }
+  },
+  {
+    "model": "users.userpersonalprofile",
+    "pk": 1,
+    "fields": {
+      "user": "e0251b37-b096-4d51-b4e4-d78e0c496c5a",
+      "first_name": null,
+      "last_name": null,
+      "updated_at": "2023-11-07T17:36:19.187Z"
+    }
+  },
+  {
+    "model": "users.userpersonalprofile",
+    "pk": 2,
+    "fields": {
+      "user": "3df1f628-5b82-4112-b1c6-47345352b9e5",
+      "first_name": null,
+      "last_name": null,
+      "updated_at": "2023-11-07T17:37:34.947Z"
+    }
+  },
+  {
+    "model": "speeds.speed",
+    "pk": "2dbc2429-a8cc-4f80-922a-5dbc4715a76c",
+    "fields": {
+      "name": "testuserone name three",
+      "description": "testuserone description three",
+      "speed_type": "constant",
+      "tags": "[\"three\"]",
+      "kmph": 3.0,
+      "estimated": false,
+      "user": "e0251b37-b096-4d51-b4e4-d78e0c496c5a",
+      "is_public": false,
+      "created_at": "2023-11-08T18:30:45.984Z",
+      "updated_at": "2023-11-08T18:51:44.487Z",
+      "downvotes": 0,
+      "upvotes": 1,
+      "score": 1,
+      "last_synced_to_meilisearch_at": "2023-11-08T18:51:44.487Z",
+      "is_synced_in_meilisearch": true,
+      "added_to_mielisearch_at": "2023-11-08",
+      "is_added_to_meilisearch": true
+    }
+  },
+  {
+    "model": "speeds.speed",
+    "pk": "66fca277-3329-49aa-96a2-cc240a659549",
+    "fields": {
+      "name": "testuserone name two",
+      "description": "testuserone description two",
+      "speed_type": "average",
+      "tags": "[\"two\", \"eight\"]",
+      "kmph": 2.0,
+      "estimated": true,
+      "user": "e0251b37-b096-4d51-b4e4-d78e0c496c5a",
+      "is_public": true,
+      "created_at": "2023-11-08T18:29:25.464Z",
+      "updated_at": "2023-11-08T18:51:23.586Z",
+      "downvotes": 0,
+      "upvotes": 1,
+      "score": 1,
+      "last_synced_to_meilisearch_at": "2023-11-08T18:51:23.586Z",
+      "is_synced_in_meilisearch": true,
+      "added_to_mielisearch_at": "2023-11-08",
+      "is_added_to_meilisearch": true
+    }
+  },
+  {
+    "model": "speeds.speed",
+    "pk": "67e77deb-13d5-43fa-af9f-cc6f1b2a1c5c",
+    "fields": {
+      "name": "testusertwo name three",
+      "description": "testusertwo description three",
+      "speed_type": "relative",
+      "tags": "[\"three\", \"eight\", \"ten\"]",
+      "kmph": 3.0,
+      "estimated": true,
+      "user": "3df1f628-5b82-4112-b1c6-47345352b9e5",
+      "is_public": true,
+      "created_at": "2023-11-08T18:50:04.276Z",
+      "updated_at": "2023-11-08T18:54:48.593Z",
+      "downvotes": 1,
+      "upvotes": 1,
+      "score": 0,
+      "last_synced_to_meilisearch_at": null,
+      "is_synced_in_meilisearch": false,
+      "added_to_mielisearch_at": "2023-11-08",
+      "is_added_to_meilisearch": true
+    }
+  },
+  {
+    "model": "speeds.speed",
+    "pk": "706efb42-5d91-4115-a52b-3e0c98fb8cd5",
+    "fields": {
+      "name": "testuserone name one",
+      "description": "testuserone description one",
+      "speed_type": "top",
+      "tags": "[\"one\", \"seven\", \"nine\"]",
+      "kmph": 1.0,
+      "estimated": false,
+      "user": "e0251b37-b096-4d51-b4e4-d78e0c496c5a",
+      "is_public": true,
+      "created_at": "2023-11-08T18:28:16.856Z",
+      "updated_at": "2023-11-08T19:37:37.194Z",
+      "downvotes": 1,
+      "upvotes": 1,
+      "score": 0,
+      "last_synced_to_meilisearch_at": null,
+      "is_synced_in_meilisearch": false,
+      "added_to_mielisearch_at": "2023-11-08",
+      "is_added_to_meilisearch": true
+    }
+  },
+  {
+    "model": "speeds.speed",
+    "pk": "d26c8bad-6548-4918-8e63-1bd59579917b",
+    "fields": {
+      "name": "testusertwo name two",
+      "description": "testusertwo description two",
+      "speed_type": "relative",
+      "tags": "[\"two\", \"five\", \"six\"]",
+      "kmph": 2.0,
+      "estimated": true,
+      "user": "3df1f628-5b82-4112-b1c6-47345352b9e5",
+      "is_public": true,
+      "created_at": "2023-11-08T18:49:16.289Z",
+      "updated_at": "2023-11-08T18:54:20.882Z",
+      "downvotes": 0,
+      "upvotes": 2,
+      "score": 2,
+      "last_synced_to_meilisearch_at": null,
+      "is_synced_in_meilisearch": false,
+      "added_to_mielisearch_at": "2023-11-08",
+      "is_added_to_meilisearch": true
+    }
+  },
+  {
+    "model": "speeds.speed",
+    "pk": "e63fe0ca-4235-4a20-9555-2926e353e9e2",
+    "fields": {
+      "name": "testusertwo name one",
+      "description": "testusertwo description one",
+      "speed_type": "relative",
+      "tags": "[\"one\", \"eleven\", \"four\"]",
+      "kmph": 1.0,
+      "estimated": true,
+      "user": "3df1f628-5b82-4112-b1c6-47345352b9e5",
+      "is_public": true,
+      "created_at": "2023-11-08T18:48:43.854Z",
+      "updated_at": "2023-11-08T18:48:43.957Z",
+      "downvotes": 0,
+      "upvotes": 1,
+      "score": 1,
+      "last_synced_to_meilisearch_at": null,
+      "is_synced_in_meilisearch": false,
+      "added_to_mielisearch_at": "2023-11-08",
+      "is_added_to_meilisearch": true
+    }
+  },
+  {
+    "model": "speeds.speedfeedback",
+    "pk": 1,
+    "fields": {
+      "vote": 1,
+      "created_at": "2023-11-08T18:28:16.860Z",
+      "updated_at": "2023-11-08T18:28:16.860Z",
+      "user": "e0251b37-b096-4d51-b4e4-d78e0c496c5a",
+      "speed": "706efb42-5d91-4115-a52b-3e0c98fb8cd5"
+    }
+  },
+  {
+    "model": "speeds.speedfeedback",
+    "pk": 2,
+    "fields": {
+      "vote": 1,
+      "created_at": "2023-11-08T18:29:25.468Z",
+      "updated_at": "2023-11-08T18:29:25.468Z",
+      "user": "e0251b37-b096-4d51-b4e4-d78e0c496c5a",
+      "speed": "66fca277-3329-49aa-96a2-cc240a659549"
+    }
+  },
+  {
+    "model": "speeds.speedfeedback",
+    "pk": 3,
+    "fields": {
+      "vote": 1,
+      "created_at": "2023-11-08T18:30:45.988Z",
+      "updated_at": "2023-11-08T18:30:45.988Z",
+      "user": "e0251b37-b096-4d51-b4e4-d78e0c496c5a",
+      "speed": "2dbc2429-a8cc-4f80-922a-5dbc4715a76c"
+    }
+  },
+  {
+    "model": "speeds.speedfeedback",
+    "pk": 4,
+    "fields": {
+      "vote": 1,
+      "created_at": "2023-11-08T18:48:43.857Z",
+      "updated_at": "2023-11-08T18:48:43.857Z",
+      "user": "3df1f628-5b82-4112-b1c6-47345352b9e5",
+      "speed": "e63fe0ca-4235-4a20-9555-2926e353e9e2"
+    }
+  },
+  {
+    "model": "speeds.speedfeedback",
+    "pk": 5,
+    "fields": {
+      "vote": 1,
+      "created_at": "2023-11-08T18:49:16.292Z",
+      "updated_at": "2023-11-08T18:49:16.292Z",
+      "user": "3df1f628-5b82-4112-b1c6-47345352b9e5",
+      "speed": "d26c8bad-6548-4918-8e63-1bd59579917b"
+    }
+  },
+  {
+    "model": "speeds.speedfeedback",
+    "pk": 6,
+    "fields": {
+      "vote": 1,
+      "created_at": "2023-11-08T18:50:04.280Z",
+      "updated_at": "2023-11-08T18:50:04.280Z",
+      "user": "3df1f628-5b82-4112-b1c6-47345352b9e5",
+      "speed": "67e77deb-13d5-43fa-af9f-cc6f1b2a1c5c"
+    }
+  },
+  {
+    "model": "speeds.speedfeedback",
+    "pk": 7,
+    "fields": {
+      "vote": 1,
+      "created_at": "2023-11-08T18:54:20.884Z",
+      "updated_at": "2023-11-08T18:54:20.884Z",
+      "user": "e0251b37-b096-4d51-b4e4-d78e0c496c5a",
+      "speed": "d26c8bad-6548-4918-8e63-1bd59579917b"
+    }
+  },
+  {
+    "model": "speeds.speedfeedback",
+    "pk": 8,
+    "fields": {
+      "vote": -1,
+      "created_at": "2023-11-08T18:54:48.596Z",
+      "updated_at": "2023-11-08T18:54:48.596Z",
+      "user": "e0251b37-b096-4d51-b4e4-d78e0c496c5a",
+      "speed": "67e77deb-13d5-43fa-af9f-cc6f1b2a1c5c"
+    }
+  },
+  {
+    "model": "speeds.speedfeedback",
+    "pk": 9,
+    "fields": {
+      "vote": -1,
+      "created_at": "2023-11-08T19:37:37.198Z",
+      "updated_at": "2023-11-08T19:37:37.198Z",
+      "user": "3df1f628-5b82-4112-b1c6-47345352b9e5",
+      "speed": "706efb42-5d91-4115-a52b-3e0c98fb8cd5"
+    }
+  },
+  {
+    "model": "speeds.speedbookmark",
+    "pk": 1,
+    "fields": {
+      "category": "testuserone category one",
+      "created_at": "2023-11-08T19:14:23.827Z",
+      "updated_at": "2023-11-08T19:14:23.827Z",
+      "user": "e0251b37-b096-4d51-b4e4-d78e0c496c5a",
+      "speed": "67e77deb-13d5-43fa-af9f-cc6f1b2a1c5c"
+    }
+  },
+  {
+    "model": "speeds.speedreport",
+    "pk": 1,
+    "fields": {
+      "report_reason": "other",
+      "detail": "testusertwo detail one",
+      "created_at": "2023-11-08T19:45:51.302Z",
+      "updated_at": "2023-11-08T19:45:51.302Z",
+      "user": "3df1f628-5b82-4112-b1c6-47345352b9e5",
+      "speed": "66fca277-3329-49aa-96a2-cc240a659549"
+    }
+  }
+]
