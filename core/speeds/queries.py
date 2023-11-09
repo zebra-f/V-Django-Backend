@@ -76,6 +76,13 @@ class SpeedQueries:
         return Speed.objects\
                     .filter(user=user)\
                     .select_related('user')
+    
+    @staticmethod
+    def get_not_synced_in_meilisearch_query():
+        return Speed.objects\
+                    .filter(
+                        Q(is_synced_in_meilisearch=False) & Q(is_added_to_meilisearch=True)
+                    )
 
     # admin site
 

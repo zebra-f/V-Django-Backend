@@ -5,6 +5,7 @@ from celery.schedules import crontab
 from celery import shared_task
 
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from core.celery import app
 from core.meilisearch import client as ms_client
@@ -45,6 +46,14 @@ def setup_periodic_tasks(sender, **kwargs):
             delete_meilisearch_deleted_user_data.s(),
             name="delete meilisearch deleted user data",
         )
+        sender.add_periodic_task(
+            crontab(
+                minute="*/1"  # dev
+                # minute=0, hour='*/4'  # prod
+            ),
+            synchronize_scores_in_meilisearch.s(),
+            name="synchronize scores in meilisearch",
+        )
 
 
 @app.task  # doesn't work with @app.shared_task
@@ -62,11 +71,13 @@ def cache_random_speeds_task(**kwargs):
 
 @app.task
 def delete_meilisearch_deleted_user_data(**kwargs):
-    user = get_user_model().objects.get(username="deleted")
-    qs = SpeedQueries.get_deleted_user_query(user=user)
-
+    """
+    Periodic task.
+    """
     timestamp = time.time()
 
+    user = get_user_model().objects.get(username="deleted")
+    qs = SpeedQueries.get_deleted_user_query(user=user)
     for speed in qs:
         try:
             task_info = ms_client.index("speeds").delete_document(speed.id)
@@ -87,6 +98,21 @@ def delete_meilisearch_deleted_user_data(**kwargs):
     logger.info(
         f"core.speeds.{__name__}; the `delete_meilisearch_deleted_user_data` perdiodic task has finished in {time.time() - timestamp} seconds."
     )
+
+
+@app.task
+def synchronize_scores_in_meilisearch(**kwargs):
+    """
+    Periodic task.
+    (Not optimized.)
+    """
+    qs = SpeedQueries.get_not_synced_in_meilisearch_query()
+    for speed in qs:
+        ms_client.sync_document(
+            "speeds",
+            "update",
+            data={"id": str(speed.id), "score": speed.score},
+        )
 
 
 @shared_task
