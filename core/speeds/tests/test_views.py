@@ -1,8 +1,9 @@
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.test import APITestCase, override_settings
+
 from ..models import Speed
-from django.contrib.auth import get_user_model
 
 
 User = get_user_model()
@@ -21,56 +22,49 @@ User = get_user_model()
     MEILISEARCH={"disabled": True, "MASTER_KEY": None, "URL": None}
 )
 class SpeedTests(APITestCase):
-    fixtures = ["core/speeds/fixtures/test_fixtures.json"]
+    fixtures = ["speeds_tests_fixtures.json"]
 
-    # @classmethod
-    # def setUpTestData(cls) -> None:
-    #     pass
+    @classmethod
+    def setUpTestData(cls) -> None:
+        return super().setUpTestData()
 
     def setUp(self):
-        print("aaa")
-        self.author = User.objects.create_user(
-            username="test_author",
-            email="author@example.com",
-            password="password",
-        )
-        self.data = {
-            "name": "Test Speed",
-            "description": "Test Speed Description",
-            "tags": "test, speed, drf",
-            "kmph": 100,
-            "author": self.author.id,
-            "public": True,
+        self.testuserone = User.objects.get(username="testuserone")
+        self.testusertwo = User.objects.get(username="testusertwo")
+        return super().setUp()
+
+    def obtain_token_pair(self, user):
+        login_url = reverse("login")
+        data = {
+            "email": user.email,
+            "password": self.users_passwords[user.username],
         }
+        response = self.client.post(login_url, data, format="json")
+        return response.data
 
-    # def test_create_speed(self):
-    #     self.client.force_login(self.author)
-    #     response = self.client.post(reverse("speed-list"), self.data)
-    #     self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-    #     self.assertEqual(Speed.objects.count(), 1)
-    #     self.assertEqual(Speed.objects.get().name, self.data["name"])
-
-    def test_update_speed_detail(self):
-        print("aaaaaaaaaaaaaa")
+    def test_speed_list(self):
         url = reverse("speed-list")
         response = self.client.get(url)
-        print(response)
-        print(response.data)
-        print("bbbbbbbbbbbbbb--------------\n\n")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            len(response.data["results"]), response.data["count"], 5
+        )
+        for speed in response.data["results"]:
+            self.assertEqual(speed["is_public"], True)
 
-        # data = {
-        #     "name": "New Name",
-        #     "description": "New Description",
-        #     "tags": "new, tags, drf",
-        #     "kmph": 150,
-        #     "public": False,
-        # }
-        # self.client.force_login(self.author)
-        # response = self.client.put(self.url, data)
-        # self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # self.speed.refresh_from_db()
-        # self.assertEqual(self.speed.name, data["name"])
-        # self.assertEqual(self.speed.description, data["description"])
-        # self.assertEqual(self.speed.tags, data["tags"])
-        # self.assertEqual(self.speed.kmph, data["kmph"])
-        # self.assertEqual(self.speed.public, data["public"])
+        self.client.force_login(self.testuserone)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            len(response.data["results"]), response.data["count"], 6
+        )
+        for speed in response.data["results"]:
+            if speed["is_public"] == False:
+                self.assertEqual(speed["user"], self.testuserone.username)
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            len(response.data["results"]), response.data["count"], 5
+        )
