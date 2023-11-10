@@ -25,7 +25,7 @@ Set up environment variables (generate a secure key/password for each variable n
  
     $ export REDIS_HOST="127.0.0.1"
     $ export REDIS_PORT="6379"
-    $ export REDIS_URL="redis://redis:6379"
+    $ export REDIS_URL="redis://127.0.0.1:6379"
 
     $ export MEILISEARCH_HOST="127.0.0.1v"
     $ export MEILISEARCH_PORT="7700"
