@@ -68,3 +68,41 @@ class SpeedTests(APITestCase):
         self.assertEqual(
             len(response.data["results"]), response.data["count"], 5
         )
+
+    def test_speed_retrieve(self):
+        speeds = Speed.objects.all()
+        for speed in speeds:
+            url = reverse("speed-detail", kwargs={"pk": str(speed.pk)})
+            response = self.client.get(url)
+            if speed.is_public == True:
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.data["id"], str(speed.pk))
+            else:
+                self.assertEqual(response.status_code, 404)
+
+        self.client.force_login(self.testuserone)
+        for speed in speeds:
+            if speed.user == self.testuserone:
+                url = reverse("speed-detail", kwargs={"pk": str(speed.pk)})
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(
+                    response.data["user"], self.testuserone.username
+                )
+
+        self.client.force_login(self.testusertwo)
+        for speed in speeds:
+            url = reverse("speed-detail", kwargs={"pk": str(speed.pk)})
+            response = self.client.get(url)
+            if speed.user != self.testusertwo:
+                if speed.is_public == False:
+                    self.assertEqual(response.status_code, 404)
+                    self.assertEqual(response.data["is_public"], "False")
+                    self.assertNotEqual(
+                        response.data["user"], self.testusertwo.username
+                    )
+                    continue
+            self.assertEqual(response.status_code, 200)
+
+    def test_speed_update(self):
+        pass
