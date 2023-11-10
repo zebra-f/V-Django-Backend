@@ -5,7 +5,7 @@ from celery.schedules import crontab
 from celery import shared_task
 
 from django.contrib.auth import get_user_model
-from django.utils import timezone
+from django.conf import settings
 
 from core.celery import app
 from core.meilisearch import client as ms_client
@@ -16,6 +16,8 @@ from . import logger
 
 @app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
+    if settings.TESTING:
+        return
     cache_flag = False
     try:
         # cache random `Speed` objects to ensure their availability for the client

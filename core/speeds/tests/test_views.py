@@ -19,7 +19,7 @@ User = get_user_model()
 
 
 @override_settings(
-    MEILISEARCH={"disabled": True, "MASTER_KEY": None, "URL": None}
+    MEILISEARCH={"disabled": True, "MASTER_KEY": None, "URL": None},
 )
 class SpeedTests(APITestCase):
     fixtures = ["speeds_tests_fixtures.json"]
@@ -97,10 +97,6 @@ class SpeedTests(APITestCase):
             if speed.user != self.testusertwo:
                 if speed.is_public == False:
                     self.assertEqual(response.status_code, 404)
-                    self.assertEqual(response.data["is_public"], "False")
-                    self.assertNotEqual(
-                        response.data["user"], self.testusertwo.username
-                    )
                     continue
             self.assertEqual(response.status_code, 200)
 
