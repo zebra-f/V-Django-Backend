@@ -1,3 +1,5 @@
+import string
+
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from rest_framework import status
@@ -151,6 +153,58 @@ class SpeedTests(APITestCase):
             self.assertEqual(message[0], "This field is required.")
             required_fields.remove(field)
         self.assertEqual(len(required_fields), 0)
+
+        data = {
+            "name": "testuserone name four",
+            "description": "testuserone description four",
+            "speed_type": "relative",
+            "tags": ["three", "four", "nine"],
+            "kmph": 4.0,
+            "estimated": False,
+            "is_public": False,
+        }
+        valid_name_chars = {"'", "-", "_"}
+        valid_description_chars = {",", "'", ".", "-", '"', ".", "(", ")", ","}
+        valid_tags_chars = {"'", "-"}
+        for char in string.punctuation:
+            data["name"] += char
+            response = self.client.post(url, data, format="json")
+            if char not in valid_name_chars:
+                self.assertEqual(response.status_code, 400)
+            else:
+                self.assertEqual(response.status_code, 201)
+            data["name"] = data["name"][0 : len(data["name"]) - 1]
+
+            data["description"] += char
+            response = self.client.post(url, data, format="json")
+            if char not in valid_description_chars:
+                self.assertEqual(response.status_code, 400)
+            else:
+                self.assertEqual(response.status_code, 201)
+            data["description"] = data["description"][
+                0 : len(data["description"]) - 1
+            ]
+
+            data["tags"].append("ten" + char)
+            response = self.client.post(url, data, format="json")
+            if char not in valid_tags_chars:
+                self.assertEqual(response.status_code, 400)
+            else:
+                self.assertEqual(response.status_code, 201)
+            data["tags"].pop()
+
+        data = {
+            "name": "t",
+            "description": "t" * 7,
+            "speed_type": "relative",
+            "tags": ["three", "four", "nine", "ten", "eleven"],
+            "kmph": 4.0,
+            "estimated": False,
+            "is_public": False,
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(len(response.data), 3)
 
         data = {
             "name": "testuserone name four",
