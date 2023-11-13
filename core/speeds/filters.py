@@ -7,7 +7,14 @@ from .validators import tags_validator
 
 
 class CustomQueryArrayWidget(widgets.QueryArrayWidget):
-    def value_from_datadict(self, data, files, name):
+    def value_from_datadict(self, data, files, name) -> list:
+        """
+        Allows the passing of tags in query parameters using either
+        of the following formats:
+        - .../?tags=one,seven
+        - .../?tags=one&tags=seven
+        """
+
         # source code: leave it as is just in case;
         # it appears that it won't ever run as the `data` should be always a QueryDict
         if not isinstance(data, MultiValueDict):
