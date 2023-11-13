@@ -22,7 +22,7 @@ User = get_user_model()
     MEILISEARCH={"disabled": True, "MASTER_KEY": None, "URL": None},
 )
 class SpeedTests(APITestCase):
-    fixtures = ["speeds_tests_fixtures.json"]
+    fixtures = ["speeds_tests_fixture"]
 
     @classmethod
     def setUpTestData(cls) -> None:
@@ -77,6 +77,7 @@ class SpeedTests(APITestCase):
             if speed.is_public == True:
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.data["id"], str(speed.pk))
+                self.assertEqual(len(response.data), 11)
             else:
                 self.assertEqual(response.status_code, 404)
 
@@ -99,6 +100,66 @@ class SpeedTests(APITestCase):
                     self.assertEqual(response.status_code, 404)
                     continue
             self.assertEqual(response.status_code, 200)
+            # 2 more fields for a logged in user
+            self.assertEqual(len(response.data), 13)
+            if "user_speed_feedback" not in response.data:
+                raise self.failureException(
+                    "`user_speed_feedback` was not found in response' data."
+                )
+            if "user_speed_bookmark" not in response.data:
+                raise self.failureException(
+                    "`user_speed_feedback` was not found in response' data."
+                )
 
-    def test_speed_update(self):
-        pass
+    def test_speed_create(self):
+        url = reverse("speed-list")
+        data = {
+            "name": "anon name one",
+            "description": "anon description one",
+            "speed_type": "relative",
+            "tags": ["three", "four", "nine"],
+            "kmph": 1.0,
+            "estimated": False,
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testuserone)
+        data = {
+            # "name": "testuserone name four",
+            # "description": "testuserone description four",
+            # "speed_type": "relative",
+            # "tags": ["three", "four", "nine"],
+            # "kmph": 4.0,
+            # "estimated": False,
+            # "is_public": True,
+        }
+        response = self.client.post(url, data, format="json")
+        required_fields = {
+            "name",
+            "description",
+            "speed_type",
+            "kmph",
+            "tags",
+        }
+        self.assertEqual(response.status_code, 400)
+        for field, message in response.data.items():
+            self.assertEqual(message[0], "This field is required.")
+            required_fields.remove(field)
+        self.assertEqual(len(required_fields), 0)
+
+        data = {
+            "name": "testuserone name four",
+            "description": "testuserone description four",
+            "speed_type": "relative",
+            "tags": ["three", "four", "nine"],
+            "kmph": 4.0,
+            "estimated": False,
+            "is_public": False,
+        }
+        response = self.client.post(url, data, format="json")
+        self.assertEqual(response.status_code, 201)

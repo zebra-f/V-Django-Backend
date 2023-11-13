@@ -1,4 +1,5 @@
 from uuid import uuid4
+from datetime import datetime
 
 from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
@@ -7,7 +8,6 @@ from django.core.validators import MaxValueValidator
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth import get_user_model
-from django.utils import timezone
 
 from core.speeds.validators import CustomMinValueValidator
 
@@ -30,11 +30,9 @@ class Speed(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4)
 
     name = models.CharField(_("name"), max_length=128)
-    description = models.CharField(
-        _("description"), max_length=128, null=True, blank=True
-    )
+    description = models.CharField(_("description"), max_length=128)
     speed_type = models.CharField(_("speed type"), choices=SpeedType.choices)
-    tags = ArrayField(models.CharField(max_length=20), size=4, blank=True)
+    tags = ArrayField(models.CharField(max_length=20), size=4)
 
     kmph = models.FloatField(
         _("speed in km/h"),
@@ -102,13 +100,13 @@ class Speed(models.Model):
             object.recount_votes()
 
     def mark_synced_in_meilisearch(self):
-        self.last_synced_to_meilisearch_at = timezone.now()
+        self.last_synced_to_meilisearch_at = datetime.now()
         self.is_synced_in_meilisearch = True
         self.save()
         return self
 
     def mark_added_to_meilisearch(self):
-        self.added_to_mielisearch_at = timezone.now()
+        self.added_to_mielisearch_at = datetime.now()
         self.is_added_to_meilisearch = True
         self.save()
         return self
