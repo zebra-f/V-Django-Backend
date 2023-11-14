@@ -2,8 +2,11 @@ from django.utils.datastructures import MultiValueDict
 from django_filters import rest_framework as filters, widgets
 from django.contrib import admin
 
+from rest_framework.exceptions import APIException
+
 from .models import Speed, SpeedFeedback, SpeedBookmark
 from .validators import tags_validator
+from core.users.validators import username_validator
 
 
 class CustomQueryArrayWidget(widgets.QueryArrayWidget):
@@ -52,14 +55,25 @@ class SpeedFilter(filters.FilterSet):
         method="tags_filter",
         label="Speed tags, comma separated (example: `tag1,tag2,tag3`):",
     )
+    user = filters.CharFilter(
+        method="user_filter",
+        label="Username of the user:",
+    )
 
     class Meta:
         model = Speed
-        fields = ["is_public", "speed_type", "user__username", "tags"]
+        fields = ["is_public", "speed_type", "user", "tags"]
 
     def tags_filter(self, queryset, name: str, value: list[str]):
         tags_validator(value, max_length=4)
         return queryset.filter(tags__contains=value)
+
+    def user_filter(self, queryset, name, value):
+        try:
+            username_validator(value)
+        except Exception as e:
+            raise APIException(str(e))
+        return queryset.filter(user__username=value)
 
 
 class SpeedFeedbackFilter(filters.FilterSet):
