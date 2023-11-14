@@ -1,4 +1,5 @@
 import string
+from unittest.mock import patch
 
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -33,6 +34,19 @@ class SpeedTests(APITestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         return super().setUpTestData()
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        ret = super().setUpClass()
+        cls.patcher_delay = patch("celery.app.task.Task.delay", return_value=1)
+        cls.mock_delay = cls.patcher_delay.start()
+        return ret
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        ret = super().tearDownClass()
+        cls.patcher_delay.stop()
+        return ret
 
     def setUp(self):
         self.testuserone = User.objects.get(username="testuserone")
@@ -73,11 +87,15 @@ class SpeedTests(APITestCase):
         response = self.client.get(url, {"user": "testuserone"})
         self.assertEqual(len(response.data["results"]), 2)
         response = self.client.get(url, {"user": "testusertwo"})
-        self.assertEqual(len(response.data["results"]), response.data["count"], 3)
+        self.assertEqual(
+            len(response.data["results"]), response.data["count"], 3
+        )
         response = self.client.get(url, {"user": "testusertwo", "tags": "one"})
         self.assertEqual(len(response.data["results"]), 1)
         response = self.client.get(url, {"tags": "one"})
-        self.assertEqual(len(response.data["results"]), response.data["count"], 2)
+        self.assertEqual(
+            len(response.data["results"]), response.data["count"], 2
+        )
 
         self.client.force_login(self.testuserone)
         response = self.client.get(url)
@@ -281,3 +299,110 @@ class SpeedTests(APITestCase):
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, 201)
+
+    def test_speed_update(self):
+        for speed in self.testuserone.speed_set.all():
+            url = reverse("speed-detail", kwargs={"pk": str(speed.id)})
+            data = {
+                "name": f"{speed.name} updated",
+                "description": f"{speed.description} updated",
+                "speed_type": "relative",
+                "tags": ["three", "four", "nine"],
+                "kmph": 4.0,
+                "estimated": False,
+                "is_public": False,
+            }
+
+            self.client.logout()
+            response = self.client.put(url, data, format="json")
+            self.assertEqual(response.status_code, 403)
+            self.assertEqual(
+                response.data["detail"],
+                "Authentication credentials were not provided.",
+            )
+
+            self.client.force_login(self.testusertwo)
+            response = self.client.put(url, data, format="json")
+            if not speed.is_public:
+                self.assertEqual(response.status_code, 404)
+                self.assertEqual(
+                    response.data["detail"],
+                    "Not found.",
+                )
+            else:
+                self.assertEqual(response.status_code, 403)
+                self.assertEqual(
+                    response.data["detail"],
+                    "You do not have permission to perform this action.",
+                )
+
+            self.client.force_login(self.testuserone)
+            response = self.client.put(url, data, format="json")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data["name"], speed.name + " updated")
+            self.assertEqual(
+                response.data["description"], speed.description + " updated"
+            )
+            data = {
+                "name": f"{speed.name} updated updated",
+                "description": f"{speed.description} updated updated",
+            }
+            response = self.client.put(url, data, format="json")
+            self.assertEqual(response.status_code, 400)
+
+    def test_speed_partial_update(self):
+        for speed in self.testuserone.speed_set.all():
+            url = reverse("speed-detail", kwargs={"pk": str(speed.id)})
+            data = {
+                "name": f"{speed.name} updated",
+                "description": f"{speed.description} updated",
+                "speed_type": "relative",
+                "tags": ["three", "four", "nine"],
+                "kmph": 4.0,
+                "estimated": False,
+                "is_public": False,
+            }
+
+            self.client.logout()
+            response = self.client.patch(url, data, format="json")
+            self.assertEqual(response.status_code, 403)
+            self.assertEqual(
+                response.data["detail"],
+                "Authentication credentials were not provided.",
+            )
+
+            self.client.force_login(self.testusertwo)
+            response = self.client.patch(url, data, format="json")
+            if not speed.is_public:
+                self.assertEqual(response.status_code, 404)
+                self.assertEqual(
+                    response.data["detail"],
+                    "Not found.",
+                )
+            else:
+                self.assertEqual(response.status_code, 403)
+                self.assertEqual(
+                    response.data["detail"],
+                    "You do not have permission to perform this action.",
+                )
+
+            self.client.force_login(self.testuserone)
+            response = self.client.patch(url, data, format="json")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data["name"], speed.name + " updated")
+            self.assertEqual(
+                response.data["description"], speed.description + " updated"
+            )
+            data = {
+                "name": f"{speed.name} updated updated",
+                "description": f"{speed.description} updated updated",
+            }
+            response = self.client.patch(url, data, format="json")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(
+                response.data["name"], speed.name + " updated updated"
+            )
+            self.assertEqual(
+                response.data["description"],
+                speed.description + " updated updated",
+            )
