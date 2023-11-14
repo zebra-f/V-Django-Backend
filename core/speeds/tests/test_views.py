@@ -26,6 +26,10 @@ User = get_user_model()
 class SpeedTests(APITestCase):
     fixtures = ["speeds_tests_fixture"]
 
+    valid_name_chars = {"'", "-", "_"}
+    valid_description_chars = {",", "'", ".", "-", '"', ".", "(", ")", ","}
+    valid_tags_chars = {"'", "-"}
+
     @classmethod
     def setUpTestData(cls) -> None:
         return super().setUpTestData()
@@ -53,6 +57,27 @@ class SpeedTests(APITestCase):
         )
         for speed in response.data["results"]:
             self.assertEqual(speed["is_public"], True)
+        # query params (anon)
+        response = self.client.get(url, {"is_public": False})
+        self.assertEqual(len(response.data["results"]), 0)
+        response = self.client.get(url, {"tags": "three"})
+        self.assertEqual(len(response.data["results"]), 1)
+        response = self.client.get(url, {"tags": "one,seven"})
+        self.assertEqual(len(response.data["results"]), 1)
+        for char in string.punctuation:
+            response = self.client.get(url, {"tags": f"one{char}"})
+            if char not in self.valid_tags_chars:
+                self.assertEqual(response.status_code, 400)
+            else:
+                self.assertEqual(response.status_code, 200)
+        response = self.client.get(url, {"user": "testuserone"})
+        self.assertEqual(len(response.data["results"]), 2)
+        response = self.client.get(url, {"user": "testusertwo"})
+        self.assertEqual(len(response.data["results"]), response.data["count"], 3)
+        response = self.client.get(url, {"user": "testusertwo", "tags": "one"})
+        self.assertEqual(len(response.data["results"]), 1)
+        response = self.client.get(url, {"tags": "one"})
+        self.assertEqual(len(response.data["results"]), response.data["count"], 2)
 
         self.client.force_login(self.testuserone)
         response = self.client.get(url)
@@ -63,6 +88,15 @@ class SpeedTests(APITestCase):
         for speed in response.data["results"]:
             if speed["is_public"] == False:
                 self.assertEqual(speed["user"], self.testuserone.username)
+        # query params (testuserone)
+        response = self.client.get(url, {"is_public": False})
+        self.assertEqual(len(response.data["results"]), 1)
+        response = self.client.get(url, {"tags": "three"})
+        self.assertEqual(len(response.data["results"]), 2)
+        response = self.client.get(url, {"tags": "one,seven"})
+        self.assertEqual(response.data["count"], 1)
+        response = self.client.get(url, {"user": "testuserone"})
+        self.assertEqual(response.data["count"], 3)
 
         self.client.force_login(self.testusertwo)
         response = self.client.get(url)
@@ -70,6 +104,38 @@ class SpeedTests(APITestCase):
         self.assertEqual(
             len(response.data["results"]), response.data["count"], 5
         )
+        # query params (testusertwo)
+        response = self.client.get(url, {"is_public": False})
+        self.assertEqual(len(response.data["results"]), 0)
+        response = self.client.get(url, {"tags": "three"})
+        self.assertEqual(len(response.data["results"]), 1)
+        response = self.client.get(url, {"tags": "one,seven"})
+        self.assertEqual(response.data["count"], 1)
+        response = self.client.get(url, {"user": "testuserone"})
+        self.assertEqual(response.data["count"], 2)
+
+    def test_personal_list(self):
+        url = reverse("speed-personal-list")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testuserone)
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 3)
+        for result in response.data["results"]:
+            self.assertEqual(result["user"], "testuserone")
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.get(url, format="json")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 3)
+        for result in response.data["results"]:
+            self.assertEqual(result["user"], "testusertwo")
 
     def test_speed_retrieve(self):
         speeds = Speed.objects.all()
@@ -163,13 +229,11 @@ class SpeedTests(APITestCase):
             "estimated": False,
             "is_public": False,
         }
-        valid_name_chars = {"'", "-", "_"}
-        valid_description_chars = {",", "'", ".", "-", '"', ".", "(", ")", ","}
-        valid_tags_chars = {"'", "-"}
+
         for char in string.punctuation:
             data["name"] += char
             response = self.client.post(url, data, format="json")
-            if char not in valid_name_chars:
+            if char not in self.valid_name_chars:
                 self.assertEqual(response.status_code, 400)
             else:
                 self.assertEqual(response.status_code, 201)
@@ -177,7 +241,7 @@ class SpeedTests(APITestCase):
 
             data["description"] += char
             response = self.client.post(url, data, format="json")
-            if char not in valid_description_chars:
+            if char not in self.valid_description_chars:
                 self.assertEqual(response.status_code, 400)
             else:
                 self.assertEqual(response.status_code, 201)
@@ -187,7 +251,7 @@ class SpeedTests(APITestCase):
 
             data["tags"].append("ten" + char)
             response = self.client.post(url, data, format="json")
-            if char not in valid_tags_chars:
+            if char not in self.valid_tags_chars:
                 self.assertEqual(response.status_code, 400)
             else:
                 self.assertEqual(response.status_code, 201)
