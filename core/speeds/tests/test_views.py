@@ -406,3 +406,51 @@ class SpeedTests(APITestCase):
                 response.data["description"],
                 speed.description + " updated updated",
             )
+
+    def test_speed_delete(self):
+        testuserone_speed_ids = []
+        for speed in self.testuserone.speed_set.all():
+            testuserone_speed_ids.append(speed.id)
+
+            url = reverse("speed-detail", kwargs={"pk": str(speed.id)})
+
+            self.client.logout()
+            response = self.client.delete(url)
+            self.assertEqual(response.status_code, 403)
+            self.assertEqual(
+                response.data["detail"],
+                "Authentication credentials were not provided.",
+            )
+
+            self.client.force_login(self.testusertwo)
+            response = self.client.delete(url)
+            if not speed.is_public:
+                self.assertEqual(response.status_code, 404)
+                self.assertEqual(
+                    response.data["detail"],
+                    "Not found.",
+                )
+            else:
+                self.assertEqual(response.status_code, 403)
+                self.assertEqual(
+                    response.data["detail"],
+                    "You do not have permission to perform this action.",
+                )
+
+            self.client.force_login(self.testuserone)
+            response = self.client.delete(
+                url,
+                headers={
+                    "Accept": "application/json",
+                },
+            )
+            self.assertEqual(response.status_code, 204)
+            self.assertEqual(response.data, None)
+
+        counter = 0
+        for speed in Speed.objects.filter(id__in=testuserone_speed_ids):
+            self.assertEqual(speed.user.username, "deleted")
+            counter += 1
+        self.assertEqual(counter, len(testuserone_speed_ids))
+
+        self.assertEqual(len(self.testuserone.speed_set.all()), 0)
