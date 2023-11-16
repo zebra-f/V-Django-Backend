@@ -3,10 +3,11 @@ from unittest.mock import patch
 
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from rest_framework import status
+from django.forms.models import model_to_dict
+
 from rest_framework.test import APITestCase, override_settings
 
-from ..models import Speed
+from ..models import Speed, SpeedFeedback
 
 
 User = get_user_model()
@@ -24,16 +25,8 @@ User = get_user_model()
 @override_settings(
     MEILISEARCH={"disabled": True, "MASTER_KEY": None, "URL": None},
 )
-class SpeedTests(APITestCase):
+class CustomAPITestCase(APITestCase):
     fixtures = ["speeds_tests_fixture"]
-
-    valid_name_chars = {"'", "-", "_"}
-    valid_description_chars = {",", "'", ".", "-", '"', ".", "(", ")", ","}
-    valid_tags_chars = {"'", "-"}
-
-    @classmethod
-    def setUpTestData(cls) -> None:
-        return super().setUpTestData()
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -48,6 +41,10 @@ class SpeedTests(APITestCase):
         cls.patcher_delay.stop()
         return ret
 
+    @classmethod
+    def setUpTestData(cls) -> None:
+        return super().setUpTestData()
+
     def setUp(self):
         self.testuserone = User.objects.get(username="testuserone")
         self.testusertwo = User.objects.get(username="testusertwo")
@@ -61,6 +58,12 @@ class SpeedTests(APITestCase):
         }
         response = self.client.post(login_url, data, format="json")
         return response.data
+
+
+class SpeedTests(CustomAPITestCase):
+    valid_name_chars = {"'", "-", "_"}
+    valid_description_chars = {",", "'", ".", "-", '"', ".", "(", ")", ","}
+    valid_tags_chars = {"'", "-"}
 
     def test_speed_list(self):
         url = reverse("speed-list")
@@ -454,3 +457,72 @@ class SpeedTests(APITestCase):
         self.assertEqual(counter, len(testuserone_speed_ids))
 
         self.assertEqual(len(self.testuserone.speed_set.all()), 0)
+
+
+class TestSpeedFeedback(CustomAPITestCase):
+    def test_speed_feedback_list(self):
+        url = reverse("speedfeedback-list")
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        for feedback in response.data["results"]:
+            self.assertEqual(feedback["user"], self.testusertwo.username)
+            if feedback["speed"]["user"] != self.testusertwo.username:
+                self.assertEqual(feedback["speed"]["is_public"], True)
+
+        self.client.force_login(self.testuserone)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        for feedback in response.data["results"]:
+            self.assertEqual(feedback["user"], self.testuserone.username)
+            if feedback["speed"]["user"] != self.testuserone.username:
+                self.assertEqual(feedback["speed"]["is_public"], True)
+
+    def test_speed_feedback_retrieve(self):
+        feedbacks = SpeedFeedback.objects.all()
+        for feedback in feedbacks:
+            url = reverse("speedfeedback-detail", kwargs={"pk": feedback.pk})
+
+            self.client.logout()
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 403)
+            self.assertEqual(
+                response.data["detail"],
+                "Authentication credentials were not provided.",
+            )
+
+            self.client.force_login(self.testusertwo)
+            response = self.client.get(url)
+            if feedback.user.username == self.testusertwo.username:
+                self.assertEqual(response.status_code, 200)
+                for key, val in response.data["speed"].items():
+                    model_dict = model_to_dict(feedback.speed)
+                    if key in model_dict and key != "user":
+                        self.assertEqual(str(val), str(model_dict[key]))
+            else:
+                self.assertEqual(response.status_code, 403)
+                self.assertEqual(
+                    response.data["detail"],
+                    "You do not have permission to perform this action.",
+                )
+
+    def test_speed_feedback_create(self):
+        url = reverse("speedfeedback-list")
+
+        response = self.client.post(
+            url,
+            data={"speed": "d26c8bad-6548-4918-8e63-1bd59579917b", "vote": 1},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
