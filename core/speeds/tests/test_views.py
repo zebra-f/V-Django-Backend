@@ -4,6 +4,7 @@ from unittest.mock import patch
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.forms.models import model_to_dict
+from django.db import transaction
 
 from rest_framework.test import APITestCase, override_settings
 
@@ -26,6 +27,11 @@ User = get_user_model()
     MEILISEARCH={"disabled": True, "MASTER_KEY": None, "URL": None},
 )
 class CustomAPITestCase(APITestCase):
+    """
+    Disables Meilisearch integration and Celery workers to
+    prevent data synchronization attempts in some tests.
+    """
+
     fixtures = ["speeds_tests_fixture"]
 
     @classmethod
@@ -515,8 +521,13 @@ class TestSpeedFeedback(CustomAPITestCase):
                 )
 
     def test_speed_feedback_create(self):
+        """
+        Votes are only created in this view.
+        This view does not utilize the create_or_update() method.
+        """
         url = reverse("speedfeedback-list")
 
+        # anon attempts to vote
         response = self.client.post(
             url,
             data={"speed": "d26c8bad-6548-4918-8e63-1bd59579917b", "vote": 1},
@@ -526,3 +537,96 @@ class TestSpeedFeedback(CustomAPITestCase):
             response.data["detail"],
             "Authentication credentials were not provided.",
         )
+
+        self.client.force_login(self.testusertwo)
+
+        # a client attemps to vote for the private `Speed` object
+        response = self.client.post(
+            url,
+            data={"speed": "2dbc2429-a8cc-4f80-922a-5dbc4715a76c", "vote": 0},
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to perform this action.",
+        )
+
+        # a client attempts to vote with incorrect `vote` value 0
+        response = self.client.post(
+            url,
+            data={"speed": "66fca277-3329-49aa-96a2-cc240a659549", "vote": 0},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.data[0],
+            "You should either upvote or downvote, not vote with 0. Please use 1 or -1 instead.",
+        )
+
+        # a client votes correctly
+        # ensures that the Speed object is updated correctly
+        speed = Speed.objects.get(pk="66fca277-3329-49aa-96a2-cc240a659549")
+
+        with transaction.atomic():
+            response = self.client.post(
+                url,
+                data={
+                    "speed": "66fca277-3329-49aa-96a2-cc240a659549",
+                    "vote": 1,
+                },
+            )
+            self.assertEqual(response.status_code, 201)
+            self.assertEqual(response.data["speed"]["score"], speed.score + 1)
+
+            speed_updated = Speed.objects.get(
+                pk="66fca277-3329-49aa-96a2-cc240a659549"
+            )
+            self.assertEqual(speed_updated.upvotes, speed.upvotes + 1)
+
+            transaction.set_rollback(True)
+
+        response = self.client.post(
+            url,
+            data={"speed": "66fca277-3329-49aa-96a2-cc240a659549", "vote": -1},
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["speed"]["score"], speed.score - 1)
+
+        speed_updated = Speed.objects.get(
+            pk="66fca277-3329-49aa-96a2-cc240a659549"
+        )
+        self.assertEqual(speed_updated.downvotes, speed.downvotes + 1)
+
+        # a client attempts to vote second time for the same object
+        response = self.client.post(
+            url,
+            data={"speed": "66fca277-3329-49aa-96a2-cc240a659549", "vote": 1},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.data[0],
+            "The UNIQUE constraint failed; the speed object has already been voted on.",
+        )
+
+        # a client attempts to vote on its own Speed object
+        for speed in Speed.objects.filter(user=self.testusertwo):
+            response = self.client.post(
+                url,
+                data={
+                    "speed": f"{speed.pk}",
+                    "vote": 1,
+                },
+            )
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(
+                response.data[0],
+                "The UNIQUE constraint failed; the speed object has already been voted on.",
+            )
+
+    def test_speed_feedback_update(self):
+        pass
+
+    def test_speed_feedback_partial_update(self):
+        pass
+
+    def test_speed_feedback_delete(self):
+        pass
