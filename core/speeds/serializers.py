@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
-from rest_framework.exceptions import APIException
+from rest_framework.exceptions import APIException, ValidationError
+from rest_framework import status
 
 from django.urls import reverse
 from django.db import transaction, IntegrityError
@@ -182,8 +183,8 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         curr_vote = validated_data["vote"]
         if curr_vote == 0:
-            raise APIException(
-                "You should either upvote or downvote, not vote with 0. Please use 1 or -1 instead."
+            raise ValidationError(
+                "You should either upvote or downvote, not vote with 0. Please use 1 or -1 instead.",
             )
 
         # this is a workaround since passing this validator into the Meta's `validators` attribute won't work
