@@ -416,7 +416,7 @@ class SpeedTests(CustomAPITestCase):
                 speed.description + " updated updated",
             )
 
-    def test_speed_delete(self):
+    def test_speed_destroy(self):
         testuserone_speed_ids = []
         for speed in self.testuserone.speed_set.all():
             testuserone_speed_ids.append(speed.id)
@@ -623,10 +623,271 @@ class TestSpeedFeedback(CustomAPITestCase):
             )
 
     def test_speed_feedback_update(self):
-        pass
+        for speed_feedback in SpeedFeedback.objects.all():
+            url = reverse(
+                "speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)}
+            )
+
+            # anon attempts to update a `SpeedFeedback` object
+            self.client.logout()
+            response = self.client.put(url, data={"vote": 1})
+            self.assertEqual(response.status_code, 403)
+            self.assertEqual(
+                response.data["detail"],
+                "Authentication credentials were not provided.",
+            )
+
+            # a client attempt to update 'SpeedFeedback' object
+            self.client.force_login(self.testusertwo)
+            response = self.client.put(url, data={"vote": 1})
+            self.assertEqual(response.status_code, 405)
+            self.assertEqual(
+                response.data["detail"], 'Method "PUT" not allowed.'
+            )
 
     def test_speed_feedback_partial_update(self):
-        pass
+        for speed_feedback in SpeedFeedback.objects.all():
+            url = reverse(
+                "speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)}
+            )
 
-    def test_speed_feedback_delete(self):
-        pass
+            # anon attempts to update a `SpeedFeedback` object
+            self.client.logout()
+            response = self.client.patch(url, data={"vote": 1})
+            self.assertEqual(response.status_code, 403)
+            self.assertEqual(
+                response.data["detail"],
+                "Authentication credentials were not provided.",
+            )
+
+            # a client attempt to update 'SpeedFeedback' object
+            saved_score = speed_feedback.speed.score
+
+            self.client.force_login(self.testusertwo)
+            response = self.client.patch(url, data={"vote": 1})
+
+            if speed_feedback.user != self.testusertwo:
+                self.assertEqual(response.status_code, 403)
+            else:
+                if speed_feedback.vote != 1:
+                    self.assertNotEqual(
+                        response.data["speed"]["score"],
+                        saved_score,
+                    )
+                self.assertEqual(response.status_code, 200)
+
+            # a client attempt to update 'SpeedFeedback' object
+            self.client.force_login(self.testuserone)
+            response = self.client.patch(url, data={"vote": 1})
+
+            if speed_feedback.user != self.testuserone:
+                self.assertEqual(response.status_code, 403)
+            else:
+                self.assertEqual(response.status_code, 200)
+
+    def test_speed_feedback_partial_update_of_downvote(self):
+        # make sure that updates result in a correct score of 'Speed' objects
+        # vote: downvote, user: testuserone, speed: "67e77deb-13d5-43fa-af9f-cc6f1b2a1c5c"
+        speed_feedback = SpeedFeedback.objects.get(pk=8)
+        speed_score = speed_feedback.speed.score
+        speed_upvotes = speed_feedback.speed.upvotes
+        speed_downvotes = speed_feedback.speed.downvotes
+
+        url = reverse(
+            "speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)}
+        )
+
+        with transaction.atomic():
+            self.client.force_login(self.testuserone)
+            response = self.client.patch(
+                url,
+                data={
+                    "speed": str(speed_feedback.speed.pk),
+                    "vote": 1,
+                    "user": str(self.testuserone.pk),
+                },
+            )
+            self.assertEqual(response.data[0], "Can't change the speed field.")
+            # user is set to read_only
+            self.assertEqual(len(response.data), 1)
+
+            response = self.client.patch(
+                url,
+                data={
+                    "vote": 1,
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data["speed"]["score"], speed_score + 2)
+            curr_speed = Speed.objects.get(pk=speed_feedback.speed.id)
+            self.assertEqual(curr_speed.upvotes, speed_upvotes + 1)
+            self.assertEqual(curr_speed.downvotes, speed_downvotes - 1)
+
+            self.client.logout()
+            transaction.set_rollback(True)
+
+        with transaction.atomic():
+            self.client.force_login(self.testuserone)
+
+            response = self.client.patch(
+                url,
+                data={
+                    "vote": -1,
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data["speed"]["score"], speed_score)
+            curr_speed = Speed.objects.get(pk=speed_feedback.speed.id)
+            self.assertEqual(curr_speed.upvotes, speed_upvotes)
+            self.assertEqual(curr_speed.downvotes, speed_downvotes)
+
+            self.client.logout()
+            transaction.set_rollback(True)
+
+        with transaction.atomic():
+            self.client.force_login(self.testuserone)
+
+            response = self.client.patch(
+                url,
+                data={
+                    "vote": 0,
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data["speed"]["score"], speed_score + 1)
+            curr_speed = Speed.objects.get(pk=speed_feedback.speed.id)
+            self.assertEqual(curr_speed.upvotes, speed_upvotes)
+            self.assertEqual(curr_speed.downvotes, speed_downvotes - 1)
+
+            self.client.logout()
+            transaction.set_rollback(True)
+
+    def test_speed_feedback_partial_update_of_upvote(self):
+        # make sure that updates result in a correct score of 'Speed' objects
+        # vote: upvote, user: testuserone, speed: "d26c8bad-6548-4918-8e63-1bd59579917b"
+        speed_feedback = SpeedFeedback.objects.get(pk=7)
+        speed_score = speed_feedback.speed.score
+        speed_upvotes = speed_feedback.speed.upvotes
+        speed_downvotes = speed_feedback.speed.downvotes
+
+        url = reverse(
+            "speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)}
+        )
+
+        with transaction.atomic():
+            self.client.force_login(self.testuserone)
+            response = self.client.patch(
+                url,
+                data={
+                    "speed": str(speed_feedback.speed.pk),
+                    "vote": 1,
+                    "user": str(self.testuserone.pk),
+                },
+            )
+            self.assertEqual(response.data[0], "Can't change the speed field.")
+            # user is set to read_only
+            self.assertEqual(len(response.data), 1)
+
+            response = self.client.patch(
+                url,
+                data={
+                    "vote": 1,
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data["speed"]["score"], speed_score)
+            curr_speed = Speed.objects.get(pk=speed_feedback.speed.id)
+            self.assertEqual(curr_speed.upvotes, speed_upvotes)
+            self.assertEqual(curr_speed.downvotes, speed_downvotes)
+
+            self.client.logout()
+            transaction.set_rollback(True)
+
+        with transaction.atomic():
+            self.client.force_login(self.testuserone)
+
+            response = self.client.patch(
+                url,
+                data={
+                    "vote": -1,
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data["speed"]["score"], speed_score - 2)
+            curr_speed = Speed.objects.get(pk=speed_feedback.speed.id)
+            self.assertEqual(curr_speed.upvotes, speed_upvotes - 1)
+            self.assertEqual(curr_speed.downvotes, speed_downvotes + 1)
+
+            self.client.logout()
+            transaction.set_rollback(True)
+
+        with transaction.atomic():
+            self.client.force_login(self.testuserone)
+
+            response = self.client.patch(
+                url,
+                data={
+                    "vote": 0,
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.data["speed"]["score"], speed_score - 1)
+            curr_speed = Speed.objects.get(pk=speed_feedback.speed.id)
+            self.assertEqual(curr_speed.upvotes, speed_upvotes - 1)
+            self.assertEqual(curr_speed.downvotes, speed_downvotes)
+
+            self.client.logout()
+            transaction.set_rollback(True)
+
+    def test_speed_feedback_partial_update_data_reveal(self):
+        """
+        A user attempts to update its vote of the `Speed` object, added by a different
+        user, that changed the `is_public` field to `False`.
+        """
+
+        # vote: upvote, user: testuserone, speed: "d26c8bad-6548-4918-8e63-1bd59579917b"
+        speed_feedback = SpeedFeedback.objects.get(pk=7)
+        speed = Speed.objects.get(pk="d26c8bad-6548-4918-8e63-1bd59579917b")
+        speed.is_public = False
+        speed.save()
+
+        self.client.force_login(self.testuserone)
+
+        url = reverse(
+            "speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)}
+        )
+
+        response = self.client.patch(
+            url,
+            data={
+                "vote": -1,
+            },
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to perform this action.",
+        )
+
+    def test_speed_feedback_destroy(self):
+        # vote: upvote, user: testuserone, speed: "d26c8bad-6548-4918-8e63-1bd59579917b"
+        speed_feedback = SpeedFeedback.objects.get(pk=7)
+
+        url = reverse(
+            "speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)}
+        )
+
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testuserone)
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(
+            response.data["detail"],
+            'Method "DELETE" not allowed.',
+        )
