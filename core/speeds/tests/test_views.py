@@ -8,7 +8,7 @@ from django.db import transaction
 
 from rest_framework.test import APITestCase, override_settings
 
-from ..models import Speed, SpeedFeedback
+from ..models import Speed, SpeedFeedback, SpeedBookmark
 
 
 User = get_user_model()
@@ -891,3 +891,218 @@ class TestSpeedFeedback(CustomAPITestCase):
             response.data["detail"],
             'Method "DELETE" not allowed.',
         )
+
+
+class TestSpeedBookmark(CustomAPITestCase):
+    valid_category_chars = {"'", "-"}
+
+    def test_speed_feedback_list(self):
+        url = reverse("speedbookmark-list")
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["results"]), 0)
+
+        self.client.force_login(self.testuserone)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["results"]), 1)
+
+        # if `is_public` field of `Speed` objects created by a different user
+        # is changed to `False` it should disappear from a list
+        bookmark = SpeedBookmark.objects.all().first()
+        speed = bookmark.speed
+        speed.is_public = False
+        speed.save()
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["results"]), 0)
+
+    def test_speed_bookmark_detail(self):
+        bookmark = SpeedBookmark.objects.all().first()
+        url = reverse("speedbookmark-detail", kwargs={"pk": bookmark.pk})
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to perform this action.",
+        )
+
+        self.client.force_login(self.testuserone)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["speed"]["is_public"], True)
+
+        # make sure that a user won't be able to view non public data
+        # created by a different user
+        speed = bookmark.speed
+        speed.is_public = False
+        speed.save()
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to perform this action.",
+        )
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to perform this action.",
+        )
+
+    def test_speed_bookmark_create(self):
+        # user: testusertwo, is_public: True
+        speed = Speed.objects.get(pk="d26c8bad-6548-4918-8e63-1bd59579917b")
+
+        url = reverse("speedbookmark-list")
+
+        data = {"speed": str(speed.pk), "category": "testuserone category one"}
+
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testuserone)
+
+        # ensure that a user won't be able to bookmark non
+        # public `Speed` object
+        with transaction.atomic():
+            speed.is_public = False
+            speed.save()
+            response = self.client.post(url, data)
+            self.assertEqual(response.status_code, 403)
+
+            transaction.set_rollback(True)
+
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+
+        bookmarks = SpeedBookmark.objects.filter(user=self.testuserone)
+        self.assertEqual(len(bookmarks), 2)
+
+    def test_speed_bookmark_update(self):
+        bookmark = SpeedBookmark.objects.all().first()
+
+        url = reverse("speedbookmark-detail", kwargs={"pk": bookmark.pk})
+
+        data = {"category": bookmark.category + " updated"}
+
+        response = self.client.put(url, data)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.put(url, data)
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(response.data["detail"], 'Method "PUT" not allowed.')
+
+        self.client.force_login(self.testuserone)
+        response = self.client.put(url, data)
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(response.data["detail"], 'Method "PUT" not allowed.')
+
+    def test_speed_bookmark_partial_update(self):
+        bookmark = SpeedBookmark.objects.all().first()
+
+        url = reverse("speedbookmark-detail", kwargs={"pk": bookmark.pk})
+
+        data = {"category": bookmark.category + " updated"}
+
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.patch(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to perform this action.",
+        )
+
+        self.client.force_login(self.testuserone)
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, 200)
+
+        for char in string.punctuation:
+            data["category"] = "category updated" + char
+            response = self.client.patch(url, data, format="json")
+            if char not in self.valid_category_chars:
+                self.assertEqual(response.status_code, 400)
+            else:
+                self.assertEqual(response.status_code, 200)
+
+        # make sure that a user won't be able to view non public data
+        # created by a different user
+        speed = bookmark.speed
+        speed.is_public = False
+        speed.save()
+
+        data = {"category": bookmark.category + " updated"}
+
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to perform this action.",
+        )
+
+    def test_speed_bookmark_destroy(self):
+        bookmark = SpeedBookmark.objects.all().first()
+
+        url = reverse("speedbookmark-detail", kwargs={"pk": bookmark.pk})
+
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.delete(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to perform this action.",
+        )
+
+        self.client.force_login(self.testuserone)
+        response = self.client.delete(
+            url,
+            headers={
+                "Accept": "application/json",
+            },
+        )
+        self.assertEqual(response.status_code, 204)
+        self.assertEqual(response.data, None)
