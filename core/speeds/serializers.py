@@ -347,6 +347,7 @@ class SpeedReportSerializer(serializers.ModelSerializer):
         representation["user"] = instance.user.username
         return representation
 
+    @prevent_unauthorized_create_and_data_reveal
     def create(self, validated_data):
         obj, created = SpeedReport.objects.update_or_create(
             user=validated_data["user"],

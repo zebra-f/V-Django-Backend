@@ -5,7 +5,8 @@ from rest_framework.exceptions import PermissionDenied
 
 def prevent_unauthorized_create_and_data_reveal(func):
     """
-    Decorate the `create` method of `SpeedFeedbackSerializer` and `SpeedBookmarkSerializer`.
+    Decorate the `create` method of serializers that save objects with
+    `speed` and `user` (Foreign Key) fields.
     Prevents authenticated users from creating objects like `SpeedFeedback`, `SpeedBookmark`
     that could reveal non-public speed data created by another user.
     ("Another user might have modified the 'is_public' attribute of their `Speed` object to `False`,

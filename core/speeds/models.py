@@ -233,10 +233,13 @@ class SpeedReport(models.Model):
         OTHER = "other"
 
     report_reason = models.CharField(
-        _("report reason"), choices=ReportReason.choices, null=True, blank=True
+        _("report reason"),
+        choices=ReportReason.choices,
+        null=False,
+        blank=False,
     )
     detail = models.CharField(
-        _("detail"), max_length=256, blank=True, null=True
+        _("detail"), max_length=256, blank=False, null=False
     )
 
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)

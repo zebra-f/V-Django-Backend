@@ -8,7 +8,7 @@ from django.db import transaction
 
 from rest_framework.test import APITestCase, override_settings
 
-from ..models import Speed, SpeedFeedback, SpeedBookmark
+from ..models import Speed, SpeedFeedback, SpeedBookmark, SpeedReport
 
 
 User = get_user_model()
@@ -1133,3 +1133,181 @@ class TestSpeedBookmark(CustomAPITestCase):
         )
         self.assertEqual(response.status_code, 204)
         self.assertEqual(response.data, None)
+
+
+class TestSpeedFeedback(CustomAPITestCase):
+    valid_detail_chars = [
+        "'",
+        ".",
+        ",",
+        ",",
+        ":",
+        ";",
+        "?",
+        "!",
+        "(",
+        ")",
+        "-",
+    ]
+
+    def test_speed_report_list(self):
+        url = reverse("speedreport-list")
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testuserone)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data["count"], 0, len(response.data["results"])
+        )
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.data["count"], 1, len(response.data["results"])
+        )
+
+    def test_speed_report_retrieve(self):
+        report = SpeedReport.objects.all().first()
+
+        url = reverse("speedreport-detail", kwargs={"pk": str(report.pk)})
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["detail"], "Not found.")
+
+    def test_speed_report_create(self):
+        url = reverse("speedreport-list")
+
+        speed = Speed.objects.all().first()
+
+        data = {
+            "report_reason": "spam",
+            "detail": "testusertwo detail two",
+            "speed": str(speed.id),
+        }
+
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+
+        testusertwo_reports = SpeedReport.objects.filter(user=self.testusertwo)
+        self.assertEqual(len(testusertwo_reports), 2)
+
+        # the `POST` HTTP method should update previous report if it exists
+        data["detail"] = data["detail"] + " updated"
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+
+        testusertwo_reports = SpeedReport.objects.filter(user=self.testusertwo)
+        self.assertEqual(len(testusertwo_reports), 2)
+
+        # ensure that a user won't be able to view non public data
+        # created by a different user
+        speed = Speed.objects.filter(
+            is_public=False, user=self.testuserone
+        ).first()
+        data = {
+            "report_reason": "spam",
+            "detail": "testusertwo detail two",
+            "speed": str(speed.id),
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "You do not have permission to perform this action.",
+        )
+
+    def test_speed_report_update(self):
+        report = SpeedReport.objects.all().first()
+
+        url = reverse("speedreport-detail", kwargs={"pk": str(report.pk)})
+
+        data = {
+            "report_reason": "spam",
+            "detail": report.detail + " updated",
+            "speed": str(report.speed.id),
+        }
+        response = self.client.put(url, data)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.put(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["detail"], "Not found.")
+
+    def test_speed_report_partial_update(self):
+        report = SpeedReport.objects.all().first()
+
+        url = reverse("speedreport-detail", kwargs={"pk": str(report.pk)})
+
+        data = {
+            "detail": report.detail + " updated",
+        }
+        response = self.client.patch(url, data)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.patch(url)
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["detail"], "Not found.")
+
+    def test_speed_report_destroy(self):
+        report = SpeedReport.objects.all().first()
+
+        url = reverse("speedreport-detail", kwargs={"pk": str(report.pk)})
+
+        response = self.client.delete(
+            url,
+            headers={
+                "Accept": "application/json",
+            },
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(
+            response.data["detail"],
+            "Authentication credentials were not provided.",
+        )
+
+        self.client.force_login(self.testusertwo)
+        response = self.client.delete(
+            url,
+            headers={
+                "Accept": "application/json",
+            },
+        )
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data["detail"], "Not found.")
+
+        self.assertEqual(len(SpeedReport.objects.all()), 1)
