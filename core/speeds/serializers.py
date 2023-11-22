@@ -314,6 +314,14 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
         Only the 'category' field is modifiable via the HTTP `PATCH` method.
         The HTTP `PUT` method is disabled in the bookmark related view.
         """
+        # this is a workaround since passing this validator into the Meta's `validators` attribute won't work
+        # the 'user' field is only available during the 'create' operation in validated_data (passed by the 'perform_create' method).
+        validator = UniqueTogetherValidator(
+            queryset=SpeedBookmark.objects.all(),
+            fields=["category", "user", "speed"],
+            message="The UNIQUE constraint failed; the `Speed` object is already bookmarked for this category.",
+        )
+        validator(validated_data, self)
         return super().update(instance, validated_data)
 
 

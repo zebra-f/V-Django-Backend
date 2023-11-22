@@ -1056,7 +1056,7 @@ class TestSpeedBookmark(CustomAPITestCase):
         )
 
         self.client.force_login(self.testusertwo)
-        response = self.client.patch(url)
+        response = self.client.patch(url, data)
         self.assertEqual(response.status_code, 403)
         self.assertEqual(
             response.data["detail"],
@@ -1066,6 +1066,20 @@ class TestSpeedBookmark(CustomAPITestCase):
         self.client.force_login(self.testuserone)
         response = self.client.patch(url, data)
         self.assertEqual(response.status_code, 200)
+
+        # validation test
+        bookmark2 = SpeedBookmark.objects.create(
+            category="testuserone category three",
+            speed=bookmark.speed,
+            user=self.testuserone,
+        )
+        url2 = reverse("speedbookmark-detail", kwargs={"pk": bookmark2.pk})
+        response = self.client.patch(url2, data={"category": data["category"]})
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.data[0],
+            "The UNIQUE constraint failed; the `Speed` object is already bookmarked for this category.",
+        )
 
         for char in string.punctuation:
             data["category"] = "category updated" + char
