@@ -193,7 +193,8 @@ class SpeedBookmark(models.Model):
         ordering = ["-created_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=("user", "speed"), name="bm_unique_user_speed"
+                fields=("category", "user", "speed"),
+                name="bm_unique_user_speed",
             )
         ]
 

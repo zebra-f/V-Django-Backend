@@ -192,7 +192,7 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
         validator = UniqueTogetherValidator(
             queryset=SpeedFeedback.objects.all(),
             fields=["user", "speed"],
-            message="The UNIQUE constraint failed; the speed object has already been voted on.",
+            message="The UNIQUE constraint failed; the `Speed` object has already been voted on.",
         )
         validator(validated_data, self)
 
@@ -302,8 +302,8 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
         # the 'user' field is only available during the 'create' operation in validated_data (passed by the 'perform_create' method).
         validator = UniqueTogetherValidator(
             queryset=SpeedBookmark.objects.all(),
-            fields=["user", "speed"],
-            message="The UNIQUE constraint failed; the speed object is already bookmarked.",
+            fields=["category", "user", "speed"],
+            message="The UNIQUE constraint failed; the `Speed` object is already bookmarked for this category.",
         )
         validator(validated_data, self)
         return super().create(validated_data)

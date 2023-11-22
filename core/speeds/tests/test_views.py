@@ -604,7 +604,7 @@ class TestSpeedFeedback(CustomAPITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.data[0],
-            "The UNIQUE constraint failed; the speed object has already been voted on.",
+            "The UNIQUE constraint failed; the `Speed` object has already been voted on.",
         )
 
         # a client attempts to vote on its own Speed object
@@ -619,7 +619,7 @@ class TestSpeedFeedback(CustomAPITestCase):
             self.assertEqual(response.status_code, 400)
             self.assertEqual(
                 response.data[0],
-                "The UNIQUE constraint failed; the speed object has already been voted on.",
+                "The UNIQUE constraint failed; the `Speed` object has already been voted on.",
             )
 
     def test_speed_feedback_update(self):
@@ -977,7 +977,7 @@ class TestSpeedBookmark(CustomAPITestCase):
 
         url = reverse("speedbookmark-list")
 
-        data = {"speed": str(speed.pk), "category": "testuserone category one"}
+        data = {"speed": str(speed.pk), "category": "testuserone category two"}
 
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 403)
@@ -1001,8 +1001,21 @@ class TestSpeedBookmark(CustomAPITestCase):
         response = self.client.post(url, data)
         self.assertEqual(response.status_code, 201)
 
+        data["category"] = "testuserone category three"
+        # ensure that a user can bookmark the same 'Speed'
+        # object for a different category
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 201)
+
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            response.data[0],
+            "The UNIQUE constraint failed; the `Speed` object is already bookmarked for this category.",
+        )
+
         bookmarks = SpeedBookmark.objects.filter(user=self.testuserone)
-        self.assertEqual(len(bookmarks), 2)
+        self.assertEqual(len(bookmarks), 3)
 
     def test_speed_bookmark_update(self):
         bookmark = SpeedBookmark.objects.all().first()
