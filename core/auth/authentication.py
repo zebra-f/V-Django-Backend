@@ -1,5 +1,6 @@
-from  django.contrib.auth.backends import ModelBackend
-from rest_framework import exceptions
+from django.contrib.auth.backends import ModelBackend
+
+# from rest_framework import exceptions
 
 
 # class AuthenticationRules:
@@ -18,7 +19,6 @@ from rest_framework import exceptions
 
 
 class CustomModelBackend(ModelBackend):
-
     def user_can_authenticate(self, user) -> bool:
         """
         Reject users with is_active=False and email_verified=False. Custom user models that don't have
@@ -26,8 +26,9 @@ class CustomModelBackend(ModelBackend):
         """
         email_verified = getattr(user, "email_verified", None)
         if email_verified is not None and not email_verified:
-            raise exceptions.AuthenticationFailed(
-                "Email address not verified",
-                "email_not_verified",
-            )
+            return False
+            # raise exceptions.AuthenticationFailed(
+            #     "Email address not verified",
+            #     "email_not_verified",
+            # )
         return super().user_can_authenticate(user)
