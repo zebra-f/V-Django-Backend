@@ -293,3 +293,23 @@ MEILISEARCH = {
 if not MEILISEARCH["disabled"]:
     MEILISEARCH["MASTER_KEY"] = get_env_variable("MEILISEARCH_V_1_MASTER_KEY")
     MEILISEARCH["URL"] = get_env_variable("MEILISEARCH_URL")
+
+
+# OAuth settings
+
+OAUTH_PROVIDERS = {
+    "GOOGLE": {
+        "disabled": bool(int(get_env_variable("GOOGLE_OAUTH_DISABLED"))),
+        "CLIENT_ID": None,
+        "CLIENT_SECRET": None,
+    }
+}
+
+
+if not OAUTH_PROVIDERS["GOOGLE"]["disabled"]:
+    OAUTH_PROVIDERS["GOOGLE"]["CLIENT_ID"] = get_env_variable(
+        "GOOGLE_OAUTH_CLIENT_ID"
+    )
+    OAUTH_PROVIDERS["GOOGLE"]["CLIENT_SECRET"] = get_env_variable(
+        "GOOGLE_OAUTH_CLIENT_SECRET"
+    )
