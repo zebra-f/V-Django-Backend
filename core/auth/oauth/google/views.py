@@ -6,6 +6,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.conf import settings
 from django.contrib.auth import get_user_model, login
+from django.core.exceptions import ValidationError
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -38,10 +39,9 @@ def session_login(request):
     )
 
 
-class GoogleSessionCallbackViews(generics.GenericAPIView):
+class GoogleSessionCallback(generics.GenericAPIView):
     """
-    Frankenstein Views (used for manual
-    testing)- should never be directly called.
+    (Used for manual testing)- should never be directly called.
     Instead use `session_login` endpoint and follow instructions.
     """
 
@@ -57,6 +57,7 @@ class GoogleSessionCallbackViews(generics.GenericAPIView):
             reverse("google-session-callback")
         )
         decoded_tokens = exchange_code(code, redirect_uri)
+
         email = decoded_tokens["email"]
         email_verified: bool = decoded_tokens["email_verified"]
 
@@ -64,18 +65,20 @@ class GoogleSessionCallbackViews(generics.GenericAPIView):
         user = User.objects.filter(email=email).first()
 
         if user:
-            # log in
             try:
                 login(request, user)
+                return redirect("user-whoami")
             except Exception as e:
-                return Response({"message": "Something went wrongss."})
-            return Response({"message": "You're logged in."})
+                return Response({"message": "Something went wrong."})
         else:
             request.session["user_email"] = email
             request.session["user_email_verified"] = email_verified
             return Response(
                 {
-                    "message": "Provide your username (optionally, you can set a password to enable logging in directly with your email and password)."
+                    "message": (
+                        "Provide your username in the form under this message"
+                        "(optionally, you can set a password to enable logging in directly with your email and password)."
+                    )
                 }
             )
 
@@ -96,13 +99,18 @@ class GoogleSessionCallbackViews(generics.GenericAPIView):
                 password = data["password"]
 
             User = get_user_model()
-            user = User.objects.create_oauth_user(
-                email=request.session["user_email"],
-                email_verified=request.session["user_email_verified"],
-                username=data["username"],
-                oauth_provider="google",
-                password=password,
-            )
-            login(request, user)
+            try:
+                user = User.objects.create_oauth_user(
+                    email=request.session["user_email"],
+                    email_verified=request.session["user_email_verified"],
+                    username=data["username"],
+                    oauth_provider="google",
+                    password=password,
+                )
+            except ValidationError as e:
+                return Response(e)
 
-        return Response({"message": "Thnaks for username"})
+            login(request, user)
+            return redirect("user-whoami")
+        else:
+            return Response(serializer.errors)

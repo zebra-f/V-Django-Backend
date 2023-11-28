@@ -1,7 +1,7 @@
 from django.urls import path
 from .google.views import (
     session_login as google_session_login,
-    GoogleSessionCallbackViews,
+    GoogleSessionCallback,
 )
 
 urlpatterns = [
@@ -12,7 +12,7 @@ urlpatterns = [
     ),
     path(
         "api-oauth/google/session/callback/",
-        GoogleSessionCallbackViews.as_view(),
+        GoogleSessionCallback.as_view(),
         name="google-session-callback",
     ),
 ]

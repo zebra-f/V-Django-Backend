@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -20,3 +21,7 @@ class UsernameSerializer(serializers.Serializer):
     password = serializers.CharField(
         max_length=128, required=False, write_only=True
     )
+
+    def validate_password(self, value):
+        validate_password(value)
+        return value
