@@ -47,7 +47,7 @@ class UserViewSet(viewsets.ModelViewSet):
             "token_verify_email_activate_user",
         ):
             self.permission_classes = [AllowAny]
-        if self.action in self.object_level_actions:
+        if self.action in self.object_level_actions or self.action == "whoami":
             self.permission_classes = [UserIsAuthorized]
         if self.action in self.forbidden_object_level_actions:
             self.permission_classes = [ForbiddenAction]
@@ -74,6 +74,12 @@ class UserViewSet(viewsets.ModelViewSet):
         return None
 
     # user views
+
+    @action(methods=["get"], detail=False)
+    def whoami(self, request):
+        instance = request.user
+        serializer = self.get_serializer_class()(instance)
+        return Response(serializer.data)
 
     @action(methods=["get", "post"], detail=False)
     def token_verify_email_activate_user(self, request):

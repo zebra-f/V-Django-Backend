@@ -11,9 +11,9 @@
       "created_at": "2023-11-07T17:37:34.543Z",
       "updated_at": "2023-11-07T17:38:12.952Z",
       "last_login": "2023-11-08T19:36:04.777Z",
-      "last_logout": null,
       "is_admin": false,
       "is_active": true,
+      "oauth_providers": [],
       "groups": [],
       "user_permissions": []
     }
@@ -30,9 +30,9 @@
       "created_at": "2023-11-07T17:30:10.945Z",
       "updated_at": "2023-11-07T17:30:11.333Z",
       "last_login": null,
-      "last_logout": null,
       "is_admin": false,
       "is_active": false,
+      "oauth_providers": [],
       "groups": [],
       "user_permissions": []
     }
@@ -49,9 +49,9 @@
       "created_at": "2023-11-07T17:36:18.782Z",
       "updated_at": "2023-11-07T17:36:22.251Z",
       "last_login": "2023-11-08T18:51:01.734Z",
-      "last_logout": null,
       "is_admin": false,
       "is_active": true,
+      "oauth_providers": [],
       "groups": [],
       "user_permissions": []
     }

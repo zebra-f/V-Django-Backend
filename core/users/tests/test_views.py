@@ -105,8 +105,49 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["count"], 11)
 
+    def test_user_retrieve(self):
+        users = User.objects.all()
+        for user in users:
+            url = reverse("user-detail", kwargs={"pk": str(user.pk)})
+
+            self.client.logout()
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 403)
+
+            self.client.force_login(self.testuserone)
+            response = self.client.get(url)
+            if user == self.testuserone:
+                self.assertEqual(response.status_code, 200)
+            else:
+                self.assertEqual(response.status_code, 403)
+
+            self.client.force_login(user)
+            response = self.client.get(url)
+            if user.is_active:
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.data["email"], user.email)
+            else:
+                self.assertEqual(response.status_code, 403)
+
+    def test_whoami(self):
+        users = User.objects.all()
+        for user in users:
+            url = reverse("user-whoami")
+
+            self.client.logout()
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 403)
+
+            self.client.force_login(user)
+            response = self.client.get(url)
+            if user.is_active:
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.data["email"], user.email)
+            else:
+                self.assertEqual(response.status_code, 403)
+
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
-    def test_create_user(self):
+    def test_user_create(self):
         """
         Ensure we can create a new User.
         """

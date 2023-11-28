@@ -97,8 +97,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         ordering = ["-created_at"]
 
     id = models.UUIDField(primary_key=True, default=uuid4)
-    email = models.EmailField(_("email address"), max_length=255, unique=True)
 
+    # defined in AbstractBaseUser class
+    # password = models.CharField(_("password"), max_length=128)
+    # last_login = models.DateTimeField(_("last login"), blank=True, null=True)
+
+    email = models.EmailField(_("email address"), max_length=255, unique=True)
     email_verified = models.BooleanField(default=False)
 
     username = models.CharField(
@@ -107,11 +111,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
-    last_login = models.DateTimeField(_("last login"), null=True)
-    last_logout = models.DateTimeField(_("last logout"), null=True)
 
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
+
+    # OAuth
+    oauth_providers = ArrayField(
+        models.CharField(max_length=40),
+        size=10,
+        default=get_oauth_providers_default_list,
+    )
 
     objects = UserManager()
 
@@ -121,13 +130,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     # required for the creation of superuser
     REQUIRED_FIELDS = ["username"]
-
-    # OAuth
-    oauth_providers = ArrayField(
-        models.CharField(max_length=40),
-        size=10,
-        default=get_oauth_providers_default_list,
-    )
 
     def __str__(self):
         return self.username
