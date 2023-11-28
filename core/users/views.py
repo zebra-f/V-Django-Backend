@@ -77,6 +77,11 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(methods=["get"], detail=False)
     def whoami(self, request):
+        """
+        A view is designed to enable users to access their
+        information without needing to provide
+        a specific primary key (pk).
+        """
         instance = request.user
         serializer = self.get_serializer_class()(instance)
         return Response(serializer.data)
