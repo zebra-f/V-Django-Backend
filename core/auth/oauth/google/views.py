@@ -2,23 +2,26 @@ import hashlib
 import os
 import secrets
 
-
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.conf import settings
+from django.contrib.auth import get_user_model, login
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, generics
+from rest_framework.permissions import AllowAny
 
 from ..decorators import check_oauth_enabled
-from .services import exchange_code
+from .services import exchange_code, get_code_and_validate_params
+from .serializers import UsernameSerializer
 
 
 @api_view(["GET"])
 @check_oauth_enabled("GOOGLE")
 def session_login(request):
     state = hashlib.sha256(os.urandom(1024)).hexdigest()
+
     request.session["state"] = state
 
     nonce = secrets.token_hex(23)
@@ -35,30 +38,71 @@ def session_login(request):
     )
 
 
-@api_view(["GET", "POST"])
-def session_callback(request):
+class GoogleSessionCallbackViews(generics.GenericAPIView):
     """
-    This view should never be directly called.
+    Frankenstein Views (used for manual
+    testing)- should never be directly called.
+    Instead use `session_login` endpoint and follow instructions.
     """
-    if request.method == "GET":
-        query_params = request.query_params
-        state = query_params.get("state", None)
-        code = query_params.get("code", None)
-        scope = query_params.get("scope", None)
 
-        print(f"{state=}, {code=}, {scope=}")
+    serializer_class = UsernameSerializer
+    permission_classes = [AllowAny]
 
-        if not request.session or not request.session["state"]:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        if not state or not code or not scope:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
-        if request.session["state"] != state:
+    def get(self, request, *args, **kwargs):
+        code, valid = get_code_and_validate_params(request)
+        if not valid:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        exchange_code(code)
+        redirect_uri = request.build_absolute_uri(
+            reverse("google-session-callback")
+        )
+        decoded_tokens = exchange_code(code, redirect_uri)
+        email = decoded_tokens["email"]
+        email_verified: bool = decoded_tokens["email_verified"]
 
-        return Response({"message": "GET CALLBACK CALLED"})
-    elif request.method == "POST":
-        return Response({"message": "Got some data!", "data": request.data})
-    else:
-        return Response({"message": "Hello, world!"})
+        User = get_user_model()
+        user = User.objects.filter(email=email).first()
+
+        if user:
+            # log in
+            try:
+                login(request, user)
+            except Exception as e:
+                return Response({"message": "Something went wrongss."})
+            return Response({"message": "You're logged in."})
+        else:
+            request.session["user_email"] = email
+            request.session["user_email_verified"] = email_verified
+            return Response(
+                {
+                    "message": "Provide your username (optionally, you can set a password to enable logging in directly with your email and password)."
+                }
+            )
+
+    def post(self, request, *args, **kwargs):
+        if (
+            not request.session
+            or not "user_email" in request.session
+            or not "user_email_verified" in request.session
+        ):
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            data = serializer.validated_data
+
+            password = None
+            if "password" in data:
+                password = data["password"]
+
+            User = get_user_model()
+            user = User.objects.create_oauth_user(
+                email=request.session["user_email"],
+                email_verified=request.session["user_email_verified"],
+                username=data["username"],
+                oauth_provider="google",
+                password=password,
+            )
+            login(request, user)
+
+        return Response({"message": "Thnaks for username"})
