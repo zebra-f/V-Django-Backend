@@ -2,11 +2,12 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:14.9-alpine
+    image: postgres:15-alpine
     container_name: postgres_v_1
     environment:
       POSTGRES_DB: ${POSTGRES_DB_NAME}
       POSTGRES_PASSWORD: ${POSTGRES_V_1_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
     ports:
       - 5432:5432
     volumes:
@@ -17,11 +18,12 @@ services:
     ports:
       - "6379:6379"
   meilisearch:
-    image: getmeili/meilisearch:v1.3
+    image: getmeili/meilisearch:v1.5
     container_name: meilisearch_v_1_dev
     ports:
       - "7700:7700"
     environment:
+      MEILI_ENV: development
       MEILI_MASTER_KEY: ${MEILISEARCH_V_1_MASTER_KEY}
     volumes:
       - ${BIND_MOUNT_DATA_PATH}/meili_data:/meili_data
@@ -41,6 +43,7 @@ services:
       POSTGRES_V_1_PASSWORD: ${POSTGRES_V_1_PASSWORD}
       DJANGO_V_1_SECRET_KEY: ${DJANGO_V_1_SECRET_KEY}
       POSTGRES_DB_NAME: ${POSTGRES_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
       GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID}
       GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET}
     env_file:
@@ -62,6 +65,7 @@ services:
       POSTGRES_V_1_PASSWORD: ${POSTGRES_V_1_PASSWORD}
       DJANGO_V_1_SECRET_KEY: ${DJANGO_V_1_SECRET_KEY}
       POSTGRES_DB_NAME: ${POSTGRES_DB_NAME}
+      POSTGRES_USER: ${POSTGRES_USER}
       GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID}
       GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET}
     env_file:

@@ -8,4 +8,5 @@ chmod +x ./compose/dev/django/entrypoint.sh
 
 # enters cli
 sudo docker exec -it redis-stack redis-cli
-sudo docker exec -it postgres_v_one psql -U postgres -W
+sudo docker exec -it postgres_v_one psql -U <username> -W
+sudo docker exec -it postgres_v_1  psql --username=<username> --dbname=<dbname>
