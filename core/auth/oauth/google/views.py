@@ -65,6 +65,9 @@ class GoogleSessionCallback(generics.GenericAPIView):
         user = User.objects.filter(email=email).first()
 
         if user:
+            if "Google" not in user.oauth_providers:
+                user.oauth_providers.append("Google")
+                user.save()
             try:
                 login(request, user)
                 return redirect("user-whoami")
@@ -104,7 +107,7 @@ class GoogleSessionCallback(generics.GenericAPIView):
                     email=request.session["user_email"],
                     email_verified=request.session["user_email_verified"],
                     username=data["username"],
-                    oauth_provider="google",
+                    oauth_provider="Google",
                     password=password,
                 )
             except ValidationError as e:
