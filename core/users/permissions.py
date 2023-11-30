@@ -2,7 +2,6 @@ from rest_framework.permissions import BasePermission
 
 
 class UserIsAuthorized(BasePermission):
-
     def has_permission(self, request, view):
         if request.user.is_anonymous:
             return False
@@ -15,7 +14,6 @@ class UserIsAuthorized(BasePermission):
 
 
 class ForbiddenAction(BasePermission):
-
     def has_permission(self, request, view):
         return False
 
