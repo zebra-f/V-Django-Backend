@@ -16,13 +16,12 @@ from core.users.models import User, UserPersonalProfile
 class UserTests(APITestCase):
     users_passwords = {}
     random_access_token = (
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-        "eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjczNzM4MzI1LCJ"
-        "pYXQiOjE2NzM3MzcxMjUsImp0aSI6ImRiNmVlMjAzYmJlNDQ4Yj"
-        "E5ZDRkNzE1MDQ2MjYxNmQyIiwidXNlcl9pZCI6ImVkMTgwM"
-        "jk3LWY0ZGYtNDFlYi05ZDc3LTBkZjFmZTBkMThhYSJ9"
-        ".9Cyc5YFc-bs_lSprlJsLWsNY8h1THIDuVlO0lt"
-        "skgm0"
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+        ".eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjczNzM4MzI1LCJ"
+        "pYXQiOjE2NzM3MzcxMjUsImp0aSI6ImRiNmVlMjAzYmJlNDQ4YjE5ZDR"
+        "kNzE1MDQ2MjYxNmQyIiwidXNlcl9pZCI6ImVkMTgwMjk3LWY0ZGYtNDF"
+        "lYi05ZDc3LTBkZjFmZTBkMThhYSJ9"
+        ".9Cyc5YFc-bs_lSprlJsLWsNY8h1THIDuVlO0ltskgm0"
     )
 
     def obtain_token_pair(self, user):
@@ -94,11 +93,11 @@ class UserTests(APITestCase):
     def test_user_list(self):
         url = reverse("user-list")
         response = self.client.get(url, format="json")
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 405)
 
         self.client.force_login(self.testuserone)
         response = self.client.get(url, format="json")
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 405)
 
         self.client.force_login(self.testadmin)
         response = self.client.get(url, format="json")

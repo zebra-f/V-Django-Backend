@@ -26,14 +26,26 @@ from .exceptions import ServiceUnavailable
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    # ModelViewSet (3) attributes
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
+
+    # custom attribute
+    not_allowed_http_method_names = ["put"]
+    # ModelViewSet attribute
+    http_method_names = []
+    for method_name in viewsets.ModelViewSet.http_method_names:
+        if method_name not in not_allowed_http_method_names:
+            http_method_names.append(method_name)
+
+    # custom attribute
     object_level_actions = [
         "retrieve",
         "destroy",
         "partial_update",
     ]
+    # custom attribute
     forbidden_object_level_actions = [
         "deactivate_user",
         "update",
@@ -41,16 +53,22 @@ class UserViewSet(viewsets.ModelViewSet):
     ]
 
     def get_permissions(self):
-        if self.action in (
-            "create",
-            "token_password_reset",
-            "token_verify_email_activate_user",
+        if (
+            self.action
+            in (
+                "create",
+                "token_password_reset",
+                "token_verify_email_activate_user",
+            )
+            # explanation in the `list` method
+            or self.action == "list"
         ):
             self.permission_classes = [AllowAny]
         if self.action in self.object_level_actions or self.action == "whoami":
             self.permission_classes = [UserIsAuthorized]
         if self.action in self.forbidden_object_level_actions:
             self.permission_classes = [ForbiddenAction]
+
         return super().get_permissions()
 
     def get_serializer(self, *args, **kwargs):
@@ -73,7 +91,17 @@ class UserViewSet(viewsets.ModelViewSet):
                 return user
         return None
 
-    # user views
+    def list(self, request, *args, **kwargs):
+        # a workaround for the `DRF Browsable API` as the permission
+        # `IsAdminUser` would remove the form used for the `create` method
+        # this way users (anonymous and logged in) can use the form while
+        # maintaining privacy of others by securing access to private data
+        if request.user.is_anonymous or not request.user.is_admin:
+            return Response(
+                {"detail": 'Method "GET" not allowed.'},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED,
+            )
+        return super().list(request, *args, **kwargs)
 
     @action(methods=["get"], detail=False)
     def whoami(self, request):
@@ -88,7 +116,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(methods=["get", "post"], detail=False)
     def token_verify_email_activate_user(self, request):
-        # a user requests a 'resend' of ActivateUserVerifiyEmailEmailMessage providing an email address
+        # a user requests 'resend' of `ActivateUserVerifiyEmailEmailMessage` providing an email address
         # if the user exists and its `email_verified` field is set to False, email is sent
         if request.method == "POST":
             serializer = self.get_serializer(data=request.data)
@@ -166,8 +194,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 serializer.save()
                 return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
-
-    # admin views
 
     @action(methods=["get"], detail=True)
     def admin_activate_user(self, request, pk=None):
