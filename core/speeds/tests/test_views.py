@@ -1188,8 +1188,8 @@ class TestSpeedFeedback(CustomAPITestCase):
 
         self.client.force_login(self.testusertwo)
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.data["detail"], "Not found.")
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(response.data["detail"], 'Method "GET" not allowed.')
 
     def test_speed_report_create(self):
         url = reverse("speedreport-list")
@@ -1260,8 +1260,8 @@ class TestSpeedFeedback(CustomAPITestCase):
 
         self.client.force_login(self.testusertwo)
         response = self.client.put(url)
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.data["detail"], "Not found.")
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(response.data["detail"], 'Method "PUT" not allowed.')
 
     def test_speed_report_partial_update(self):
         report = SpeedReport.objects.all().first()
@@ -1280,8 +1280,10 @@ class TestSpeedFeedback(CustomAPITestCase):
 
         self.client.force_login(self.testusertwo)
         response = self.client.patch(url)
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.data["detail"], "Not found.")
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(
+            response.data["detail"], 'Method "PATCH" not allowed.'
+        )
 
     def test_speed_report_destroy(self):
         report = SpeedReport.objects.all().first()
@@ -1307,7 +1309,9 @@ class TestSpeedFeedback(CustomAPITestCase):
                 "Accept": "application/json",
             },
         )
-        self.assertEqual(response.status_code, 404)
-        self.assertEqual(response.data["detail"], "Not found.")
+        self.assertEqual(response.status_code, 405)
+        self.assertEqual(
+            response.data["detail"], 'Method "DELETE" not allowed.'
+        )
 
         self.assertEqual(len(SpeedReport.objects.all()), 1)

@@ -1,4 +1,4 @@
-from rest_framework import viewsets, response
+from rest_framework import viewsets, response, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.renderers import JSONRenderer
@@ -26,6 +26,7 @@ from .services import get_random_speeds
 
 
 class SpeedViewSet(viewsets.ModelViewSet):
+    # ModelViewSet (6) attributes
     renderer_classes = [CustomBrowsableAPIRenderer, JSONRenderer]
 
     queryset = Speed.objects.filter(is_public=True)
@@ -36,13 +37,22 @@ class SpeedViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = SpeedFilter
 
+    # custom attribute
+    not_allowed_http_method_names = []
+    # ModelViewSet attribute
+    http_method_names = []
+    for method_name in viewsets.ModelViewSet.http_method_names:
+        if method_name not in not_allowed_http_method_names:
+            http_method_names.append(method_name)
+
+    # custom attribute
     object_level_actions = [
         "destroy",
         "update",
         "partial_update",
     ]
-    object_level_actions_to_restrict = [*object_level_actions]
-    actions_to_restrict = ["personal_list", "create"]
+    # custom attribute
+    forbidden_object_level_actions = []
 
     def get_permissions(self):
         if self.action in (
@@ -50,9 +60,9 @@ class SpeedViewSet(viewsets.ModelViewSet):
             "retrieve",
         ):
             self.permission_classes = [AllowAny]
-        if (
-            self.action in self.object_level_actions_to_restrict
-            or self.action in self.actions_to_restrict
+        if self.action in self.object_level_actions or self.action in (
+            "personal_list",
+            "create",
         ):
             self.permission_classes = [UserIsAuthorized]
 
@@ -134,6 +144,7 @@ class SpeedFeedbackViewSet(viewsets.ModelViewSet):
     A user should always be authorized for any action in this ViewSet.
     """
 
+    # ModelViewSet (5) attributes
     queryset = SpeedFeedback.objects.all()
     serializer_class = SpeedFeedbackSerializer
     permission_classes = [UserIsAuthorized]
@@ -141,19 +152,23 @@ class SpeedFeedbackViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = SpeedFeedbackFilter
 
+    # custom attribute
     not_allowed_http_method_names = ["put", "delete"]
+    # ModelViewSet attribute
     http_method_names = []
     for method_name in viewsets.ModelViewSet.http_method_names:
         if method_name not in not_allowed_http_method_names:
             http_method_names.append(method_name)
 
+    # custom attribute
     object_level_actions = [
         "retrieve",
         "partial_update",
     ]
+    # custom attribute
     forbidden_object_level_actions = [
-        "update",
-        "destroy",
+        "update",  # handled by `not_allowed_http_method_names` attribute
+        "destroy",  # handled by `not_allowed_http_method_names` attribute
     ]
 
     def get_permissions(self):
@@ -180,6 +195,7 @@ class SpeedBookmarkViewSet(viewsets.ModelViewSet):
     A user should always be authorized for any action in this ViewSet.
     """
 
+    # ModelViewSet (5) attributes
     queryset = SpeedBookmark.objects.all()
     serializer_class = SpeedBookmarkSerializer
     permission_classes = [UserIsAuthorized]
@@ -187,15 +203,19 @@ class SpeedBookmarkViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_class = SpeedBookmarkFilter
 
+    # custom attribute
     not_allowed_http_method_names = ["put"]
+    # ModelViewSet attribute
     http_method_names = []
     for method_name in viewsets.ModelViewSet.http_method_names:
         if method_name not in not_allowed_http_method_names:
             http_method_names.append(method_name)
 
+    # custom attribute
     object_level_actions = ["destroy", "retrieve", "partial_update"]
+    # custom attribute
     forbidden_object_level_actions = [
-        "update",
+        "update",  # handled by `not_allowed_http_method_names` attribute
     ]
 
     def get_permissions(self):
@@ -222,6 +242,7 @@ class SpeedReportViewSet(viewsets.ModelViewSet):
     A user should always be authorized for any action in this ViewSet.
     """
 
+    # ModelViewSet (3) attributes
     queryset = SpeedReport.objects.all()
     serializer_class = SpeedReportSerializer
     permission_classes = [UserIsAuthorized]
@@ -237,14 +258,27 @@ class SpeedReportViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         if self.request.user.is_admin:
             return super().retrieve(request, *args, **kwargs)
-        raise NotFound()
+
+        return response.Response(
+            {"detail": 'Method "GET" not allowed.'},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
 
     def update(self, request, *args, **kwargs):
         if self.request.user.is_admin:
-            return super().update(request, *args, **kwargs)
-        raise NotFound()
+            return super().retrieve(request, *args, **kwargs)
+
+        # handles both "PUT" and "PATCH" (`partial_update`)
+        return response.Response(
+            {"detail": f'Method "{request.method.upper()}" not allowed.'},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
 
     def destroy(self, request, *args, **kwargs):
         if self.request.user.is_admin:
-            return super().destroy(request, *args, **kwargs)
-        raise NotFound()
+            return super().retrieve(request, *args, **kwargs)
+
+        return response.Response(
+            {"detail": 'Method "DELETE" not allowed.'},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
