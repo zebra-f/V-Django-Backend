@@ -19,7 +19,7 @@ import os
 from django.core.exceptions import ImproperlyConfigured
 
 
-def get_env_variable(variable_name):
+def get_env_variable(variable_name: str) -> str:
     variable = os.environ.get(variable_name)
     if variable == None:
         raise ImproperlyConfigured(
@@ -59,9 +59,11 @@ INSTALLED_APPS = [
     "core.speeds",
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -261,6 +263,8 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
+
+CORS_ALLOWED_ORIGINS = get_env_variable("CORS_ALLOWED_ORIGINS").split(" ")
 
 
 # Celery settings
