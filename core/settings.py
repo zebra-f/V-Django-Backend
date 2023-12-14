@@ -265,7 +265,7 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOWED_ORIGINS = get_env_variable("CORS_ALLOWED_ORIGINS").split(" ")
-
+CORS_ALLOW_CREDENTIALS = True
 
 # Celery settings
 
