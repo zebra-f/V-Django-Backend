@@ -114,7 +114,11 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer_class()(instance)
         return Response(serializer.data)
 
-    @action(methods=["get", "post"], detail=False)
+    @action(
+        methods=["get", "post"],
+        detail=False,
+        url_path="token-verify-email-activate-user",
+    )
     def token_verify_email_activate_user(self, request):
         """
         Instructions for Browsable API:
@@ -147,7 +151,11 @@ class UserViewSet(viewsets.ModelViewSet):
                 return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=["post", "patch", "get"], detail=False)
+    @action(
+        methods=["post", "patch", "get"],
+        detail=False,
+        url_path="token-password-reset",
+    )
     def token_password_reset(self, request):
         """
         Instructions for Browsable API:
@@ -191,7 +199,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=["get"], detail=False)
+    @action(methods=["get"], detail=False, url_path="token-activate-user")
     def token_activate_user(self, request):
         """NOT IN USE"""
         token_generator = ActivateUserTokenGenerator()
@@ -201,14 +209,14 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    @action(methods=["get"], detail=True)
+    @action(methods=["get"], detail=True, url_path="deactivate-user")
     def deactivate_user(self, request, pk=None):
         """NOT IN USE"""
         user = self.get_object()
         user.deactivate()
         return Response(status=status.HTTP_200_OK)
 
-    @action(methods=["get"], detail=True)
+    @action(methods=["get"], detail=True, url_path="admin-activate-user")
     def admin_activate_user(self, request, pk=None):
         user = self.get_object()
         user.activate()

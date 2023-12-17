@@ -144,7 +144,7 @@ class SpeedTests(CustomAPITestCase):
     def test_personal_list(self):
         url = reverse("speed-personal-list")
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -217,7 +217,7 @@ class SpeedTests(CustomAPITestCase):
             "estimated": False,
         }
         response = self.client.post(url, data, format="json")
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -324,7 +324,7 @@ class SpeedTests(CustomAPITestCase):
 
             self.client.logout()
             response = self.client.put(url, data, format="json")
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 401)
             self.assertEqual(
                 response.data["detail"],
                 "Authentication credentials were not provided.",
@@ -374,7 +374,7 @@ class SpeedTests(CustomAPITestCase):
 
             self.client.logout()
             response = self.client.patch(url, data, format="json")
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 401)
             self.assertEqual(
                 response.data["detail"],
                 "Authentication credentials were not provided.",
@@ -425,7 +425,7 @@ class SpeedTests(CustomAPITestCase):
 
             self.client.logout()
             response = self.client.delete(url)
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 401)
             self.assertEqual(
                 response.data["detail"],
                 "Authentication credentials were not provided.",
@@ -470,7 +470,7 @@ class TestSpeedFeedback(CustomAPITestCase):
         url = reverse("speedfeedback-list")
 
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -499,7 +499,7 @@ class TestSpeedFeedback(CustomAPITestCase):
 
             self.client.logout()
             response = self.client.get(url)
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 401)
             self.assertEqual(
                 response.data["detail"],
                 "Authentication credentials were not provided.",
@@ -514,7 +514,7 @@ class TestSpeedFeedback(CustomAPITestCase):
                     if key in model_dict and key != "user":
                         self.assertEqual(str(val), str(model_dict[key]))
             else:
-                self.assertEqual(response.status_code, 403)
+                self.assertEqual(response.status_code, 401)
                 self.assertEqual(
                     response.data["detail"],
                     "You do not have permission to perform this action.",
@@ -532,7 +532,7 @@ class TestSpeedFeedback(CustomAPITestCase):
             url,
             data={"speed": "d26c8bad-6548-4918-8e63-1bd59579917b", "vote": 1},
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -545,7 +545,7 @@ class TestSpeedFeedback(CustomAPITestCase):
             url,
             data={"speed": "2dbc2429-a8cc-4f80-922a-5dbc4715a76c", "vote": 0},
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "You do not have permission to perform this action.",
@@ -631,7 +631,7 @@ class TestSpeedFeedback(CustomAPITestCase):
             # anon attempts to update a `SpeedFeedback` object
             self.client.logout()
             response = self.client.put(url, data={"vote": 1})
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 401)
             self.assertEqual(
                 response.data["detail"],
                 "Authentication credentials were not provided.",
@@ -654,7 +654,7 @@ class TestSpeedFeedback(CustomAPITestCase):
             # anon attempts to update a `SpeedFeedback` object
             self.client.logout()
             response = self.client.patch(url, data={"vote": 1})
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 401)
             self.assertEqual(
                 response.data["detail"],
                 "Authentication credentials were not provided.",
@@ -667,7 +667,7 @@ class TestSpeedFeedback(CustomAPITestCase):
             response = self.client.patch(url, data={"vote": 1})
 
             if speed_feedback.user != self.testusertwo:
-                self.assertEqual(response.status_code, 403)
+                self.assertEqual(response.status_code, 401)
             else:
                 if speed_feedback.vote != 1:
                     self.assertNotEqual(
@@ -681,7 +681,7 @@ class TestSpeedFeedback(CustomAPITestCase):
             response = self.client.patch(url, data={"vote": 1})
 
             if speed_feedback.user != self.testuserone:
-                self.assertEqual(response.status_code, 403)
+                self.assertEqual(response.status_code, 401)
             else:
                 self.assertEqual(response.status_code, 200)
 
@@ -863,7 +863,7 @@ class TestSpeedFeedback(CustomAPITestCase):
                 "vote": -1,
             },
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "You do not have permission to perform this action.",
@@ -878,7 +878,7 @@ class TestSpeedFeedback(CustomAPITestCase):
         )
 
         response = self.client.delete(url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -900,7 +900,7 @@ class TestSpeedBookmark(CustomAPITestCase):
         url = reverse("speedbookmark-list")
 
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -932,7 +932,7 @@ class TestSpeedBookmark(CustomAPITestCase):
         url = reverse("speedbookmark-detail", kwargs={"pk": bookmark.pk})
 
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -980,7 +980,7 @@ class TestSpeedBookmark(CustomAPITestCase):
         data = {"speed": str(speed.pk), "category": "testuserone category two"}
 
         response = self.client.post(url, data)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -1025,7 +1025,7 @@ class TestSpeedBookmark(CustomAPITestCase):
         data = {"category": bookmark.category + " updated"}
 
         response = self.client.put(url, data)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -1049,7 +1049,7 @@ class TestSpeedBookmark(CustomAPITestCase):
         data = {"category": bookmark.category + " updated"}
 
         response = self.client.patch(url, data)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -1110,7 +1110,7 @@ class TestSpeedBookmark(CustomAPITestCase):
         url = reverse("speedbookmark-detail", kwargs={"pk": bookmark.pk})
 
         response = self.client.delete(url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -1154,7 +1154,7 @@ class TestSpeedFeedback(CustomAPITestCase):
         url = reverse("speedreport-list")
 
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -1180,7 +1180,7 @@ class TestSpeedFeedback(CustomAPITestCase):
         url = reverse("speedreport-detail", kwargs={"pk": str(report.pk)})
 
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -1203,7 +1203,7 @@ class TestSpeedFeedback(CustomAPITestCase):
         }
 
         response = self.client.post(url, data)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -1252,7 +1252,7 @@ class TestSpeedFeedback(CustomAPITestCase):
             "speed": str(report.speed.id),
         }
         response = self.client.put(url, data)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -1272,7 +1272,7 @@ class TestSpeedFeedback(CustomAPITestCase):
             "detail": report.detail + " updated",
         }
         response = self.client.patch(url, data)
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",
@@ -1296,7 +1296,7 @@ class TestSpeedFeedback(CustomAPITestCase):
                 "Accept": "application/json",
             },
         )
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data["detail"],
             "Authentication credentials were not provided.",

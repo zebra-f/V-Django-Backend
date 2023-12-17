@@ -111,7 +111,7 @@ class UserTests(APITestCase):
 
             self.client.logout()
             response = self.client.get(url)
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 401)
 
             self.client.force_login(self.testuserone)
             response = self.client.get(url)
@@ -126,7 +126,7 @@ class UserTests(APITestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.data["email"], user.email)
             else:
-                self.assertEqual(response.status_code, 403)
+                self.assertEqual(response.status_code, 401)
 
     def test_whoami(self):
         users = User.objects.all()
@@ -135,7 +135,7 @@ class UserTests(APITestCase):
 
             self.client.logout()
             response = self.client.get(url)
-            self.assertEqual(response.status_code, 403)
+            self.assertEqual(response.status_code, 401)
 
             self.client.force_login(user)
             response = self.client.get(url)
@@ -143,7 +143,7 @@ class UserTests(APITestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.data["email"], user.email)
             else:
-                self.assertEqual(response.status_code, 403)
+                self.assertEqual(response.status_code, 401)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_user_create(self):
@@ -268,7 +268,7 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(
             response.data["username"][0],
-            "Ensure this field has no more than 32 characters.",
+            "Ensure this field has no more than 24 characters.",
         )
 
         data = {
@@ -430,13 +430,13 @@ class UserTests(APITestCase):
             response.data["detail"],
             "Authentication credentials were not provided.",
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         self.client.credentials(
             HTTP_AUTHORIZATION="Bearer " + self.random_access_token
         )
         response = self.client.get(url, format="json")
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
             response.data.get("detail", "no detail"),
             "Given token not valid for any token type",
@@ -477,7 +477,7 @@ class UserTests(APITestCase):
             response.data["detail"],
             "Authentication credentials were not provided.",
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         token_pair = self.obtain_token_pair(self.testuserone)
         self.client.credentials(
@@ -500,7 +500,7 @@ class UserTests(APITestCase):
             response.data["detail"],
             "Authentication credentials were not provided.",
         )
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         # testusertwo makes the request on behalf of testuserone
         token_pair = self.obtain_token_pair(self.testusertwo)
@@ -523,7 +523,7 @@ class UserTests(APITestCase):
             HTTP_AUTHORIZATION="Bearer " + self.random_access_token
         )
         response = self.client.patch(url, data, format="json")
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.data.get("detail", "no detail"),
             "Given token not valid for any token type",

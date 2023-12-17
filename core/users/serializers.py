@@ -15,7 +15,7 @@ class UserSerializer(serializers.ModelSerializer):
         required=False, max_length=128, write_only=True
     )
     username = serializers.CharField(
-        max_length=32,
+        max_length=24,
         validators=[
             username_validator,
             UniqueValidator(
