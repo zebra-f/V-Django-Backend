@@ -164,7 +164,9 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         # without this method the POST` and `PATCH` form will disappear from DRF Browsable API
         if request.method == "GET":
-            return Response(status=status.HTTP_200_OK)
+            return Response(
+                status=status.HTTP_200_OK,
+            )
 
         # a user requests a password reset providing an email address
         if request.method == "POST":
@@ -196,8 +198,9 @@ class UserViewSet(viewsets.ModelViewSet):
                 )
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
-                return Response(status=status.HTTP_200_OK)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+                return Response(data={}, status=status.HTTP_200_OK)
+
+        return Response(data={}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(methods=["get"], detail=False, url_path="token-activate-user")
     def token_activate_user(self, request):
