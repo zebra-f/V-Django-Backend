@@ -36,16 +36,18 @@ class UserManager(BaseUserManager):
 
     def create_oauth_user(
         self,
-        email,
+        email: str,
         email_verified: bool,
         username: str,
         oauth_provider: str,
-        password=None,
+        password: str = None,
     ):
         if not email:
             raise ValueError("Users must have an email address")
         if not username:
             raise ValueError("Users must have an username")
+        if not email_verified:
+            raise ValueError("User email not verified")
 
         user = self.model(
             email=self.normalize_email(email),

@@ -8,11 +8,14 @@ from django.urls import reverse
 from django.conf import settings
 from django.contrib.auth import get_user_model, login
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status, generics
 from rest_framework.permissions import AllowAny
+
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from ..decorators import check_oauth_enabled
 from .services import exchange_code, get_code_and_validate_params
@@ -79,6 +82,7 @@ class GoogleSessionCallback(generics.GenericAPIView):
         else:
             request.session["user_email"] = email
             request.session["user_email_verified"] = email_verified
+            request.session.set_expiry(900)
             return Response(
                 {
                     "message": (
@@ -132,7 +136,7 @@ def token_login(request):
     request.session["state"] = state
 
     nonce = secrets.token_hex(23)
-    callback_url = "http://127.0.0.1:5173/openid/googleredirect/"
+    callback_url = settings.OAUTH_PROVIDERS["GOOGLE"]["FRONTEND_CALLBACK_URL"]
     redrect_url = (
         "https://accounts.google.com/o/oauth2/v2/auth?"
         "response_type=code&"
@@ -149,17 +153,35 @@ class GoogleTokenCallback(generics.GenericAPIView):
     serializer_class = UsernameSerializer
     permission_classes = [AllowAny]
 
+    def prepare_response(self, user) -> Response:
+        refresh = RefreshToken.for_user(user)
+        data = {
+            "refresh": str(refresh),
+            "access": str(refresh.access_token),
+        }
+
+        if "Google" not in user.oauth_providers:
+            user.oauth_providers.append("Google")
+            user.save()
+
+        user.last_login = timezone.now()
+
+        return Response(data, status=status.HTTP_200_OK)
+
     def finalize_response(self, request, response, *args, **kwargs):
         response = set_refresh_cookie(response)
         return super().finalize_response(request, response, *args, **kwargs)
 
+    @check_oauth_enabled("GOOGLE")
     def get(self, request, *args, **kwargs):
         code, valid = get_code_and_validate_params(request)
         if not valid:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        redirect_uri = "http://127.0.0.1:5173/openid/googleredirect/"
-        decoded_tokens = exchange_code(code, redirect_uri)
+        callback_url = settings.OAUTH_PROVIDERS["GOOGLE"][
+            "FRONTEND_CALLBACK_URL"
+        ]
+        decoded_tokens = exchange_code(code, callback_url)
 
         email = decoded_tokens["email"]
         email_verified: bool = decoded_tokens["email_verified"]
@@ -168,9 +190,6 @@ class GoogleTokenCallback(generics.GenericAPIView):
         user = User.objects.filter(email=email).first()
 
         if user:
-            if "Google" not in user.oauth_providers:
-                user.oauth_providers.append("Google")
-                user.save()
             for path in settings.AUTHENTICATION_BACKENDS:
                 module_name, class_name = path.rsplit(".", 1)
                 module = importlib.import_module(module_name)
@@ -183,24 +202,23 @@ class GoogleTokenCallback(generics.GenericAPIView):
                         status=status.HTTP_401_UNAUTHORIZED,
                     )
             try:
-                return Response({"message": "logged in"}, status=200)
-                # Log in user !!!!
-                # log in user !!!!
-                # Log in user !!!!
+                return self.prepare_response(user)
             except Exception as e:
                 return Response({"message": "Something went wrong."})
         else:
             request.session["user_email"] = email
             request.session["user_email_verified"] = email_verified
+            request.session.set_expiry(900)
             return Response(
                 {
                     "message": (
-                        "Provide your username in the form under this message"
-                        "(optionally, you can set a password to enable logging in directly with your email and password)."
+                        "Please provide your username. Password is optional. Please respond promptly or your session will expire."
                     )
-                }
+                },
+                status=status.HTTP_202_ACCEPTED,
             )
 
+    @check_oauth_enabled("GOOGLE")
     def post(self, request, *args, **kwargs):
         if (
             not request.session
@@ -213,12 +231,10 @@ class GoogleTokenCallback(generics.GenericAPIView):
         if serializer.is_valid():
             data = serializer.validated_data
 
-            password = None
-            if "password" in data:
-                password = data["password"]
-
             User = get_user_model()
+
             try:
+                password = data.get("password", None)
                 user = User.objects.create_oauth_user(
                     email=request.session["user_email"],
                     email_verified=request.session["user_email_verified"],
@@ -226,10 +242,13 @@ class GoogleTokenCallback(generics.GenericAPIView):
                     oauth_provider="Google",
                     password=password,
                 )
+                return self.prepare_response(user)
             except ValidationError as e:
-                return Response(e)
-
-            login(request, user)
-            return redirect("user-whoami")
+                return Response(
+                    data={"detail": str(e)},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
         else:
-            return Response(serializer.errors)
+            return Response(
+                data=serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )

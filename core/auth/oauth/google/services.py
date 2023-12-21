@@ -17,8 +17,6 @@ def get_code_and_validate_params(request) -> (str, bool):
     code = query_params.get("code", None)
     scope = query_params.get("scope", None)
 
-    print(f"\n{state=}, {code=}, {scope=}\n")
-
     is_valid = True
     if not request.session or not "state" in request.session:
         is_valid = False

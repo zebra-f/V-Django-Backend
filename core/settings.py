@@ -305,6 +305,7 @@ OAUTH_PROVIDERS = {
         "disabled": bool(int(get_env_variable("GOOGLE_OAUTH_DISABLED"))),
         "CLIENT_ID": None,
         "CLIENT_SECRET": None,
+        "FRONTEND_CALLBACK_URL": None,
     }
 }
 
@@ -315,4 +316,7 @@ if not OAUTH_PROVIDERS["GOOGLE"]["disabled"]:
     )
     OAUTH_PROVIDERS["GOOGLE"]["CLIENT_SECRET"] = get_env_variable(
         "GOOGLE_OAUTH_CLIENT_SECRET"
+    )
+    OAUTH_PROVIDERS["GOOGLE"]["FRONTEND_CALLBACK_URL"] = get_env_variable(
+        "FRONTEND_CALLBACK_URL"
     )
