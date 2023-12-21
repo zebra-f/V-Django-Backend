@@ -671,7 +671,7 @@ class UserTests(APITestCase):
                 password_reset_link, data, format="json"
             )
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(response.data, None)
+            self.assertEqual(response.data, {})
 
             # password reset link can be used only once
             data = {"new_password": "7C34xvby&1!A"}
