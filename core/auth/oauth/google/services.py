@@ -31,7 +31,6 @@ def get_code_and_validate_params(request) -> (str, bool):
 
 
 def exchange_code(code: str, redirect_uri: str) -> dict:
-    # exchange the code
     url = "https://oauth2.googleapis.com/token"
     client_id = settings.OAUTH_PROVIDERS["GOOGLE"]["CLIENT_ID"]
     client_secret = settings.OAUTH_PROVIDERS["GOOGLE"]["CLIENT_SECRET"]
@@ -57,5 +56,4 @@ def exchange_code(code: str, redirect_uri: str) -> dict:
         #     options={"verify_signature": False}
         # )
     else:
-        # Error handling for unsuccessful response
-        return None  # or raise an exception or handle the error as needed
+        return None

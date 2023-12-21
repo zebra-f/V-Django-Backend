@@ -8,10 +8,10 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from django.utils import timezone
-from django.conf import settings
 
 from .serializers import CustomTokenRefreshSerializer, LogoutSerializer
 from ..users.models import User
+from .utils import set_refresh_cookie
 
 
 class LoginView(TokenObtainPairView):
@@ -26,17 +26,7 @@ class LoginView(TokenObtainPairView):
         return response
 
     def finalize_response(self, request, response, *args, **kwargs):
-        if response.data.get("refresh"):
-            response.set_cookie(
-                "refresh",
-                value=response.data["refresh"],
-                max_age=settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"],
-                path="/api/token/",
-                httponly=True,
-                samesite="Strict",
-                secure=True,
-            )
-            del response.data["refresh"]
+        response = set_refresh_cookie(response)
         return super().finalize_response(request, response, *args, **kwargs)
 
 

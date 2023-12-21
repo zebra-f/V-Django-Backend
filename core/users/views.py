@@ -134,7 +134,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 self.get_queryset(), email=serializer.data["email"]
             )
             if user.email_verified:
-                return Response(status=status.HTTP_409_CONFLICT)
+                return Response({}, status=status.HTTP_409_CONFLICT)
 
             Email.send_activate_user_verify_email_token(user)
 
@@ -148,8 +148,8 @@ class UserViewSet(viewsets.ModelViewSet):
             user = self.check_token_get_user(request, token_generator)
             if user:
                 user.activate_verify_email()
-                return Response(status=status.HTTP_200_OK)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+                return Response({}, status=status.HTTP_200_OK)
+        return Response({}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(
         methods=["post", "patch", "get"],

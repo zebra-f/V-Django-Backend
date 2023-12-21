@@ -9,7 +9,7 @@ from core.users.validators import username_validator
 
 class UsernameSerializer(serializers.Serializer):
     username = serializers.CharField(
-        max_length=32,
+        max_length=24,
         validators=[
             username_validator,
             UniqueValidator(

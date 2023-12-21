@@ -114,6 +114,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
+    is_banned = models.BooleanField(default=False)
 
     # OAuth
     oauth_providers = ArrayField(
