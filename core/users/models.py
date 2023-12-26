@@ -1,3 +1,5 @@
+from random import randint
+
 from django.db import models
 from django.contrib.auth.models import (
     AbstractBaseUser,
@@ -62,7 +64,7 @@ class UserManager(BaseUserManager):
             validate_password(password, user)
             user.set_password(password)
         else:
-            user.set_password(get_random_string(length=40))
+            user.set_password(get_random_string(length=randint(40, 60)))
 
         user.save(using=self._db)
         return user
