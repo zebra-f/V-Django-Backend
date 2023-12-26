@@ -21,6 +21,7 @@ from ..decorators import check_oauth_enabled
 from .services import exchange_code, get_code_and_validate_params
 from .serializers import UsernameSerializer
 from ...utils import set_refresh_cookie
+from ... import logger
 
 
 @api_view(["GET"])
@@ -47,8 +48,8 @@ def session_login(request):
 
 class GoogleSessionCallback(generics.GenericAPIView):
     """
-    (Used for manual testing)- should never be directly called.
-    Instead use `session_login` endpoint and follow instructions.
+    Should never be directly called,
+    instead use `session_login` endpoint.
     """
 
     serializer_class = UsernameSerializer
@@ -154,6 +155,10 @@ class GoogleTokenCallback(generics.GenericAPIView):
     permission_classes = [AllowAny]
 
     def prepare_response(self, user) -> Response:
+        """
+        This method, alongside `finalize_response`, returns data
+        necessary for the authentication.
+        """
         refresh = RefreshToken.for_user(user)
         data = {
             "refresh": str(refresh),
@@ -188,7 +193,6 @@ class GoogleTokenCallback(generics.GenericAPIView):
 
         User = get_user_model()
         user = User.objects.filter(email=email).first()
-
         if user:
             for path in settings.AUTHENTICATION_BACKENDS:
                 module_name, class_name = path.rsplit(".", 1)
@@ -205,6 +209,8 @@ class GoogleTokenCallback(generics.GenericAPIView):
                 return self.prepare_response(user)
             except Exception as e:
                 return Response({"message": "Something went wrong."})
+        # user tries to log in for the first time using Google
+        # username is required, handled by the POST method
         else:
             request.session["user_email"] = email
             request.session["user_email_verified"] = email_verified
@@ -225,14 +231,16 @@ class GoogleTokenCallback(generics.GenericAPIView):
             or not "user_email" in request.session
             or not "user_email_verified" in request.session
         ):
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                data={"detail": "Session expired."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             data = serializer.validated_data
 
             User = get_user_model()
-
             try:
                 password = data.get("password", None)
                 user = User.objects.create_oauth_user(
@@ -242,11 +250,30 @@ class GoogleTokenCallback(generics.GenericAPIView):
                     oauth_provider="Google",
                     password=password,
                 )
+                request.session.flush()
                 return self.prepare_response(user)
             except ValidationError as e:
+                if (
+                    e.messages[0]
+                    == "The password is too similar to the username."
+                ):
+                    return Response(
+                        data={
+                            "password": "The password is too similar to the username."
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
                 return Response(
-                    data={"detail": str(e)},
-                    status=status.HTTP_401_UNAUTHORIZED,
+                    data={"detail": ", ".join(e.messages)},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            except Exception as e:
+                logger.warning(
+                    f"core.auth.google.{__name__}; `create_oauth_user` failed, {str(e)}"
+                )
+                return Response(
+                    data={"detail": "Something went wrong."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
         else:
             return Response(
