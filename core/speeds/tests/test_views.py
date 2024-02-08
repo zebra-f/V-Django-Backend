@@ -56,15 +56,6 @@ class CustomAPITestCase(APITestCase):
         self.testusertwo = User.objects.get(username="testusertwo")
         return super().setUp()
 
-    def obtain_token_pair(self, user):
-        login_url = reverse("login")
-        data = {
-            "email": user.email,
-            "password": self.users_passwords[user.username],
-        }
-        response = self.client.post(login_url, data, format="json")
-        return response.data
-
 
 class SpeedTests(CustomAPITestCase):
     valid_name_chars = {"'", "-", "_"}
