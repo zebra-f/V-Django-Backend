@@ -32,9 +32,7 @@ def session_login(request):
     request.session["state"] = state
 
     nonce = secrets.token_hex(23)
-    callback_url = request.build_absolute_uri(
-        reverse("google-session-callback")
-    )
+    callback_url = request.build_absolute_uri(reverse("google-session-callback"))
     return redirect(
         "https://accounts.google.com/o/oauth2/v2/auth?"
         "response_type=code&"
@@ -60,9 +58,7 @@ class GoogleSessionCallback(generics.GenericAPIView):
         if not valid:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        redirect_uri = request.build_absolute_uri(
-            reverse("google-session-callback")
-        )
+        redirect_uri = request.build_absolute_uri(reverse("google-session-callback"))
         decoded_tokens = exchange_code(code, redirect_uri)
 
         email = decoded_tokens["email"]
@@ -154,7 +150,7 @@ class GoogleTokenCallback(generics.GenericAPIView):
     serializer_class = UsernameSerializer
     permission_classes = [AllowAny]
 
-    def prepare_response(self, user) -> Response:
+    def _prepare_response(self, user) -> Response:
         """
         This method, alongside `finalize_response`, returns data
         necessary for the authentication.
@@ -167,9 +163,9 @@ class GoogleTokenCallback(generics.GenericAPIView):
 
         if "Google" not in user.oauth_providers:
             user.oauth_providers.append("Google")
-            user.save()
 
         user.last_login = timezone.now()
+        user.save()
 
         return Response(data, status=status.HTTP_200_OK)
 
@@ -183,9 +179,7 @@ class GoogleTokenCallback(generics.GenericAPIView):
         if not valid:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        callback_url = settings.OAUTH_PROVIDERS["GOOGLE"][
-            "FRONTEND_CALLBACK_URL"
-        ]
+        callback_url = settings.OAUTH_PROVIDERS["GOOGLE"]["FRONTEND_CALLBACK_URL"]
         decoded_tokens = exchange_code(code, callback_url)
 
         email = decoded_tokens["email"]
@@ -206,7 +200,7 @@ class GoogleTokenCallback(generics.GenericAPIView):
                         status=status.HTTP_401_UNAUTHORIZED,
                     )
             try:
-                return self.prepare_response(user)
+                return self._prepare_response(user)
             except Exception as e:
                 return Response({"message": "Something went wrong."})
         # user tries to log in for the first time using Google
@@ -251,12 +245,9 @@ class GoogleTokenCallback(generics.GenericAPIView):
                     password=password,
                 )
                 request.session.flush()
-                return self.prepare_response(user)
+                return self._prepare_response(user)
             except ValidationError as e:
-                if (
-                    e.messages[0]
-                    == "The password is too similar to the username."
-                ):
+                if e.messages[0] == "The password is too similar to the username.":
                     return Response(
                         data={
                             "password": "The password is too similar to the username."
@@ -276,6 +267,4 @@ class GoogleTokenCallback(generics.GenericAPIView):
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
         else:
-            return Response(
-                data=serializer.errors, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response(data=serializer.errors, status=status.HTTP_400_BAD_REQUEST)
