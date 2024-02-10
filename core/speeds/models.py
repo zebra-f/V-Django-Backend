@@ -126,7 +126,7 @@ class Vote(models.IntegerChoices):
 
 class SpeedFeedback(models.Model):
     class Meta:
-        ordering = ["-created_at"]
+        ordering = ["-updated_at"]
         constraints = [
             models.UniqueConstraint(
                 fields=("user", "speed"), name="fb_unique_user_speed"
@@ -141,12 +141,8 @@ class SpeedFeedback(models.Model):
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
-    )
-    speed = models.ForeignKey(
-        Speed, on_delete=models.CASCADE, related_name="feedback"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name="feedback")
 
     def __str__(self) -> str:
         return str(self.vote)
@@ -198,19 +194,13 @@ class SpeedBookmark(models.Model):
             )
         ]
 
-    category = models.CharField(
-        _("category"), max_length=32, blank=True, null=True
-    )
+    category = models.CharField(_("category"), max_length=32, blank=True, null=True)
 
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
 
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
-    )
-    speed = models.ForeignKey(
-        Speed, on_delete=models.CASCADE, related_name="bookmark"
-    )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name="bookmark")
 
     def __str__(self) -> str:
         return self.category
@@ -238,9 +228,7 @@ class SpeedReport(models.Model):
         null=False,
         blank=False,
     )
-    detail = models.CharField(
-        _("detail"), max_length=256, blank=False, null=False
-    )
+    detail = models.CharField(_("detail"), max_length=256, blank=False, null=False)
 
     created_at = models.DateTimeField(_("created at"), auto_now_add=True)
     updated_at = models.DateTimeField(_("updated at"), auto_now=True)
@@ -248,9 +236,7 @@ class SpeedReport(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL
     )
-    speed = models.ForeignKey(
-        Speed, on_delete=models.CASCADE, related_name="report"
-    )
+    speed = models.ForeignKey(Speed, on_delete=models.CASCADE, related_name="report")
 
     def __str__(self) -> str:
         return self.report_reason + " (" + self.detail[:25] + "...)"

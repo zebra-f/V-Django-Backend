@@ -25,9 +25,7 @@ class CustomQueryArrayWidget(widgets.QueryArrayWidget):
             for key, value in data.items():
                 # treat value as csv string: ?foo=1,2
                 if isinstance(value, str):
-                    data[key] = [
-                        x.strip() for x in value.rstrip(",").split(",") if x
-                    ]
+                    data[key] = [x.strip() for x in value.rstrip(",").split(",") if x]
             data = MultiValueDict(data)
 
         values_list = data.getlist(name, data.getlist("%s[]" % name)) or []
@@ -78,6 +76,7 @@ class SpeedFilter(filters.FilterSet):
 
 class SpeedFeedbackFilter(filters.FilterSet):
     speed = filters.UUIDFilter()
+    vote = filters.NumberFilter()
 
     class Meta:
         model = SpeedFeedback
