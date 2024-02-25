@@ -8,6 +8,9 @@ from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.conf import settings
+
+from .services import turnstile_token_is_valid
 
 from .serializers import (
     UserSerializer,
@@ -103,6 +106,22 @@ class UserViewSet(viewsets.ModelViewSet):
             )
         return super().list(request, *args, **kwargs)
 
+    def create(self, request, *args, **kwargs):
+        turnstile_token = request.headers.get("turnstile-token", None)
+        # Cloudflare's Turnstile required in production
+        if not turnstile_token and not settings.DEBUG:
+            return Response(
+                {"detail": "Cloudflare's Turnstile Token not found."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        elif turnstile_token and not turnstile_token_is_valid(turnstile_token):
+            return Response(
+                {"detail": "Cloudflare's Turnstile Token is not valid."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return super().create(request, *args, **kwargs)
+
     @action(methods=["get"], detail=False)
     def whoami(self, request):
         """
@@ -139,9 +158,7 @@ class UserViewSet(viewsets.ModelViewSet):
             Email.send_activate_user_verify_email_token(user)
 
             headers = self.get_success_headers(serializer.data)
-            return Response(
-                serializer.data, status=status.HTTP_200_OK, headers=headers
-            )
+            return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
         # a user opens a verification link from the received 'welcome' email
         else:
             token_generator = ActivateUserVerifyEmailTokenGenerator()
@@ -184,18 +201,14 @@ class UserViewSet(viewsets.ModelViewSet):
                 raise ServiceUnavailable()
 
             headers = self.get_success_headers(serializer.data)
-            return Response(
-                serializer.data, status=status.HTTP_200_OK, headers=headers
-            )
+            return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
 
         # a user submits a new password with the provided token
         if request.method == "PATCH":
             token_generator = CustomPasswordResetTokenGenerator()
             user = self.check_token_get_user(request, token_generator)
             if user:
-                serializer = self.get_serializer(
-                    user, data=request.data, partial=True
-                )
+                serializer = self.get_serializer(user, data=request.data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
                 return Response(data={}, status=status.HTTP_200_OK)

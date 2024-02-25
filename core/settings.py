@@ -237,8 +237,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=2),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=24),
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=24*24*24),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
     "UPDATE_LAST_LOGIN": False,
@@ -320,3 +320,8 @@ if not OAUTH_PROVIDERS["GOOGLE"]["disabled"]:
     OAUTH_PROVIDERS["GOOGLE"]["FRONTEND_CALLBACK_URL"] = get_env_variable(
         "FRONTEND_CALLBACK_URL"
     )
+
+
+# Cloudflare Trunstile
+
+CLOUDFLARE_TURNSTILE_SECRET_KEY = get_env_variable('CLOUDFLARE_TURNSTILE_SECRET_KEY')

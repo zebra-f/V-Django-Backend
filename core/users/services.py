@@ -1,3 +1,7 @@
+import requests
+
+from django.conf import settings
+
 from .emails.tokens import (
     CustomPasswordResetTokenGenerator,
     ActivateUserVerifyEmailTokenGenerator,
@@ -39,3 +43,18 @@ class Email:
             )
         except:
             raise OperationalError()
+
+
+def turnstile_token_is_valid(token: str) -> bool:
+    secret = settings.CLOUDFLARE_TURNSTILE_SECRET_KEY
+
+    form_data = {
+        "secret": secret,
+        "response": token,
+    }
+    response = requests.post(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify", data=form_data
+    )
+    json_response = response.json()
+
+    return json_response.get("success", False)

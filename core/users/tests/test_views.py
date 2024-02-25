@@ -104,6 +104,7 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["count"], 11)
 
+    @override_settings(DEBUG=1)
     def test_user_retrieve(self):
         users = User.objects.all()
         for user in users:
@@ -146,6 +147,7 @@ class UserTests(APITestCase):
                 self.assertEqual(response.status_code, 401)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    @override_settings(DEBUG=1)
     def test_user_create(self):
         """
         Ensure we can create a new User.
@@ -204,9 +206,7 @@ class UserTests(APITestCase):
                 "password": "6A37xvby&1!L",
             }
             response = self.client.post(url, data, format="json")
-            self.assertEqual(
-                response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE
-            )
+            self.assertEqual(response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE)
             self.assertEqual(
                 response.data["detail"],
                 "Service temporarily unavailable, try again later.",
@@ -243,9 +243,7 @@ class UserTests(APITestCase):
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.data["email"][0], "Enter a valid email address."
-        )
+        self.assertEqual(response.data["email"][0], "Enter a valid email address.")
 
         data = {
             "username": "testuserthirteen",
@@ -254,13 +252,10 @@ class UserTests(APITestCase):
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.data["email"][0], "Enter a valid email address."
-        )
+        self.assertEqual(response.data["email"][0], "Enter a valid email address.")
 
         data = {
-            "username": "testuserthirteen"
-            + ("x" * (32 - len("testuserthirteen") + 1)),
+            "username": "testuserthirteen" + ("x" * (32 - len("testuserthirteen") + 1)),
             "email": "testuserthirteen@email.com",
             "password": "6A37xvby&1!L",
         }
@@ -290,9 +285,7 @@ class UserTests(APITestCase):
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.data["password"][0], "This password is too common."
-        )
+        self.assertEqual(response.data["password"][0], "This password is too common.")
 
         data = {
             "username": "testuserthirteen",
@@ -307,6 +300,7 @@ class UserTests(APITestCase):
         )
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
+    @override_settings(DEBUG=1)
     def test_token_activate_user_verify_email(self):
         # GET method
         url = reverse("user-list")
@@ -341,25 +335,16 @@ class UserTests(APITestCase):
             with patch(
                 "core.users.emails.tokens.ActivateUserVerifyEmailTokenGenerator._now"
             ) as mocked__now:
-                mocked__now.return_value = (
-                    datetime.datetime.now()
-                    + datetime.timedelta(
-                        0, settings.PASSWORD_RESET_TIMEOUT + 60
-                    )
+                mocked__now.return_value = datetime.datetime.now() + datetime.timedelta(
+                    0, settings.PASSWORD_RESET_TIMEOUT + 60
                 )
-                response = self.client.get(
-                    activation_verification_link, format="json"
-                )
+                response = self.client.get(activation_verification_link, format="json")
                 self.assertEqual(response.status_code, 400)
 
-            response = self.client.get(
-                activation_verification_link, format="json"
-            )
+            response = self.client.get(activation_verification_link, format="json")
             self.assertEqual(response.status_code, 200)
             # it's not possible to use this link/activate the user twice
-            response = self.client.get(
-                activation_verification_link, format="json"
-            )
+            response = self.client.get(activation_verification_link, format="json")
             self.assertEqual(response.status_code, 400)
         else:
             raise TypeError("Link doesn't exist")
@@ -416,9 +401,7 @@ class UserTests(APITestCase):
                 break
 
         if activation_verification_link:
-            response = self.client.get(
-                activation_verification_link, format="json"
-            )
+            response = self.client.get(activation_verification_link, format="json")
             self.assertEqual(response.status_code, 200)
         else:
             raise TypeError("Link doesn't exist")
@@ -432,9 +415,7 @@ class UserTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-        self.client.credentials(
-            HTTP_AUTHORIZATION="Bearer " + self.random_access_token
-        )
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + self.random_access_token)
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(
@@ -443,23 +424,17 @@ class UserTests(APITestCase):
         )
 
         token_pair = self.obtain_token_pair(self.testuserone)
-        self.client.credentials(
-            HTTP_AUTHORIZATION="Bearer " + token_pair["access"]
-        )
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token_pair["access"])
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            response.data.get("username", "no username"), "testuserone"
-        )
+        self.assertEqual(response.data.get("username", "no username"), "testuserone")
         self.assertEqual(
             response.data.get("email", "no email"), "testuserone@email.com"
         )
 
         # testusertwo makes the request on behalf of testuserone
         token_pair = self.obtain_token_pair(self.testusertwo)
-        self.client.credentials(
-            HTTP_AUTHORIZATION="Bearer " + token_pair["access"]
-        )
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token_pair["access"])
         response = self.client.get(url, format="json")
         self.assertEqual(response.status_code, 403)
         self.assertEqual(
@@ -480,9 +455,7 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         token_pair = self.obtain_token_pair(self.testuserone)
-        self.client.credentials(
-            HTTP_AUTHORIZATION="Bearer " + token_pair["access"]
-        )
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token_pair["access"])
         response = self.client.put(url, format="json")
         self.assertEqual(response.status_code, 403)
         self.assertEqual(
@@ -504,9 +477,7 @@ class UserTests(APITestCase):
 
         # testusertwo makes the request on behalf of testuserone
         token_pair = self.obtain_token_pair(self.testusertwo)
-        self.client.credentials(
-            HTTP_AUTHORIZATION="Bearer " + token_pair["access"]
-        )
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token_pair["access"])
         data = {
             "username": "testuserone",
             "email": "testuserone@email.com",
@@ -519,9 +490,7 @@ class UserTests(APITestCase):
             "You do not have permission to perform this action.",
         )
 
-        self.client.credentials(
-            HTTP_AUTHORIZATION="Bearer " + self.random_access_token
-        )
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + self.random_access_token)
         response = self.client.patch(url, data, format="json")
         self.assertEqual(response.status_code, 401)
         self.assertEqual(
@@ -530,9 +499,7 @@ class UserTests(APITestCase):
         )
 
         token_pair = self.obtain_token_pair(self.testuserone)
-        self.client.credentials(
-            HTTP_AUTHORIZATION="Bearer " + token_pair["access"]
-        )
+        self.client.credentials(HTTP_AUTHORIZATION="Bearer " + token_pair["access"])
         data = {
             "username": "testuseroneupdated",
             "email": "testuseroneupdated@email.com",
@@ -540,12 +507,8 @@ class UserTests(APITestCase):
         response = self.client.patch(url, data, format="json")
         # email address and username can't be changed
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(
-            response.data["password"][0], "This field is required."
-        )
-        self.assertEqual(
-            response.data["new_password"][0], "This field is required."
-        )
+        self.assertEqual(response.data["password"][0], "This field is required.")
+        self.assertEqual(response.data["new_password"][0], "This field is required.")
 
         data = {
             "new_password": "password",
@@ -587,13 +550,9 @@ class UserTests(APITestCase):
         response = self.client.patch(url, data, format="json")
         self.assertEqual(response.status_code, 200)
 
-        self.assertEqual(
-            response.data.get("password", "no password"), "no password"
-        )
+        self.assertEqual(response.data.get("password", "no password"), "no password")
         testuserone_updated = User.objects.get(email="testuserone@email.com")
-        self.assertNotEqual(
-            self.testuserone.password, testuserone_updated.password
-        )
+        self.assertNotEqual(self.testuserone.password, testuserone_updated.password)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
     def test_token_password_reset(self):
@@ -623,18 +582,14 @@ class UserTests(APITestCase):
 
         if password_reset_link:
             data = {}
-            response = self.client.patch(
-                password_reset_link, data, format="json"
-            )
+            response = self.client.patch(password_reset_link, data, format="json")
             self.assertEqual(response.status_code, 400)
             self.assertEqual(
                 response.data["new_password"][0], "This field is required."
             )
 
             data = {"new_password": "testuserone"}
-            response = self.client.patch(
-                password_reset_link, data, format="json"
-            )
+            response = self.client.patch(password_reset_link, data, format="json")
             self.assertEqual(response.status_code, 400)
             self.assertEqual(
                 response.data["new_password"][0],
@@ -642,9 +597,7 @@ class UserTests(APITestCase):
             )
 
             data = {"new_password": "testuserone@email.com"}
-            response = self.client.patch(
-                password_reset_link, data, format="json"
-            )
+            response = self.client.patch(password_reset_link, data, format="json")
             self.assertEqual(response.status_code, 400)
             self.assertEqual(
                 response.data["new_password"][0],
@@ -655,37 +608,24 @@ class UserTests(APITestCase):
             with patch(
                 "core.users.emails.tokens.CustomPasswordResetTokenGenerator._now"
             ) as mocked__now:
-                mocked__now.return_value = (
-                    datetime.datetime.now()
-                    + datetime.timedelta(
-                        0, settings.PASSWORD_RESET_TIMEOUT + 60
-                    )
+                mocked__now.return_value = datetime.datetime.now() + datetime.timedelta(
+                    0, settings.PASSWORD_RESET_TIMEOUT + 60
                 )
-                response = self.client.patch(
-                    password_reset_link, data, format="json"
-                )
+                response = self.client.patch(password_reset_link, data, format="json")
                 self.assertEqual(response.status_code, 400)
 
             data = {"new_password": "7C34xvby&1!A"}
-            response = self.client.patch(
-                password_reset_link, data, format="json"
-            )
+            response = self.client.patch(password_reset_link, data, format="json")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.data, {})
 
             # password reset link can be used only once
             data = {"new_password": "7C34xvby&1!A"}
-            response = self.client.patch(
-                password_reset_link, data, format="json"
-            )
+            response = self.client.patch(password_reset_link, data, format="json")
             self.assertEqual(response.status_code, 400)
 
-            testuserone_updated = User.objects.get(
-                email="testuserone@email.com"
-            )
-            self.assertNotEqual(
-                self.testuserone.password, testuserone_updated.password
-            )
+            testuserone_updated = User.objects.get(email="testuserone@email.com")
+            self.assertNotEqual(self.testuserone.password, testuserone_updated.password)
 
             # let's try to log in with the old and new password
             login_url = reverse("login")
