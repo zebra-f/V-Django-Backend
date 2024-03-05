@@ -14,12 +14,12 @@ else
 fi
 
 python manage.py migrate
+python manage.py collectstatic --no-input --clear  
 
 if [ "$MEILISEARCH_DISABLED" = "0" ]; then
     
     python manage.py createspeedsindex
     python manage.py updatespeedsindex
-    
     echo "Meilisearch index was created and updated"
 fi
 
