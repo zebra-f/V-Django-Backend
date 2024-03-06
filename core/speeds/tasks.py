@@ -86,13 +86,13 @@ def delete_meilisearch_deleted_user_data(**kwargs):
             if ms_client.task_succeeded(task_info):
                 try:
                     speed.delete()
-                except:
-                    raise Exception(
-                        f"the `delete()` for {speed.id} has failed"
+                except Exception as e:
+                    logger.error(
+                        f"The `delete()` for {speed.id} of deleted user has failed.\n {str(e)}"
                     )
             else:
                 logger.error(
-                    f"core.speeds.{__name__}; the `delete_document()` for {speed.id} has not succeeded."
+                    f"core.speeds.{__name__}; the `delete_document()` for {speed.id} of deleted user has not succeeded."
                 )
         except Exception as e:
             logger.error(f"core.speeds.{__name__}; {str(e)}.")
@@ -124,3 +124,32 @@ def sync_or_add_document_to_meiliserach_task(
     data: dict,
 ):
     ms_client.sync_document(index_name, action, data)
+
+
+@shared_task
+def delete_meilisearch_banned_user_data(user_pk):
+    timestamp = time.time()
+
+    user = get_user_model().objects.get(pk=user_pk)
+    qs = SpeedQueries.get_banned_user_query(user=user)
+    for speed in qs:
+        try:
+            task_info = ms_client.index("speeds").delete_document(speed.id)
+            if ms_client.task_succeeded(task_info):
+                try:
+                    speed.is_public = False
+                    speed.save()
+                except Exception as e:
+                    logger.error(
+                        f"The `save()` (update) for {speed.id} of banned user has failed.\n {str(e)}"
+                    )
+            else:
+                logger.error(
+                    f"core.speeds.{__name__}; the `delete_document()` for {speed.id} of banned user has not succeeded."
+                )
+        except Exception as e:
+            logger.error(f"core.speeds.{__name__}; {str(e)}.")
+
+    logger.info(
+        f"core.speeds.{__name__}; the `delete_meilisearch_banned_user_data` task has finished in {time.time() - timestamp} seconds."
+    )

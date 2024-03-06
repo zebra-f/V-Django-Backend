@@ -76,6 +76,15 @@ class SpeedQueries:
         return Speed.objects\
                     .filter(user=user)\
                     .select_related('user')
+
+    @staticmethod
+    def get_banned_user_query(user: User):
+        '''
+        Same as `get_deleted_user_query`.
+        '''
+        return Speed.objects\
+                    .filter(user=user)\
+                    .select_related('user')
     
     @staticmethod
     def get_not_synced_in_meilisearch_query():
