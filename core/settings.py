@@ -44,6 +44,8 @@ DEBUG = bool(int(get_env_variable("DEBUG")))
 
 ALLOWED_HOSTS = get_env_variable("ALLOWED_HOSTS").split(" ")
 
+# Should end with a '/', https://example.com/
+CLIENT_BASE_URL = get_env_variable("CLIENT_BASE_URL")
 
 # Application definition
 
@@ -159,8 +161,14 @@ AUTHENTICATION_BACKENDS = ["core.auth.authentication.CustomModelBackend"]
 AUTH_USER_MODEL = "users.User"
 
 # email
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-DEFAULT_FROM_EMAIL = "backend@example.com"
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+DEFAULT_FROM_EMAIL = "no-reply@sovertis.com"
+EMAIL_HOST = get_env_variable("EMAIL_HOST")
+EMAIL_PORT = 587
+EMAIL_HOST_USER = get_env_variable("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = get_env_variable("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS = True
+
 ADMINS = [
     ("John Smith", "john@example.com"),
     # ('Jane Doe', 'jane@example.com'),
@@ -264,8 +272,13 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
+# CORS  settings used for dev server, in prod set CORS_ALLOWED_ORIGINS to an empty list []
+
 CORS_ALLOWED_ORIGINS = get_env_variable("CORS_ALLOWED_ORIGINS").split(" ")
 CORS_ALLOW_CREDENTIALS = True
+
+from corsheaders.defaults import default_headers
+CORS_ALLOW_HEADERS = (*default_headers, "turnstile-token",)
 
 # Celery settings
 
