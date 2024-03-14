@@ -128,9 +128,7 @@ class AuthTests(APITestCase):
                 whoami_url = reverse("user-whoami")
 
                 # correct token
-                self.client.credentials(
-                    HTTP_AUTHORIZATION="Bearer " + access_token
-                )
+                self.client.credentials(HTTP_AUTHORIZATION="Bearer " + access_token)
                 response = self.client.get(whoami_url, format="json")
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
                 # check if user has logged in
@@ -142,9 +140,7 @@ class AuthTests(APITestCase):
                     HTTP_AUTHORIZATION="Bearer " + self.random_access_token
                 )
                 response = self.client.get(whoami_url, format="json")
-                self.assertEqual(
-                    response.status_code, status.HTTP_403_FORBIDDEN
-                )
+                self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
             else:
                 self.assertEqual(response.status_code, 401)
                 self.assertEqual(
@@ -185,9 +181,7 @@ class AuthTests(APITestCase):
             )
 
             blacklisted_tokens = BlacklistedToken.objects.all()
-            self.assertEqual(
-                len(blacklisted_tokens), blacklisted_tokens_counter
-            )
+            self.assertEqual(len(blacklisted_tokens), blacklisted_tokens_counter)
 
             self.client.cookies["refresh"] = cookies["refresh"]
             response = self.client.post(url, data, format="json")
@@ -195,9 +189,7 @@ class AuthTests(APITestCase):
 
             blacklisted_tokens = BlacklistedToken.objects.all()
             blacklisted_tokens_counter += 1
-            self.assertEqual(
-                len(blacklisted_tokens), blacklisted_tokens_counter
-            )
+            self.assertEqual(len(blacklisted_tokens), blacklisted_tokens_counter)
 
     def test_refresh(self):
         url = reverse("refresh")
