@@ -37,11 +37,20 @@ TESTING = sys.argv[1:2] == ["test"]
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = bool(int(get_env_variable("DEBUG")))
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = get_env_variable("DJANGO_V_1_SECRET_KEY")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = bool(int(get_env_variable("DEBUG")))
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 120
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = True
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 
 ALLOWED_HOSTS = get_env_variable("ALLOWED_HOSTS").split(" ")
 
@@ -162,7 +171,10 @@ AUTHENTICATION_BACKENDS = ["core.auth.authentication.CustomModelBackend"]
 AUTH_USER_MODEL = "users.User"
 
 # email
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+if DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 DEFAULT_FROM_EMAIL = "no-reply@sovertis.com"
 EMAIL_HOST = get_env_variable("EMAIL_HOST")
 EMAIL_PORT = 587
@@ -206,7 +218,7 @@ if not TESTING:
             "mail_admins": {
                 "level": "ERROR",
                 "class": "django.utils.log.AdminEmailHandler",
-                "email_backend": "django.core.mail.backends.console.EmailBackend",
+                "email_backend": EMAIL_BACKEND,
                 "include_html": False,
                 "formatter": "verbose",
             },
