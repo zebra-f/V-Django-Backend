@@ -58,7 +58,7 @@ class CustomAPITestCase(APITestCase):
 
 
 class SpeedTests(CustomAPITestCase):
-    valid_name_chars = {"'", "-", "_"}
+    valid_name_chars = {"'", "-", "_", "(", ")"}
     valid_description_chars = {",", "'", ".", "-", '"', ".", "(", ")", ","}
     valid_tags_chars = {"'", "-"}
 
