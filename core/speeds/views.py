@@ -2,9 +2,9 @@ from rest_framework import viewsets, response, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
 from rest_framework.renderers import JSONRenderer
-from rest_framework.exceptions import NotFound
 
 from django_filters.rest_framework import DjangoFilterBackend
+from django.conf import settings
 
 from .models import Speed, SpeedFeedback, SpeedBookmark, SpeedReport
 from .permissions import (
@@ -27,7 +27,7 @@ from .services import get_random_speeds
 
 class SpeedViewSet(viewsets.ModelViewSet):
     # ModelViewSet (6) attributes
-    renderer_classes = [CustomBrowsableAPIRenderer, JSONRenderer]
+    renderer_classes = [CustomBrowsableAPIRenderer, JSONRenderer] if settings.DEBUG else [JSONRenderer]
 
     queryset = Speed.objects.filter(is_public=True)
     serializer_class = SpeedHyperlinkedSerializer

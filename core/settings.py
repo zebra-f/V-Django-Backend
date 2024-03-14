@@ -15,6 +15,7 @@ from datetime import timedelta
 
 import sys
 import os
+import json
 
 from django.core.exceptions import ImproperlyConfigured
 
@@ -169,10 +170,9 @@ EMAIL_HOST_USER = get_env_variable("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = get_env_variable("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = True
 
-ADMINS = [
-    ("John Smith", "john@example.com"),
-    # ('Jane Doe', 'jane@example.com'),
-]
+# set this variablie as a JSON string, example: ADMINS='[{"name": "John", "email": "john@example.com"}, {"name": "Mary", "email": "mary@example.com"}]'
+ADMINS = [(obj["name"], obj["email"]) for obj in json.loads(get_env_variable("ADMINS"))]
+
 
 # PasswordResetTokenGenerator
 PASSWORD_RESET_TIMEOUT = 172800  # 2 days in seconds
