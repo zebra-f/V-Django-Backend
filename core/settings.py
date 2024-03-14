@@ -200,9 +200,7 @@ if not TESTING:
             "speeds_debug_file": {
                 "level": "DEBUG",
                 "class": "logging.FileHandler",
-                "filename": os.path.join(
-                    BASE_DIR, "logs", "speeds", "debug.log"
-                ),
+                "filename": os.path.join(BASE_DIR, "logs", "speeds", "debug.log"),
                 "formatter": "verbose",
             },
             "mail_admins": {
@@ -244,10 +242,14 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.BasicAuthentication",
     ],
 }
+if not DEBUG:
+    REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
+        "rest_framework.renderers.JSONRenderer",
+    ]
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=24),
-    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=24*24*24),
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=24 * 24 * 24),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
     "UPDATE_LAST_LOGIN": False,
@@ -278,7 +280,11 @@ CORS_ALLOWED_ORIGINS = get_env_variable("CORS_ALLOWED_ORIGINS").split(" ")
 CORS_ALLOW_CREDENTIALS = True
 
 from corsheaders.defaults import default_headers
-CORS_ALLOW_HEADERS = (*default_headers, "turnstile-token",)
+
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+    "turnstile-token",
+)
 
 # Celery settings
 
@@ -325,9 +331,7 @@ OAUTH_PROVIDERS = {
 
 
 if not OAUTH_PROVIDERS["GOOGLE"]["disabled"]:
-    OAUTH_PROVIDERS["GOOGLE"]["CLIENT_ID"] = get_env_variable(
-        "GOOGLE_OAUTH_CLIENT_ID"
-    )
+    OAUTH_PROVIDERS["GOOGLE"]["CLIENT_ID"] = get_env_variable("GOOGLE_OAUTH_CLIENT_ID")
     OAUTH_PROVIDERS["GOOGLE"]["CLIENT_SECRET"] = get_env_variable(
         "GOOGLE_OAUTH_CLIENT_SECRET"
     )
@@ -338,4 +342,4 @@ if not OAUTH_PROVIDERS["GOOGLE"]["disabled"]:
 
 # Cloudflare Trunstile
 
-CLOUDFLARE_TURNSTILE_SECRET_KEY = get_env_variable('CLOUDFLARE_TURNSTILE_SECRET_KEY')
+CLOUDFLARE_TURNSTILE_SECRET_KEY = get_env_variable("CLOUDFLARE_TURNSTILE_SECRET_KEY")

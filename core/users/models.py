@@ -42,7 +42,7 @@ class UserManager(BaseUserManager):
         email_verified: bool,
         username: str,
         oauth_provider: str,
-        password: str = None,
+        password: str | None = None,
     ):
         if not email:
             raise ValueError("Users must have an email address")
