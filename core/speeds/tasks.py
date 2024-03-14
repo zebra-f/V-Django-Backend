@@ -30,29 +30,31 @@ def setup_periodic_tasks(sender, **kwargs):
         )
 
     if cache_flag:
+        if settings.DEBUG:
+            crontab_ = crontab(minute="*/1")
+        else:
+            crontab_ = crontab(minute=0, hour="*/12")
+
         sender.add_periodic_task(
-            crontab(
-                minute="*/1"  # dev
-                # minute=0, hour='*/12'  # prod
-            ),
+            crontab_,
             cache_random_speeds_task.s(),
             name="cache random speeds",
         )
 
     if not ms_client.is_disabled():
+        if settings.DEBUG:
+            crontab_ = crontab(minute="*/1")
+        else:
+            crontab_ = crontab(minute=0, hour="*/4")
+
         sender.add_periodic_task(
-            crontab(
-                minute="*/1"  # dev
-                # minute=0, hour='*/4'  # prod
-            ),
+            crontab_,
             delete_meilisearch_deleted_user_data.s(),
             name="delete meilisearch deleted user data",
         )
+
         sender.add_periodic_task(
-            crontab(
-                minute="*/1"  # dev
-                # minute=0, hour='*/4'  # prod
-            ),
+            crontab_,
             synchronize_scores_in_meilisearch.s(),
             name="synchronize scores in meilisearch",
         )
