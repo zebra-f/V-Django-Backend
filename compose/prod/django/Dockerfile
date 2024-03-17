@@ -24,6 +24,12 @@ RUN pip install -r /requirements.txt
 
 COPY . .
 
+RUN sed -i 's/\r$//g' ./compose/prod/django/celery/beat/entrypoint.sh
+RUN chmod +x ./compose/prod/django/celery/beat/entrypoint.sh
+
+RUN sed -i 's/\r$//g' ./compose/prod/django/celery/workers/entrypoint.sh
+RUN chmod +x ./compose/prod/django/celery/workers/entrypoint.sh
+
 RUN sed -i 's/\r$//g' ./compose/prod/django/entrypoint.sh
 RUN chmod +x ./compose/prod/django/entrypoint.sh
 
