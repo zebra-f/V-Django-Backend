@@ -19,6 +19,7 @@ else
 fi
 
 # python manage.py flush --no-input
+python manage.py makemigrations
 python manage.py migrate
 
 # a custom management command
