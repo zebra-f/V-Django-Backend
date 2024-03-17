@@ -50,6 +50,7 @@ services:
       EMAIL_HOST: ${EMAIL_HOST}
       EMAIL_HOST_USER: ${EMAIL_HOST_USER}
       EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
+      ADMIN_URL_SEGMENT: ${ADMIN_URL_SEGMENT}
     env_file:
       - ./compose/dev/django/.env.dev
     depends_on:
@@ -76,6 +77,7 @@ services:
       EMAIL_HOST: ${EMAIL_HOST}
       EMAIL_HOST_USER: ${EMAIL_HOST_USER}
       EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
+      ADMIN_URL_SEGMENT: ${ADMIN_URL_SEGMENT}
     env_file:
       - ./compose/dev/django/.env.dev
     depends_on:

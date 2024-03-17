@@ -57,6 +57,9 @@ ALLOWED_HOSTS = get_env_variable("ALLOWED_HOSTS").split(" ")
 # Should end with a '/', https://example.com/
 CLIENT_BASE_URL = get_env_variable("CLIENT_BASE_URL")
 
+# Secret segment to hide admin panel (look at core.urls).
+ADMIN_URL_SEGMENT = get_env_variable("ADMIN_URL_SEGMENT")
+
 # Application definition
 
 INSTALLED_APPS = [
