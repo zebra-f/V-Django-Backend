@@ -75,7 +75,7 @@ INSTALLED_APPS = [
     "core.speeds",
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
-    "/corsheaders",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
