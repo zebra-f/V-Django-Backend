@@ -74,7 +74,7 @@ INSTALLED_APPS = [
     "core.speeds",
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
-    "corsheaders",
+    "/corsheaders",
 ]
 
 MIDDLEWARE = [
@@ -291,7 +291,7 @@ SIMPLE_JWT = {
 
 # CORS  settings used for dev server, in prod set CORS_ALLOWED_ORIGINS to an empty list []
 
-CORS_ALLOWED_ORIGINS = get_env_variable("CORS_ALLOWED_ORIGINS").split(" ")
+CORS_ALLOWED_ORIGINS = get_env_variable("CORS_ALLOWED_ORIGINS").split()
 CORS_ALLOW_CREDENTIALS = True
 
 from corsheaders.defaults import default_headers
