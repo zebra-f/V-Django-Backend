@@ -38,6 +38,6 @@ done
 
 # django migrations
 echo 'Sleeping for 12 seconds.'
-sleep 12
+sleep 20
 
 exec "$@"
