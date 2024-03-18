@@ -1,5 +1,6 @@
 import time
 from typing import Literal
+import sys
 
 from celery.schedules import crontab
 from celery import shared_task
@@ -14,7 +15,6 @@ from .services import cache_random_speeds
 from . import logger
 
 
-@app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
     if settings.TESTING:
         return
@@ -58,6 +58,12 @@ def setup_periodic_tasks(sender, **kwargs):
             synchronize_scores_in_meilisearch.s(),
             name="synchronize scores in meilisearch",
         )
+
+
+if settings.DEBUG:
+    app.on_after_finalize.connect(setup_periodic_tasks)
+elif "-A" in sys.argv and "beat" in sys.argv:
+    app.on_after_finalize.connect(setup_periodic_tasks)
 
 
 @app.task  # doesn't work with @app.shared_task
