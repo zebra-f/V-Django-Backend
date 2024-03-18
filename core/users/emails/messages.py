@@ -9,7 +9,7 @@ class ActivateUserVerifiyEmailEmailMessage(EmailMessage):
         super().__init__(*args, **kwargs)
         self.encoded_pk = encoded_pk
         self.token = token
-        self.subject = """Activation Verification email"""
+        self.subject = """Sovertis - Activation"""
         self.body = f"""Welcome to Sovertis,
         To activate your account visit:  
             {CLIENT_BASE_URL}verifyemail/?id={self.encoded_pk}&token={self.token}
@@ -37,7 +37,7 @@ class PasswordResetEmailMessage(EmailMessage):
         super().__init__(*args, **kwargs)
         self.encoded_pk = encoded_pk
         self.token = token
-        self.subject = """Password reset email"""
+        self.subject = """Sovertis - Password Reset"""
         self.body = f"""Hello,
         It seems like you've forgotten your password. No worries! Visit the link below to reset it:
             {CLIENT_BASE_URL}resetpassword/?id={self.encoded_pk}&token={self.token}
