@@ -36,4 +36,8 @@ until redis_ready; do
   sleep 0.1
 done
 
+# django migrations
+echo 'Sleeping for 12 seconds.'
+sleep 12
+
 exec "$@"
