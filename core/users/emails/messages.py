@@ -40,7 +40,7 @@ class PasswordResetEmailMessage(EmailMessage):
         self.subject = """Sovertis - Password Reset"""
         self.body = f"""Hello,
         It seems like you've forgotten your password. No worries! Visit the link below to reset it:
-            {CLIENT_BASE_URL}resetpassword/?id={self.encoded_pk}&token={self.token}
+            {CLIENT_BASE_URL}passwordreset/?id={self.encoded_pk}&token={self.token}
         \n
         If you didn't request this, you can safely ignore this message.
         Best ragards, Sovertis.
