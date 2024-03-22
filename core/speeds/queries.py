@@ -70,12 +70,14 @@ class SpeedQueries:
                     user_speed_bookmark=ArraySubquery(SpeedQueries.get_user_speed_bookmark_subquery(user))
                 )\
                 .select_related('user')
+
+    # tasks
     
     @staticmethod
     def get_deleted_user_query(user: User):
         return Speed.objects\
-                    .filter(user=user)\
-                    .select_related('user')
+                .filter(user=user)\
+                .select_related('user')
 
     @staticmethod
     def get_banned_user_query(user: User):
@@ -83,15 +85,15 @@ class SpeedQueries:
         Same as `get_deleted_user_query`.
         '''
         return Speed.objects\
-                    .filter(user=user)\
-                    .select_related('user')
+                .filter(user=user)\
+                .select_related('user')
     
     @staticmethod
     def get_not_synced_in_meilisearch_query():
         return Speed.objects\
-                    .filter(
-                        Q(is_synced_in_meilisearch=False) & Q(is_added_to_meilisearch=True)
-                    )
+                .filter(
+                    Q(is_synced_in_meilisearch=False) & Q(is_added_to_meilisearch=True)
+                )
 
     # admin site
 
