@@ -21,7 +21,7 @@ class LoginView(TokenObtainPairView):
         if response.status_code == 200:
             user = User.objects.get(email=request.data["email"])
             user.last_login = timezone.now()
-            user.save()
+            user.save(update_fields=["last_login"])
 
         return response
 
