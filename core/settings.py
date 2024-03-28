@@ -179,11 +179,12 @@ if DEBUG:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 else:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = get_env_variable("EMAIL_HOST")
+    EMAIL_HOST_USER = get_env_variable("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = get_env_variable("EMAIL_HOST_PASSWORD")
+
 DEFAULT_FROM_EMAIL = "no-reply@sovertis.com"
-EMAIL_HOST = get_env_variable("EMAIL_HOST")
 EMAIL_PORT = 587
-EMAIL_HOST_USER = get_env_variable("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = get_env_variable("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = True
 
 # set this variablie as a JSON string, example: ADMINS='[{"name": "John", "email": "john@example.com"}, {"name": "Mary", "email": "mary@example.com"}]'
@@ -358,4 +359,9 @@ if not OAUTH_PROVIDERS["GOOGLE"]["disabled"]:
 
 # Cloudflare Trunstile
 
-CLOUDFLARE_TURNSTILE_SECRET_KEY = get_env_variable("CLOUDFLARE_TURNSTILE_SECRET_KEY")
+CLOUDFLARE_TURNSTILE_DISABLED = bool(int(get_env_variable("CLOUDFLARE_TURNSTILE_DISABLED")))
+if not CLOUDFLARE_TURNSTILE_DISABLED:
+    CLOUDFLARE_TURNSTILE_SECRET_KEY = get_env_variable("CLOUDFLARE_TURNSTILE_SECRET_KEY")
+
+if CLOUDFLARE_TURNSTILE_DISABLED and not DEBUG:
+    raise ImproperlyConfigured("Cloudflare's Turnstile should be enabled in production.")

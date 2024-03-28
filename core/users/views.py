@@ -109,12 +109,16 @@ class UserViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         turnstile_token = request.headers.get("turnstile-token", None)
         # Cloudflare's Turnstile required in production
-        if not turnstile_token and not settings.DEBUG:
+        if not turnstile_token and not settings.CLOUDFLARE_TURNSTILE_DISABLED:
             return Response(
                 {"detail": "Cloudflare's Turnstile Token not found."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        elif turnstile_token and not turnstile_token_is_valid(turnstile_token):
+        elif (
+            not settings.CLOUDFLARE_TURNSTILE_DISABLED
+            and turnstile_token
+            and not turnstile_token_is_valid(turnstile_token)
+        ):
             return Response(
                 {"detail": "Cloudflare's Turnstile Token is not valid."},
                 status=status.HTTP_400_BAD_REQUEST,
