@@ -1,6 +1,12 @@
 
 ### How to run locally (Linux):  
 (Tested on `Kubuntu 22.04`, `Python 3.10.6`, `Docker 24.0.5`.)
+
+    $ git clone <project_url>
+    $ chmod +x init-project.sh
+    $ source ./init-project.sh
+
+    or 
     
     $ # navigate to a desired directory
     $ git clone <project_url> 
