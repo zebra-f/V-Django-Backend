@@ -53,7 +53,7 @@ if not DEBUG:
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
-ALLOWED_HOSTS = get_env_variable("ALLOWED_HOSTS").split(" ")
+ALLOWED_HOSTS = get_env_variable("ALLOWED_HOSTS").split()
 
 # Should end with a '/', https://example.com/
 CLIENT_BASE_URL = get_env_variable("CLIENT_BASE_URL")
@@ -291,7 +291,7 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
-# CORS  settings used for dev server, in prod set CORS_ALLOWED_ORIGINS to an empty list []
+# CORS settings used for dev server, in production set CORS_ALLOWED_ORIGINS env to an empty string
 
 CORS_ALLOWED_ORIGINS = get_env_variable("CORS_ALLOWED_ORIGINS").split()
 CORS_ALLOW_CREDENTIALS = True
