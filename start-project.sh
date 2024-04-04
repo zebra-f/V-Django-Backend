@@ -2,9 +2,15 @@
 
 set -e
 
-echo "start"
+echo "Starting..."
+
 if [ -z "$1" ]; then
-	echo "not set"
+	chmod +x ./compose/dev/django/entrypoint.sh
+	chmod +x ./compose/dev/django/celery/entrypoint.sh
+	chmod +x ./compose/dev/composeup.sh
+
+	source ./compose/dev/composeup.sh
+
 	exit 0
 fi
 
@@ -23,11 +29,29 @@ required_vars=(\
 
 for var in "${required_vars[@]}"; do
 	if [ -z "${!var}" ]; then
-		echo "Error: $var is not set"
-		exit 1
+		echo "Error: $var is not set."
+		exit 2
 	fi
 done
 
+if [ $MEILISEARCH_DISABLED -eq "0" ]; then
+	if [ -z "$MEILISEARCH_PORT" ] || [ -z "$MEILISEARCH_HOST" ] || [ -z "$MEILISEARCH_URL" ]; then
+		echo "Make sure that MEILISEARCH_HOST, MEILISEARCH_PORT and MEILISEARCH_URL environment variables are set."
+		exit 3
+	fi
+fi
+
+if [ $GOOGLE_OAUTH_DISABLED -eq "0" ]; then
+	if [ -z "$GOOGLE_OAUTH_CLIENT_SECRET" ] || [ -z "$FRONTEND_CALLBACK_URL" ]; then
+		echo "Make sure that GOOGLE_OAUTH_CLIENT_SECRET and FRONTEND_CALLBACK_URL environment variables are set."
+		exit 4
+	fi
+fi
+
+if [ $CLOUDFLARE_TURNSTILE_DISABLED -eq "0" ] && [ -z $CLOUDFLARE_TURNSTILE_TOKEN ]; then
+	echo "Make sure that CLOUDFLARE_TURNSTILE_TOKEN environment variable is set."
+	exit 5
+fi
 
 echo "Waiting for postgres..."
 while ! nc -z $POSTGRES_HOST $POSTGRES_PORT; do
@@ -37,7 +61,14 @@ done
 python3 manage.py makemigrations
 python3 manage.py migrate
  
-python manage.py createuser --sentinel deleted
+python3 manage.py createuser --sentinel deleted
+
+if [ $MEILISEARCH_DISABLED -eq "0" ]; then
+	python manage.py createspeedsindex
+	python manage.py updatespeedsindex
+    
+	echo "Meilisearch index was created and updated"
+fi
 
 read -p "Would you like to create a superuser [y/n]: " createsuperuser
 createsuperuser_lowercase=$(echo "$createsuperuser" | tr '[:upper:]' '[:lower:]')
@@ -46,22 +77,4 @@ if [[ "$createsuperuser_lowercase" == "y" ]]; then
 	python3 manage.py createsuperuser
 fi
 
-
-# export MEILISEARCH_HOST="meilisearch"
-# export MEILISEARCH_PORT="7700"
-# export MEILISEARCH_URL="http://meilisearch:7700"
-# export MEILISEARCH_DISABLED="1"
-# 
-# export GOOGLE_OAUTH_DISABLED="1"
-# # set if not GOOGLE_OAUTH_DISABLED
-# export GOOGLE_OAUTH_CLIENT_SECRET=""
-# export FRONTEND_CALLBACK_URL=""
-# 
-# export CLOUDFLARE_TURNSTILE_DISABLED="1"
-# # set if not CLOUDFLARE_TURNSTILE_DISABLED
-# export CLOUDFLARE_TURNSTILE_TOKEN=""
-
-
-	
-
-
+python3 manage.py runserver
