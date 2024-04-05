@@ -17,6 +17,9 @@ and execute:
     $ chmod +x start-project.sh
     $ ./start-project.sh
   
+---
+---
+---
 ### How to run locally (Linux):  
 (Two options, tested on `Kubuntu 22.04`, `Python 3.10.6`, `Docker 24.0.5`.)
 
@@ -114,12 +117,12 @@ Run an instance of PostgreSQL in Docker, or refer to the PostgreSQL documentatio
     $ python3 manage.py createuser --sentinel deleted
 
 ---
-### Redis Docker container:
+#### Redis Docker container:
 Run an instance of PostgreSQL in Docker, or refer to the Redis documentation for other options.  
 
     $ docker run --name redis-v-1-dev -p 6379:6379 -d redis:7.2.1-alpine
 
-### Finally (for Option 2):  
+#### Finally (for Option 2):  
 
     $ python3 manage.py runserver
     $ # in a seperate terminal window
