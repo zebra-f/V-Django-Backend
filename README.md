@@ -12,14 +12,12 @@ After that, remove the `boilerplate` prefix or run copy commands:
     $ cp ./compose/dev/django/boilerplate.env.dev ./compose/dev/django/.env.dev
     $ cp ./boilerplate.env ./.env
 
-and execute:  
+#### Finally:  
     
     $ chmod +x start-project.sh
     $ ./start-project.sh
   
----
----
----
+- - -
 ### How to run locally (Linux):  
 (Two options, tested on `Kubuntu 22.04`, `Python 3.10.6`, `Docker 24.0.5`.)
 
@@ -76,11 +74,11 @@ Set up environment variables (generate a secure key/password for each variable n
     $ export ADMINS='[{"name": "Joe", "email": "joe@example.com"}, {"name": "Jane", "email": "jane@example.com"}]'
 
     $ export CLOUDFLARE_TURNSTILE_DISABLED="1"
-    # not required if CLOUDFLARE_TURNSTILE_DISABLED is set to 1
+    $ # not required if CLOUDFLARE_TURNSTILE_DISABLED is set to 1
     $ export CLOUDFLARE_TURNSTILE_TOKEN="<secret-token>"
 
     $ export GOOGLE_OAUTH_DISABLED="1"
-    # not required if GOOGLE_OAUTH_DISABLED is set to 1
+    $ # not required if GOOGLE_OAUTH_DISABLED is set to 1
     $ export GOOGLE_OAUTH_CLIENT_SECRET=""
     $ export FRONTEND_CALLBACK_URL="http://127.0.0.1:5173/openid/googleredirect/"
 
