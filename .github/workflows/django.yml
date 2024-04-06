@@ -17,11 +17,11 @@ env:
   MEILISEARCH_URL: "http://meilisearch:7700"
   MEILISEARCH_V_1_MASTER_KEY: "meilisearch"
   
-  DATABASE: "postgres"
-  POSTGRES_V_1_PASSWORD: "postgres"
-  POSTGRES_DB_NAME: "githubactions"
-  POSTGRES_USER: "postgres"
-  POSTGRES_HOST: "postgres"
+  DATABASE: postgres
+  POSTGRES_V_1_PASSWORD: postgres
+  POSTGRES_DB_NAME: githubactions
+  POSTGRES_USER: postgres
+  POSTGRES_HOST: postgres
   POSTGRES_PORT: 5432
 
   DJANGO_V_1_SECRET_KEY: "django"
@@ -58,15 +58,13 @@ jobs:
 
     services:
       postgres:
-        image: "postgres:15-alpine"
+        image: postgres:15-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: "githubactions"
+          POSTGRES_DB: githubactions
         ports:
           - "5432:5432"
-        # needed because the postgres container does not provide a healthcheck
-        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
     - uses: actions/checkout@v3
