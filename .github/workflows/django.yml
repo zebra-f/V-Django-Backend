@@ -19,7 +19,7 @@ env:
   
   DATABASE: postgres
   POSTGRES_V_1_PASSWORD: postgres
-  POSTGRES_DB_NAME: githubactions
+  POSTGRES_DB_NAME: v_1
   POSTGRES_USER: postgres
   POSTGRES_HOST: postgres
   POSTGRES_PORT: 5432
@@ -58,7 +58,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: githubactions
+          POSTGRES_DB: v_1
         ports:
           - 5432:5432
         options: >-
@@ -73,7 +73,8 @@ jobs:
         python-version: "3.10"
     - name: Install Dependencies
       run: |
-        python -m pip install --upgrade pip
+        python -m venv .venv
+        source .venv/bin/activate
         pip install -r requirements.txt
     - name: Run Migrations
       run: |
