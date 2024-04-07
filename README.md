@@ -4,16 +4,17 @@ otherwise, update `./compose/dev/composeup.sh` file.)
     
     $ git clone <project_url>
     
+---
 #### Environemt variables:
-
 Remove `boilerplate` prefix from these files `./compose/dev/django/boilerplate.env.dev` and `./boilerplate.env`, or
 execute copy commands:  
     
     $ cp ./compose/dev/django/boilerplate.env.dev ./compose/dev/django/.env.dev
     $ cp ./boilerplate.env ./.env
 
-After that fill in empty fields in `./compose/dev/django/.env.dev` and `/.env`.
+After that fill in empty fields in `./compose/dev/django/.env.dev` and `./.env`.
 
+---
 #### Finally:  
     
     $ chmod +x start-project.sh
