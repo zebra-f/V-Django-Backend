@@ -20,7 +20,9 @@ After that fill in empty fields in `./compose/dev/django/.env.dev` and `./.env`.
     $ chmod +x start-project.sh
     $ ./start-project.sh
   
-- - -
+  
+  
+
 ### How to run locally (Linux):  
 (Two options, tested on `Kubuntu 22.04`, `Python 3.10.6`, `Docker 24.0.5`.)
 
@@ -128,3 +130,14 @@ Run an instance of PostgreSQL in Docker, or refer to the Redis documentation for
     $ python3 manage.py runserver
     $ # in a seperate terminal window
     $ celery -A core worker -B --loglevel=INFO 
+
+  
+ 
+  
+### Usage Instructions for Email Verification and Password Reset
+
+Verification and password reset links in emails are hardcoded, they work with the frontend, example:  
+verify- `http://127.0.0.1:5173/verifyemail/?id=<id>&token=<token>`
+for DRF Browsable API use:
+password reset- `/http://127.0.0.1:8000/api/users/token-password-reset/?id=<id>&token=<token>`
+verify- `http://127.0.0.1:8000/api/users/token-verify-email-activate-user/?id=<id>&token=<token>`
