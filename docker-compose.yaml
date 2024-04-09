@@ -15,7 +15,7 @@ services:
       retries: 5
     volumes:
       - ${BIND_MOUNT_DATA_PATH}/postgres_data/data:/var/lib/postgresql/data
-      - ${BIND_MOUNT_DATA_PATH}/postgres_data/dump:/tmp/dump
+      - ${BIND_MOUNT_DATA_PATH}/postgres_data/dumps:/tmp/dumps
   redis:
     image: redis:7.2.1-alpine
     container_name: redis-v-1-dev
