@@ -30,27 +30,27 @@ required_vars=(\
 for var in "${required_vars[@]}"; do
 	if [ -z "${!var}" ]; then
 		echo "Error: $var is not set."
-		exit 2
+		exit 1
 	fi
 done
 
 if [ $MEILISEARCH_DISABLED -eq "0" ]; then
 	if [ -z "$MEILISEARCH_PORT" ] || [ -z "$MEILISEARCH_HOST" ] || [ -z "$MEILISEARCH_URL" ]; then
 		echo "Make sure that MEILISEARCH_HOST, MEILISEARCH_PORT and MEILISEARCH_URL environment variables are set."
-		exit 3
+		exit 1
 	fi
 fi
 
 if [ $GOOGLE_OAUTH_DISABLED -eq "0" ]; then
 	if [ -z "$GOOGLE_OAUTH_CLIENT_SECRET" ] || [ -z "$FRONTEND_CALLBACK_URL" ]; then
 		echo "Make sure that GOOGLE_OAUTH_CLIENT_SECRET and FRONTEND_CALLBACK_URL environment variables are set."
-		exit 4
+		exit 1
 	fi
 fi
 
 if [ $CLOUDFLARE_TURNSTILE_DISABLED -eq "0" ] && [ -z $CLOUDFLARE_TURNSTILE_TOKEN ]; then
 	echo "Make sure that CLOUDFLARE_TURNSTILE_TOKEN environment variable is set."
-	exit 5
+	exit 1
 fi
 
 echo "Waiting for postgres..."
