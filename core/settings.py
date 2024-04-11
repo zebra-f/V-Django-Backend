@@ -199,53 +199,53 @@ PASSWORD_RESET_TIMEOUT = 172800  # 2 days in seconds
 
 
 # logging
-if not TESTING:
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "verbose": {
-                "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-                "style": "{",
-            },
-            "simple": {
-                "format": "{levelname} {message}",
-                "style": "{",
-            },
-        },
-        "handlers": {
-            "console": {
-                "class": "logging.StreamHandler",
-            },
-            "speeds_debug_file": {
-                "level": "DEBUG",
-                "class": "logging.FileHandler",
-                "filename": os.path.join(BASE_DIR, "logs", "speeds", "debug.log"),
-                "formatter": "verbose",
-            },
-            "mail_admins": {
-                "level": "ERROR",
-                "class": "django.utils.log.AdminEmailHandler",
-                "email_backend": EMAIL_BACKEND,
-                "include_html": False,
-                "formatter": "verbose",
-            },
-        },
-        "loggers": {
-            "core.speeds": {
-                "handlers": [
-                    "speeds_debug_file",
-                    "mail_admins",
-                ],
-                "level": "DEBUG",
-                "propagate": False,
-            },
-        },
-        "root": {
-            "handlers": ["console"],
-            "level": "WARNING",
-        },
-    }
+# if not TESTING:
+#     LOGGING = {
+#         "version": 1,
+#         "disable_existing_loggers": False,
+#         "formatters": {
+#             "verbose": {
+#                 "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+#                 "style": "{",
+#             },
+#             "simple": {
+#                 "format": "{levelname} {message}",
+#                 "style": "{",
+#             },
+#         },
+#         "handlers": {
+#             "console": {
+#                 "class": "logging.StreamHandler",
+#             },
+#             "speeds_debug_file": {
+#                 "level": "DEBUG",
+#                 "class": "logging.FileHandler",
+#                 "filename": os.path.join(BASE_DIR, "logs", "speeds", "debug.log"),
+#                 "formatter": "verbose",
+#             },
+#             "mail_admins": {
+#                 "level": "ERROR",
+#                 "class": "django.utils.log.AdminEmailHandler",
+#                 "email_backend": EMAIL_BACKEND,
+#                 "include_html": False,
+#                 "formatter": "verbose",
+#             },
+#         },
+#         "loggers": {
+#             "core.speeds": {
+#                 "handlers": [
+#                     "speeds_debug_file",
+#                     "mail_admins",
+#                 ],
+#                 "level": "DEBUG",
+#                 "propagate": False,
+#             },
+#         },
+#         "root": {
+#             "handlers": ["console"],
+#             "level": "WARNING",
+#         },
+#     }
 
 
 # Django Rest Framework settings
