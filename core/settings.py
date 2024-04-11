@@ -184,6 +184,9 @@ else:
     EMAIL_HOST_PASSWORD = get_env_variable("EMAIL_HOST_PASSWORD")
 
 DEFAULT_FROM_EMAIL = "no-reply@sovertis.com"
+
+SERVER_EMAIL = "server@sovertis.com"
+
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
