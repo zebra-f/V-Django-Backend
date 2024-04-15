@@ -199,53 +199,91 @@ PASSWORD_RESET_TIMEOUT = 172800  # 2 days in seconds
 
 
 # logging
-# if not TESTING:
-#     LOGGING = {
-#         "version": 1,
-#         "disable_existing_loggers": False,
-#         "formatters": {
-#             "verbose": {
-#                 "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-#                 "style": "{",
-#             },
-#             "simple": {
-#                 "format": "{levelname} {message}",
-#                 "style": "{",
-#             },
-#         },
-#         "handlers": {
-#             "console": {
-#                 "class": "logging.StreamHandler",
-#             },
-#             "speeds_debug_file": {
-#                 "level": "DEBUG",
-#                 "class": "logging.FileHandler",
-#                 "filename": os.path.join(BASE_DIR, "logs", "speeds", "debug.log"),
-#                 "formatter": "verbose",
-#             },
-#             "mail_admins": {
-#                 "level": "ERROR",
-#                 "class": "django.utils.log.AdminEmailHandler",
-#                 "email_backend": EMAIL_BACKEND,
-#                 "include_html": False,
-#                 "formatter": "verbose",
-#             },
-#         },
-#         "loggers": {
-#             "core.speeds": {
-#                 "handlers": [
-#                     "speeds_debug_file",
-#                     "mail_admins",
-#                 ],
-#                 "level": "DEBUG",
-#                 "propagate": False,
-#             },
-#         },
-#         "root": {
-#             "handlers": ["console"],
-#             "level": "WARNING",
-#         },
-#     }
+if not TESTING:
+    LOGGING = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "verbose": {
+                "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+                "style": "{",
+            },
+            "simple": {
+                "format": "{levelname} {message}",
+                "style": "{",
+            },
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+            },
+            "django_file": {
+                "level": "WARNING",
+                "class": "logging.FileHandler",
+                "filename": os.path.join(BASE_DIR, "logs", "django", "debug.log"),
+                "formatter": "verbose",
+            },
+            "users_file": {
+                "level": "INFO",
+                "class": "logging.FileHandler",
+                "filename": os.path.join(BASE_DIR, "logs", "users", "debug.log"),
+                "formatter": "verbose",
+            },
+            "speeds_file": {
+                "level": "INFO",
+                "class": "logging.FileHandler",
+                "filename": os.path.join(BASE_DIR, "logs", "speeds", "debug.log"),
+                "formatter": "verbose",
+            },
+            "auth_file": {
+                "level": "INFO",
+                "class": "logging.FileHandler",
+                "filename": os.path.join(BASE_DIR, "logs", "auth", "debug.log"),
+                "formatter": "verbose",
+            },
+            "mail_admins": {
+                "level": "ERROR",
+                "class": "django.utils.log.AdminEmailHandler",
+                "email_backend": EMAIL_BACKEND,
+                "include_html": False,
+                "formatter": "verbose",
+            },
+        },
+        "loggers": {
+            "django": {
+                "handlers": ["django_file", "console"],
+                "level": "INFO",
+            },
+            "core.speeds": {
+                "handlers": [
+                    "speeds_file",
+                    "mail_admins",
+                ],
+                "level": "DEBUG",
+                "propagate": False,
+            },
+            "core.users": {
+                "handlers": [
+                    "users_file",
+                    "mail_admins",
+                ],
+                "level": "DEBUG",
+                "propagate": False,
+            },
+            "core.auth": {
+                "handlers": [
+                    "auth_file",
+                    "mail_admins",
+                ],
+                "level": "DEBUG",
+                "propagate": False,
+            },
+        },
+        "root": {
+            "handlers": ["console"],
+            "level": "WARNING",
+        },
+    }
 
 
 # Django Rest Framework settings
@@ -362,9 +400,15 @@ if not OAUTH_PROVIDERS["GOOGLE"]["disabled"]:
 
 # Cloudflare Trunstile
 
-CLOUDFLARE_TURNSTILE_DISABLED = bool(int(get_env_variable("CLOUDFLARE_TURNSTILE_DISABLED")))
+CLOUDFLARE_TURNSTILE_DISABLED = bool(
+    int(get_env_variable("CLOUDFLARE_TURNSTILE_DISABLED"))
+)
 if not CLOUDFLARE_TURNSTILE_DISABLED:
-    CLOUDFLARE_TURNSTILE_SECRET_KEY = get_env_variable("CLOUDFLARE_TURNSTILE_SECRET_KEY")
+    CLOUDFLARE_TURNSTILE_SECRET_KEY = get_env_variable(
+        "CLOUDFLARE_TURNSTILE_SECRET_KEY"
+    )
 
 if CLOUDFLARE_TURNSTILE_DISABLED and not DEBUG:
-    raise ImproperlyConfigured("Cloudflare's Turnstile should be enabled in production.")
+    raise ImproperlyConfigured(
+        "Cloudflare's Turnstile should be enabled in production."
+    )
