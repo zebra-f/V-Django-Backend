@@ -456,7 +456,7 @@ class SpeedTests(CustomAPITestCase):
         self.assertEqual(len(self.testuserone.speed_set.all()), 0)
 
 
-class TestSpeedFeedback(CustomAPITestCase):
+class SpeedFeedbackTests(CustomAPITestCase):
     def test_speed_feedback_list(self):
         url = reverse("speedfeedback-list")
 
@@ -505,7 +505,7 @@ class TestSpeedFeedback(CustomAPITestCase):
                     if key in model_dict and key != "user":
                         self.assertEqual(str(val), str(model_dict[key]))
             else:
-                self.assertEqual(response.status_code, 401)
+                self.assertEqual(response.status_code, 403)
                 self.assertEqual(
                     response.data["detail"],
                     "You do not have permission to perform this action.",
@@ -536,7 +536,7 @@ class TestSpeedFeedback(CustomAPITestCase):
             url,
             data={"speed": "2dbc2429-a8cc-4f80-922a-5dbc4715a76c", "vote": 0},
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 403)
         self.assertEqual(
             response.data["detail"],
             "You do not have permission to perform this action.",
@@ -658,7 +658,7 @@ class TestSpeedFeedback(CustomAPITestCase):
             response = self.client.patch(url, data={"vote": 1})
 
             if speed_feedback.user != self.testusertwo:
-                self.assertEqual(response.status_code, 401)
+                self.assertEqual(response.status_code, 403)
             else:
                 if speed_feedback.vote != 1:
                     self.assertNotEqual(
@@ -672,7 +672,7 @@ class TestSpeedFeedback(CustomAPITestCase):
             response = self.client.patch(url, data={"vote": 1})
 
             if speed_feedback.user != self.testuserone:
-                self.assertEqual(response.status_code, 401)
+                self.assertEqual(response.status_code, 403)
             else:
                 self.assertEqual(response.status_code, 200)
 
@@ -854,7 +854,7 @@ class TestSpeedFeedback(CustomAPITestCase):
                 "vote": -1,
             },
         )
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 403)
         self.assertEqual(
             response.data["detail"],
             "You do not have permission to perform this action.",
@@ -884,10 +884,10 @@ class TestSpeedFeedback(CustomAPITestCase):
         )
 
 
-class TestSpeedBookmark(CustomAPITestCase):
+class SpeedBookmarkTests(CustomAPITestCase):
     valid_category_chars = {"'", "-"}
 
-    def test_speed_feedback_list(self):
+    def test_speed_bookmark_list(self):
         url = reverse("speedbookmark-list")
 
         response = self.client.get(url)
@@ -1126,7 +1126,7 @@ class TestSpeedBookmark(CustomAPITestCase):
         self.assertEqual(response.data, None)
 
 
-class TestSpeedFeedback(CustomAPITestCase):
+class SpeedReportTests(CustomAPITestCase):
     valid_detail_chars = [
         "'",
         ".",

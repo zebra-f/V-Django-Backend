@@ -104,7 +104,6 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["count"], 11)
 
-    @override_settings(DEBUG=1)
     def test_user_retrieve(self):
         users = User.objects.all()
         for user in users:
@@ -147,7 +146,6 @@ class UserTests(APITestCase):
                 self.assertEqual(response.status_code, 401)
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
-    @override_settings(DEBUG=1)
     def test_user_create(self):
         """
         Ensure we can create a new User.
@@ -300,7 +298,6 @@ class UserTests(APITestCase):
         )
 
     @override_settings(CELERY_TASK_ALWAYS_EAGER=True)
-    @override_settings(DEBUG=1)
     def test_token_activate_user_verify_email(self):
         # GET method
         url = reverse("user-list")
