@@ -198,9 +198,7 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
 
         # prevents a race conditions
         with transaction.atomic():
-            speed = Speed.objects.select_for_update().get(
-                id=validated_data["speed"].id
-            )
+            speed = Speed.objects.select_for_update().get(id=validated_data["speed"].id)
 
             if curr_vote == -1:
                 speed.downvotes += 1
@@ -229,9 +227,10 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
         Only the 'vote' field is modifiable via the HTTP `PATCH` method.
         The HTTP `PUT` method is disabled in the feedback related view.
         """
-
         prev_vote = instance.vote
-        curr_vote = validated_data["vote"]
+        curr_vote = validated_data.get("vote", None)
+        if curr_vote == None:
+            return super().update(instance, validated_data)
         if curr_vote == prev_vote:
             return instance
 
@@ -300,12 +299,7 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # this is a workaround since passing this validator into the Meta's `validators` attribute won't work
         # the 'user' field is only available during the 'create' operation in validated_data (passed by the 'perform_create' method).
-        validator = UniqueTogetherValidator(
-            queryset=SpeedBookmark.objects.all(),
-            fields=["category", "user", "speed"],
-            message="The UNIQUE constraint failed; the `Speed` object is already bookmarked for this category.",
-        )
-        validator(validated_data, self)
+        self.__unique_together_validator(validated_data)
         return super().create(validated_data)
 
     @restrict_field_updates("speed", "user")
@@ -314,15 +308,17 @@ class SpeedBookmarkSerializer(serializers.ModelSerializer):
         Only the 'category' field is modifiable via the HTTP `PATCH` method.
         The HTTP `PUT` method is disabled in the bookmark related view.
         """
-        # this is a workaround since passing this validator into the Meta's `validators` attribute won't work
-        # the 'user' field is only available during the 'create' operation in validated_data (passed by the 'perform_create' method).
+        self.__unique_together_validator(validated_data)
+        return super().update(instance, validated_data)
+
+    def __unique_together_validator(self, validated_data):
+        # responds with 400 status code with a custom message instead of throwing `IntegrityError`
         validator = UniqueTogetherValidator(
             queryset=SpeedBookmark.objects.all(),
             fields=["category", "user", "speed"],
             message="The UNIQUE constraint failed; the `Speed` object is already bookmarked for this category.",
         )
         validator(validated_data, self)
-        return super().update(instance, validated_data)
 
 
 class SpeedReportSerializer(serializers.ModelSerializer):

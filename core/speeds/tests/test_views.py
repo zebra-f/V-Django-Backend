@@ -66,9 +66,7 @@ class SpeedTests(CustomAPITestCase):
         url = reverse("speed-list")
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            len(response.data["results"]), response.data["count"], 5
-        )
+        self.assertEqual(len(response.data["results"]), response.data["count"], 5)
         for speed in response.data["results"]:
             self.assertEqual(speed["is_public"], True)
         # query params (anon)
@@ -87,22 +85,16 @@ class SpeedTests(CustomAPITestCase):
         response = self.client.get(url, {"user": "testuserone"})
         self.assertEqual(len(response.data["results"]), 2)
         response = self.client.get(url, {"user": "testusertwo"})
-        self.assertEqual(
-            len(response.data["results"]), response.data["count"], 3
-        )
+        self.assertEqual(len(response.data["results"]), response.data["count"], 3)
         response = self.client.get(url, {"user": "testusertwo", "tags": "one"})
         self.assertEqual(len(response.data["results"]), 1)
         response = self.client.get(url, {"tags": "one"})
-        self.assertEqual(
-            len(response.data["results"]), response.data["count"], 2
-        )
+        self.assertEqual(len(response.data["results"]), response.data["count"], 2)
 
         self.client.force_login(self.testuserone)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            len(response.data["results"]), response.data["count"], 6
-        )
+        self.assertEqual(len(response.data["results"]), response.data["count"], 6)
         for speed in response.data["results"]:
             if speed["is_public"] == False:
                 self.assertEqual(speed["user"], self.testuserone.username)
@@ -119,9 +111,7 @@ class SpeedTests(CustomAPITestCase):
         self.client.force_login(self.testusertwo)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            len(response.data["results"]), response.data["count"], 5
-        )
+        self.assertEqual(len(response.data["results"]), response.data["count"], 5)
         # query params (testusertwo)
         response = self.client.get(url, {"is_public": False})
         self.assertEqual(len(response.data["results"]), 0)
@@ -173,9 +163,7 @@ class SpeedTests(CustomAPITestCase):
                 url = reverse("speed-detail", kwargs={"pk": str(speed.pk)})
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, 200)
-                self.assertEqual(
-                    response.data["user"], self.testuserone.username
-                )
+                self.assertEqual(response.data["user"], self.testuserone.username)
 
         self.client.force_login(self.testusertwo)
         for speed in speeds:
@@ -263,9 +251,7 @@ class SpeedTests(CustomAPITestCase):
                 self.assertEqual(response.status_code, 400)
             else:
                 self.assertEqual(response.status_code, 201)
-            data["description"] = data["description"][
-                0 : len(data["description"]) - 1
-            ]
+            data["description"] = data["description"][0 : len(data["description"]) - 1]
 
             data["tags"].append("ten" + char)
             response = self.client.post(url, data, format="json")
@@ -399,9 +385,7 @@ class SpeedTests(CustomAPITestCase):
             }
             response = self.client.patch(url, data, format="json")
             self.assertEqual(response.status_code, 200)
-            self.assertEqual(
-                response.data["name"], speed.name + " updated updated"
-            )
+            self.assertEqual(response.data["name"], speed.name + " updated updated")
             self.assertEqual(
                 response.data["description"],
                 speed.description + " updated updated",
@@ -531,7 +515,7 @@ class SpeedFeedbackTests(CustomAPITestCase):
 
         self.client.force_login(self.testusertwo)
 
-        # a client attemps to vote for the private `Speed` object
+        # a user attemps to vote for the private `Speed` object
         response = self.client.post(
             url,
             data={"speed": "2dbc2429-a8cc-4f80-922a-5dbc4715a76c", "vote": 0},
@@ -542,7 +526,7 @@ class SpeedFeedbackTests(CustomAPITestCase):
             "You do not have permission to perform this action.",
         )
 
-        # a client attempts to vote with incorrect `vote` value 0
+        # a user attempts to vote with incorrect `vote` value 0
         response = self.client.post(
             url,
             data={"speed": "66fca277-3329-49aa-96a2-cc240a659549", "vote": 0},
@@ -553,7 +537,7 @@ class SpeedFeedbackTests(CustomAPITestCase):
             "You should either upvote or downvote, not vote with 0. Please use 1 or -1 instead.",
         )
 
-        # a client votes correctly
+        # a user votes correctly
         # ensures that the Speed object is updated correctly
         speed = Speed.objects.get(pk="66fca277-3329-49aa-96a2-cc240a659549")
 
@@ -568,9 +552,7 @@ class SpeedFeedbackTests(CustomAPITestCase):
             self.assertEqual(response.status_code, 201)
             self.assertEqual(response.data["speed"]["score"], speed.score + 1)
 
-            speed_updated = Speed.objects.get(
-                pk="66fca277-3329-49aa-96a2-cc240a659549"
-            )
+            speed_updated = Speed.objects.get(pk="66fca277-3329-49aa-96a2-cc240a659549")
             self.assertEqual(speed_updated.upvotes, speed.upvotes + 1)
 
             transaction.set_rollback(True)
@@ -582,12 +564,10 @@ class SpeedFeedbackTests(CustomAPITestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["speed"]["score"], speed.score - 1)
 
-        speed_updated = Speed.objects.get(
-            pk="66fca277-3329-49aa-96a2-cc240a659549"
-        )
+        speed_updated = Speed.objects.get(pk="66fca277-3329-49aa-96a2-cc240a659549")
         self.assertEqual(speed_updated.downvotes, speed.downvotes + 1)
 
-        # a client attempts to vote second time for the same object
+        # a user attempts to vote second time for the same object
         response = self.client.post(
             url,
             data={"speed": "66fca277-3329-49aa-96a2-cc240a659549", "vote": 1},
@@ -598,7 +578,7 @@ class SpeedFeedbackTests(CustomAPITestCase):
             "The UNIQUE constraint failed; the `Speed` object has already been voted on.",
         )
 
-        # a client attempts to vote on its own Speed object
+        # a user attempts to vote on its own Speed object
         for speed in Speed.objects.filter(user=self.testusertwo):
             response = self.client.post(
                 url,
@@ -615,9 +595,7 @@ class SpeedFeedbackTests(CustomAPITestCase):
 
     def test_speed_feedback_update(self):
         for speed_feedback in SpeedFeedback.objects.all():
-            url = reverse(
-                "speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)}
-            )
+            url = reverse("speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)})
 
             # anon attempts to update a `SpeedFeedback` object
             self.client.logout()
@@ -628,19 +606,23 @@ class SpeedFeedbackTests(CustomAPITestCase):
                 "Authentication credentials were not provided.",
             )
 
-            # a client attempt to update 'SpeedFeedback' object
+            # a user attempt to update 'SpeedFeedback' object
             self.client.force_login(self.testusertwo)
             response = self.client.put(url, data={"vote": 1})
             self.assertEqual(response.status_code, 405)
-            self.assertEqual(
-                response.data["detail"], 'Method "PUT" not allowed.'
-            )
+            self.assertEqual(response.data["detail"], 'Method "PUT" not allowed.')
 
     def test_speed_feedback_partial_update(self):
+        temp_speed = Speed.objects.create(
+            name="temp name one",
+            speed_type="constant",
+            tags=["one", "two"],
+            kmph=3.0,
+            estimated=False,
+        )
+
         for speed_feedback in SpeedFeedback.objects.all():
-            url = reverse(
-                "speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)}
-            )
+            url = reverse("speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)})
 
             # anon attempts to update a `SpeedFeedback` object
             self.client.logout()
@@ -651,10 +633,29 @@ class SpeedFeedbackTests(CustomAPITestCase):
                 "Authentication credentials were not provided.",
             )
 
-            # a client attempt to update 'SpeedFeedback' object
+            # a user attempt to update 'SpeedFeedback' object
             saved_score = speed_feedback.speed.score
 
             self.client.force_login(self.testusertwo)
+
+            # empty data
+            response = self.client.patch(url, data={})
+            if speed_feedback.user != self.testusertwo:
+                self.assertEqual(response.status_code, 403)
+            else:
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.data["vote"], speed_feedback.vote)
+                self.assertEqual(
+                    response.data["speed"]["id"], str(speed_feedback.speed.id)
+                )
+                self.assertEqual(response.data["user"], speed_feedback.user.username)
+
+            # user should not be able to update the `speed` field
+            response = self.client.patch(url, data={"speed": temp_speed.id})
+            if speed_feedback.user == self.testusertwo:
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(str(response.data[0]), "Can't change the speed field.")
+
             response = self.client.patch(url, data={"vote": 1})
 
             if speed_feedback.user != self.testusertwo:
@@ -667,7 +668,7 @@ class SpeedFeedbackTests(CustomAPITestCase):
                     )
                 self.assertEqual(response.status_code, 200)
 
-            # a client attempt to update 'SpeedFeedback' object
+            # a user attempt to update 'SpeedFeedback' object
             self.client.force_login(self.testuserone)
             response = self.client.patch(url, data={"vote": 1})
 
@@ -675,6 +676,8 @@ class SpeedFeedbackTests(CustomAPITestCase):
                 self.assertEqual(response.status_code, 403)
             else:
                 self.assertEqual(response.status_code, 200)
+
+        temp_speed.delete()
 
     def test_speed_feedback_partial_update_of_downvote(self):
         # make sure that updates result in a correct score of 'Speed' objects
@@ -684,9 +687,7 @@ class SpeedFeedbackTests(CustomAPITestCase):
         speed_upvotes = speed_feedback.speed.upvotes
         speed_downvotes = speed_feedback.speed.downvotes
 
-        url = reverse(
-            "speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)}
-        )
+        url = reverse("speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)})
 
         with transaction.atomic():
             self.client.force_login(self.testuserone)
@@ -761,9 +762,7 @@ class SpeedFeedbackTests(CustomAPITestCase):
         speed_upvotes = speed_feedback.speed.upvotes
         speed_downvotes = speed_feedback.speed.downvotes
 
-        url = reverse(
-            "speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)}
-        )
+        url = reverse("speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)})
 
         with transaction.atomic():
             self.client.force_login(self.testuserone)
@@ -844,9 +843,7 @@ class SpeedFeedbackTests(CustomAPITestCase):
 
         self.client.force_login(self.testuserone)
 
-        url = reverse(
-            "speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)}
-        )
+        url = reverse("speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)})
 
         response = self.client.patch(
             url,
@@ -864,9 +861,7 @@ class SpeedFeedbackTests(CustomAPITestCase):
         # vote: upvote, user: testuserone, speed: "d26c8bad-6548-4918-8e63-1bd59579917b"
         speed_feedback = SpeedFeedback.objects.get(pk=7)
 
-        url = reverse(
-            "speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)}
-        )
+        url = reverse("speedfeedback-detail", kwargs={"pk": str(speed_feedback.id)})
 
         response = self.client.delete(url)
         self.assertEqual(response.status_code, 401)
@@ -1154,16 +1149,12 @@ class SpeedReportTests(CustomAPITestCase):
         self.client.force_login(self.testuserone)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.data["count"], 0, len(response.data["results"])
-        )
+        self.assertEqual(response.data["count"], 0, len(response.data["results"]))
 
         self.client.force_login(self.testusertwo)
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(
-            response.data["count"], 1, len(response.data["results"])
-        )
+        self.assertEqual(response.data["count"], 1, len(response.data["results"]))
 
     def test_speed_report_retrieve(self):
         report = SpeedReport.objects.all().first()
@@ -1217,9 +1208,7 @@ class SpeedReportTests(CustomAPITestCase):
 
         # ensure that a user won't be able to view non public data
         # created by a different user
-        speed = Speed.objects.filter(
-            is_public=False, user=self.testuserone
-        ).first()
+        speed = Speed.objects.filter(is_public=False, user=self.testuserone).first()
         data = {
             "report_reason": "spam",
             "detail": "testusertwo detail two",
@@ -1272,9 +1261,7 @@ class SpeedReportTests(CustomAPITestCase):
         self.client.force_login(self.testusertwo)
         response = self.client.patch(url)
         self.assertEqual(response.status_code, 405)
-        self.assertEqual(
-            response.data["detail"], 'Method "PATCH" not allowed.'
-        )
+        self.assertEqual(response.data["detail"], 'Method "PATCH" not allowed.')
 
     def test_speed_report_destroy(self):
         report = SpeedReport.objects.all().first()
@@ -1301,8 +1288,6 @@ class SpeedReportTests(CustomAPITestCase):
             },
         )
         self.assertEqual(response.status_code, 405)
-        self.assertEqual(
-            response.data["detail"], 'Method "DELETE" not allowed.'
-        )
+        self.assertEqual(response.data["detail"], 'Method "DELETE" not allowed.')
 
         self.assertEqual(len(SpeedReport.objects.all()), 1)
