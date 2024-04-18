@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# This script performs a specific task related to a PostgreSQL container.
+# It takes two arguments:
+#   1. Postgres container name: The name of the PostgreSQL container to perform the task on.
+#   2. encrypt (optional): If provided, enables encryption during the task execution.
+#
+# Usage:
+# sudo ./dump-database.sh <postgres_container_name> [encrypt]
+
 LOG_DIR="/var/log/database"
 mkdir -p $LOG_DIR
 LOG_FILE="${LOG_DIR}/pgdump.log"
@@ -8,8 +16,13 @@ if [ -f ./.env ]; then
 	source ./.env
 fi
 
-# Warning: hardcoded postgres container name
-timeout 10s docker exec postgres-v-1-dev pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB_NAME}
+if [ -z "$1" ] || [[ "$1" -eq "encrypt" ]]; then
+	echo "$(date), container name was not provided." >> ${LOG_FILE}
+	exit 1
+fi
+CONTAINER_NAME="${1}"
+
+timeout 12s docker exec ${CONTAINER_NAME} pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB_NAME}
 exit_code=$?
 if [ $exit_code -eq 124 ]; then
 	echo "$(date), pg_isready timed out." >> ${LOG_FILE}
@@ -20,8 +33,7 @@ if [ $exit_code -ne 0 ]; then
 	exit $exit_code
 fi
 
-# Warning: hardcoded postgres container name
-timeout 20m docker exec postgres-v-1-dev pg_dump -U ${POSTGRES_USER} -d ${POSTGRES_DB_NAME} --format=tar -f /tmp/dumps/database.tar
+timeout 20m docker exec ${CONTAINER_NAME} pg_dump -U ${POSTGRES_USER} -d ${POSTGRES_DB_NAME} --format=tar -f /tmp/dumps/database.tar
 exit_code=$?
 if [ $exit_code -eq 124 ]; then
 	echo "$(date), pg_dump timed out." >> ${LOG_FILE}
@@ -35,11 +47,11 @@ else
 fi
 
 # Exit if no arguments are provided
-if [ -z "$1" ]; then
+if [ -z "$2" ]; then
 	exit 0
 fi 
 
-if [[ "$1" != "encrypt" ]]; then
+if [[ "$2" != "encrypt" ]]; then
 	echo "Incorrect argument. Did you mean './dump-database.sh encrypt'?"
 	exit 1
 fi
