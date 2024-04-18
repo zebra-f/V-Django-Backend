@@ -4,7 +4,7 @@ from rest_framework.exceptions import APIException, ValidationError
 from rest_framework import status
 
 from django.urls import reverse
-from django.db import transaction, IntegrityError
+from django.db import transaction
 from django.contrib.auth import get_user_model
 
 from . import logger
@@ -195,31 +195,35 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
             message="The UNIQUE constraint failed; the `Speed` object has already been voted on.",
         )
         validator(validated_data, self)
+        serializers.raise_errors_on_nested_writes("create", self, validated_data)
 
         # prevents a race conditions
-        with transaction.atomic():
-            speed = Speed.objects.select_for_update().get(id=validated_data["speed"].id)
-
-            if curr_vote == -1:
-                speed.downvotes += 1
-            elif curr_vote == 1:
-                speed.upvotes += 1
-            speed.score = speed.upvotes - speed.downvotes
-
-            speed.is_synced_in_meilisearch = False
-
-            try:
-                speed.save()
-                speed_feedback = super().create(validated_data)
-            except Exception as e:
-                logger.warning(f"core.speeds.{__name__}; {str(e)}")
-                raise APIException(
-                    "An unexpected error occurred while processing your request. Please try again later."
+        try:
+            with transaction.atomic():
+                speed = Speed.objects.select_for_update().get(
+                    id=validated_data["speed"].id
                 )
 
+                if curr_vote == -1:
+                    speed.downvotes += 1
+                elif curr_vote == 1:
+                    speed.upvotes += 1
+                speed.score = speed.upvotes - speed.downvotes
+
+                speed.is_synced_in_meilisearch = False
+                speed.save()
+
+                ModelClass = self.Meta.model
+                instance = ModelClass._default_manager.create(**validated_data)
+        except Exception as e:
+            logger.warning(f"core.speeds.{__name__}; {str(e)}")
+            raise APIException(
+                "An unexpected error occurred while processing your request. Please try again later."
+            )
+
         # fix for the nested representation of the Speed's score
-        speed_feedback.speed.score = speed.score
-        return speed_feedback
+        instance.speed.score = speed.score
+        return instance
 
     @restrict_field_updates("speed", "user")
     def update(self, instance, validated_data):
@@ -227,6 +231,8 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
         Only the 'vote' field is modifiable via the HTTP `PATCH` method.
         The HTTP `PUT` method is disabled in the feedback related view.
         """
+        serializers.raise_errors_on_nested_writes("update", self, validated_data)
+
         prev_vote = instance.vote
         curr_vote = validated_data.get("vote", None)
         if curr_vote == None:
@@ -235,39 +241,36 @@ class SpeedFeedbackSerializer(serializers.ModelSerializer):
             return instance
 
         # prevents a race conditions
-        with transaction.atomic():
-            speed = Speed.objects.select_for_update().get(id=instance.speed.id)
+        try:
+            with transaction.atomic():
+                speed = Speed.objects.select_for_update().get(id=instance.speed.id)
 
-            if prev_vote == -1:
-                speed.downvotes -= 1
-            elif prev_vote == 1:
-                speed.upvotes -= 1
+                if prev_vote == -1:
+                    speed.downvotes -= 1
+                elif prev_vote == 1:
+                    speed.upvotes -= 1
 
-            if curr_vote == -1:
-                speed.downvotes += 1
-            elif curr_vote == 1:
-                speed.upvotes += 1
-            speed.score = speed.upvotes - speed.downvotes
+                if curr_vote == -1:
+                    speed.downvotes += 1
+                elif curr_vote == 1:
+                    speed.upvotes += 1
+                speed.score = speed.upvotes - speed.downvotes
 
-            speed.is_synced_in_meilisearch = False
-
-            try:
+                speed.is_synced_in_meilisearch = False
                 speed.save()
-                speed_feedback = super().update(instance, validated_data)
-            except IntegrityError as e:
-                logger.error(f"core.speeds.{__name__}; {str(e)}")
-                raise APIException(
-                    "An unexpected error occurred while processing your request. Please try again later."
-                )
-            except Exception as e:
-                logger.warning(f"core.speeds.{__name__}; {str(e)}")
-                raise APIException(
-                    "An unexpected error occurred while processing your request. Please try again later."
-                )
+
+                for key, val in validated_data.items():
+                    setattr(instance, key, val)
+                instance.save()
+        except Exception as e:
+            logger.error(f"core.speeds.{__name__}; {str(e)}")
+            raise APIException(
+                "An unexpected error occurred while processing your request. Please try again later."
+            )
 
         # fix for the nested representation of the Speed's score
-        speed_feedback.speed.score = speed.score
-        return speed_feedback
+        instance.speed.score = speed.score
+        return instance
 
 
 class SpeedBookmarkSerializer(serializers.ModelSerializer):
@@ -345,7 +348,7 @@ class SpeedReportSerializer(serializers.ModelSerializer):
 
     @prevent_unauthorized_create_and_data_reveal
     def create(self, validated_data):
-        obj, created = SpeedReport.objects.update_or_create(
+        obj, _ = SpeedReport.objects.update_or_create(
             user=validated_data["user"],
             speed=validated_data["speed"],
             defaults={
