@@ -16,8 +16,8 @@ if [ -f ./.env ]; then
 	source ./.env
 fi
 
-if [ -z "$1" ] || [[ "$1" -eq "encrypt" ]]; then
-	echo "$(date), container name was not provided." >> ${LOG_FILE}
+if [ -z "${1}" ] || [[ "${1}" = "encrypt" ]]; then
+	echo "$(date), container name was not provided." | tee -a ${LOG_FILE}
 	exit 1
 fi
 CONTAINER_NAME="${1}"
@@ -40,7 +40,7 @@ if [ $exit_code -eq 124 ]; then
 	exit $exit_code
 fi
 if [ $exit_code -eq 0 ]; then 
-	echo "$(date), pg_dump succeed." >> ${LOG_FILE}
+	echo "$(date), pg_dump succeed." | tee -a ${LOG_FILE}
 else 
 	echo "$(date), pg_dump failed." >> ${LOG_FILE}
 	exit $exit_code
@@ -76,7 +76,7 @@ echo $GPG_DATABASE_DUMP_PASSPHRASE | gpg --batch --yes -c --passphrase-fd 0 \
 	${BIND_MOUNT_DATA_PATH}/postgres_data/dumps/database.tar
 exit_code=$?
 if [ $exit_code -eq 0 ]; then 
-	echo "$(date), encryption succeed." >> ${LOG_FILE}
+	echo "$(date), encryption succeed." | tee -a ${LOG_FILE}
 else 
 	echo "$(date), encryption failed." >> ${LOG_FILE}
 	exit $exit_code
