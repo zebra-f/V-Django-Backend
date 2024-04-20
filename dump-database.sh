@@ -8,41 +8,41 @@
 # Usage:
 # sudo ./dump-database.sh <postgres_container_name> [encrypt]
 
-LOG_DIR="/var/log/database"
-mkdir -p $LOG_DIR
-LOG_FILE="${LOG_DIR}/pgdump.log"
+log_dir="/var/log/database"
+mkdir -p $log_dir
+log_file="${log_dir}/pgdump.log"
 
 if [ -f ./.env ]; then
 	source ./.env
 fi
 
 if [ -z "${1}" ] || [[ "${1}" = "encrypt" ]]; then
-	echo "$(date), container name was not provided." | tee -a ${LOG_FILE}
+	echo "$(date), container name was not provided." | tee -a ${log_file}
 	exit 1
 fi
-CONTAINER_NAME="${1}"
+container_name="${1}"
 
-timeout 12s docker exec ${CONTAINER_NAME} pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB_NAME}
+timeout 12s docker exec ${container_name} pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB_NAME}
 exit_code=$?
 if [ $exit_code -eq 124 ]; then
-	echo "$(date), pg_isready timed out." >> ${LOG_FILE}
+	echo "$(date), pg_isready timed out." >> ${log_file}
 	exit $exit_code
 fi
 if [ $exit_code -ne 0 ]; then
-	echo "$(date), pg_isready, database is unhealthy." >> ${LOG_FILE}
+	echo "$(date), pg_isready, database is unhealthy." >> ${log_file}
 	exit $exit_code
 fi
 
-timeout 20m docker exec ${CONTAINER_NAME} pg_dump -U ${POSTGRES_USER} -d ${POSTGRES_DB_NAME} --format=tar -f /tmp/dumps/database.tar
+timeout 20m docker exec ${container_name} pg_dump -U ${POSTGRES_USER} -d ${POSTGRES_DB_NAME} --format=tar -f /tmp/dumps/database.tar
 exit_code=$?
 if [ $exit_code -eq 124 ]; then
-	echo "$(date), pg_dump timed out." >> ${LOG_FILE}
+	echo "$(date), pg_dump timed out." >> ${log_file}
 	exit $exit_code
 fi
 if [ $exit_code -eq 0 ]; then 
-	echo "$(date), pg_dump succeed." | tee -a ${LOG_FILE}
+	echo "$(date), pg_dump succeed." | tee -a ${log_file}
 else 
-	echo "$(date), pg_dump failed." >> ${LOG_FILE}
+	echo "$(date), pg_dump failed." >> ${log_file}
 	exit $exit_code
 fi
 
@@ -57,17 +57,17 @@ if [[ "$2" != "encrypt" ]]; then
 fi
 
 if [[ ! -d ${BIND_MOUNT_DATA_PATH}/postgres_data/dumps ]]; then
-	echo "$(date), dir ${BIND_MOUNT_DATA_PATH}/postgres_data/dumps doesn't exists." >> ${LOG_FILE}
+	echo "$(date), dir ${BIND_MOUNT_DATA_PATH}/postgres_data/dumps doesn't exists." >> ${log_file}
 	exit 1
 fi
 
 if [[ ! -f ${BIND_MOUNT_DATA_PATH}/postgres_data/dumps/database.tar ]]; then
-	echo "$(date), file ${BIND_MOUNT_DATA_PATH}/postgres_data/dumps/database.tar doesn't exists." >> ${LOG_FILE}
+	echo "$(date), file ${BIND_MOUNT_DATA_PATH}/postgres_data/dumps/database.tar doesn't exists." >> ${log_file}
 	exit 1
 fi
 
 if [[ -z $GPG_DATABASE_DUMP_PASSPHRASE ]]; then
-	echo "$(date), encryption passphrase is not set." >> ${LOG_FILE}
+	echo "$(date), encryption passphrase is not set." >> ${log_file}
 	exit 1
 fi
 
@@ -76,9 +76,9 @@ echo $GPG_DATABASE_DUMP_PASSPHRASE | gpg --batch --yes -c --passphrase-fd 0 \
 	${BIND_MOUNT_DATA_PATH}/postgres_data/dumps/database.tar
 exit_code=$?
 if [ $exit_code -eq 0 ]; then 
-	echo "$(date), encryption succeed." | tee -a ${LOG_FILE}
+	echo "$(date), encryption succeed." | tee -a ${log_file}
 else 
-	echo "$(date), encryption failed." >> ${LOG_FILE}
+	echo "$(date), encryption failed." >> ${log_file}
 	exit $exit_code
 fi
 
