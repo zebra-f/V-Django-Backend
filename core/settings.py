@@ -223,6 +223,12 @@ if not TESTING:
                 "filename": os.path.join(BASE_DIR, "logs", "django", "debug.log"),
                 "formatter": "verbose",
             },
+            "core_file": {
+                "level": "INFO",
+                "class": "logging.FileHandler",
+                "filename": os.path.join(BASE_DIR, "logs", "core", "debug.log"),
+                "formatter": "verbose",
+            },
             "users_file": {
                 "level": "INFO",
                 "class": "logging.FileHandler",
@@ -253,6 +259,14 @@ if not TESTING:
             "django": {
                 "handlers": ["django_file", "console"],
                 "level": "INFO",
+            },
+            "core": {
+                "handlers": [
+                    "core_file",
+                    "mail_admins",
+                ],
+                "level": "DEBUG",
+                "propagate": False,
             },
             "core.speeds": {
                 "handlers": [

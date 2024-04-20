@@ -43,16 +43,13 @@ class MeilisearchClient(Client):
             fields = [field.name for field in model._meta.get_fields()]
             # checks if all `displayed_attributes_dict[index_name]` are present in a model
             if not all(
-                [
-                    attr in fields
-                    for attr in self.displayed_attributes_dict[index_name]
-                ]
+                [attr in fields for attr in self.displayed_attributes_dict[index_name]]
             ):
                 logger.critical(
-                    f"core.{__name__}; A field in the {model.__name__} model has been changed!"
+                    f"{__name__}; A field in the {model.__name__} model has been changed!"
                 )
                 raise Exception(
-                    f"A field in the {model.__name__} model has been changed!"
+                    f"{__name__}; A field in the {model.__name__} model has been changed!"
                 )
 
     def is_disabled(self) -> bool:
@@ -83,7 +80,7 @@ class MeilisearchClient(Client):
                 pk = data["id"]
                 instance = model.objects.select_for_update().get(pk=pk)
             except Exception as e:
-                logger.error(f"core.{__name__}; {str(e)}")
+                logger.error(f"{__name__}; {str(e)}")
                 return
 
             document: dict = data
@@ -95,7 +92,7 @@ class MeilisearchClient(Client):
                 elif action == "update":
                     instance.mark_synced_in_meilisearch()
             else:
-                logger.error(f"core.{__name__}; {pk} was not {action}ed!")
+                logger.error(f"{__name__}; {pk} was not {action}ed!")
 
 
 URL = settings.MEILISEARCH["URL"]
